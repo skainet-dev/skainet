@@ -1,9 +1,8 @@
 package io.github.kotlin.fibonacci.sk.ai.net.sk.ai.net
 
 import sk.ai.net.Shape
+import sk.ai.net.impl.DoublesTensor
 import sk.ai.net.impl.createTensor
-import sk.ai.net.impl.elements
-import sk.ai.net.impl.matmul
 import sk.ai.net.impl.zipMap
 import kotlin.test.assertContentEquals
 import kotlin.test.Test
@@ -18,7 +17,7 @@ class TensorTest {
         val scalar1 = createTensor(doubleArrayOf(3.0))
         val scalar2 = createTensor(doubleArrayOf(4.0))
         val result = scalar1.matmul(scalar2)
-        assertContentEquals(doubleArrayOf(12.0), result.elements())
+        assertContentEquals(doubleArrayOf(12.0), (result as DoublesTensor).elements)
     }
 
     @Test
@@ -26,7 +25,7 @@ class TensorTest {
         val scalar1 = createTensor(doubleArrayOf(3.123456789))
         val scalar2 = createTensor(doubleArrayOf(4.12345556789))
         val result = scalar1.matmul(scalar2)
-        assertContentEquals(doubleArrayOf(12.87943528766587), result.elements())
+        assertContentEquals(doubleArrayOf(12.87943528766587), (result as DoublesTensor).elements)
     }
 
     @Test
@@ -34,7 +33,7 @@ class TensorTest {
         val scalar = createTensor(doubleArrayOf(2.0))
         val vector = createTensor(Shape(3), doubleArrayOf(1.0, 2.0, 3.0))
         val result = scalar.matmul(vector)
-        assertContentEquals(doubleArrayOf(2.0, 4.0, 6.0), result.elements())
+        assertContentEquals(doubleArrayOf(2.0, 4.0, 6.0), (result as DoublesTensor).elements)
     }
 
     @Test
@@ -42,7 +41,7 @@ class TensorTest {
         val vector = createTensor(Shape(2), doubleArrayOf(1.0, 2.0))
         val matrix = createTensor(Shape(2, 3), doubleArrayOf(1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
         val result = vector.matmul(matrix)
-        assertContentEquals(doubleArrayOf(9.0, 12.0, 15.0), result.elements())
+        assertContentEquals(doubleArrayOf(9.0, 12.0, 15.0), (result as DoublesTensor).elements)
     }
 
     @Test
@@ -50,7 +49,7 @@ class TensorTest {
         val vector = createTensor(Shape(1), doubleArrayOf(2.0))
         val matrix = createTensor(Shape(1, 3), doubleArrayOf(1.0, 2.0, 3.0))
         val result = vector.matmul(matrix)
-        assertContentEquals(doubleArrayOf(2.0, 4.0, 6.0), result.elements())
+        assertContentEquals(doubleArrayOf(2.0, 4.0, 6.0), (result as DoublesTensor).elements)
     }
 
 
@@ -59,7 +58,7 @@ class TensorTest {
         val matrix1 = createTensor(Shape(2, 3), doubleArrayOf(1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
         val matrix2 = createTensor(Shape(3, 2), doubleArrayOf(7.0, 8.0, 9.0, 10.0, 11.0, 12.0))
         val result = matrix1.matmul(matrix2)
-        assertContentEquals(doubleArrayOf(58.0, 64.0, 139.0, 154.0), result.elements())
+        assertContentEquals(doubleArrayOf(58.0, 64.0, 139.0, 154.0), (result as DoublesTensor).elements)
     }
 
     @Test
@@ -383,7 +382,10 @@ class TensorTest {
         val result = tensorMap["tensor3"]!!
         val y = tensor1.matmul(tensor2)
 
-        val a = zipMap(y.elements(), result.elements()) { lhs: Double, rhs: Double -> lhs - rhs }
+        val a = zipMap(
+            (y as DoublesTensor).elements,
+            (result as DoublesTensor).elements
+        ) { lhs: Double, rhs: Double -> lhs - rhs }
 
         assertFalse(a.any { it > 1e-4 })
 
