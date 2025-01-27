@@ -3,8 +3,11 @@ package sk.ai.net.impl
 import sk.ai.net.DataDescriptor
 import sk.ai.net.Shape
 import sk.ai.net.Tensor
+import kotlin.collections.map
+import kotlin.math.exp
+import kotlin.math.pow
 
-data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) : Tensor<Double> {
+data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) : TypedTensor<Double> {
     constructor(shape: Shape, element: Double = 0.0) : this(
         shape,
         doubleArrayOf(shape.volume.toDouble(), element)
@@ -18,7 +21,6 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
 
     override val dataDescriptor: DataDescriptor
         get() = doubleDataDescriptor
-
 
     internal fun index(indices: IntArray): Int {
         assert(
@@ -34,7 +36,7 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
         return elements[index(indices)]
     }
 
-    override operator fun get(vararg ranges: IntRange): Tensor<Double> {
+    override operator fun get(vararg ranges: IntRange): TypedTensor<Double> {
         val size = ranges.size
         val shape = ranges.map { x -> x.last - x.first + 1 }
         val reversedShape = shape.reversed()
@@ -49,14 +51,14 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
             }
             get(*indices)
         }
-        return DoublesTensor(Shape(*shape), elements)
+        return DoublesTensor(Shape(*shape.toIntArray()), elements)
     }
 
 
     private inline fun commutativeBinaryOperation(
         tensor: DoublesTensor,
         operation: (Double, Double) -> Double
-    ): Tensor<Double> {
+    ): TypedTensor<Double> {
         val lSize = shape.dimensions.size
         val rSize = tensor.shape.dimensions.size
 
@@ -83,7 +85,7 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
         return DoublesTensor(a.shape, zipMapRepeat(a.elements, b.elements, operation))
     }
 
-    private inline fun noncommutativeBinaryOperation(
+    private inline fun nonCommutativeBinaryOperation(
         tensor: DoublesTensor,
         operation: (Double, Double) -> Double,
         reverseOperation: (Double, Double) -> Double
@@ -109,49 +111,112 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
         }
     }
 
-    operator fun plus(tensor: DoublesTensor): Tensor<Double> {
-        return commutativeBinaryOperation(tensor) { lhs, rhs -> lhs + rhs }
+    override operator fun plus(tensor: Tensor): Tensor {
+        return commutativeBinaryOperation(tensor as DoublesTensor) { lhs, rhs -> lhs + rhs }
     }
 
-    operator fun plus(scalar: Double): Tensor<Double> {
-        return DoublesTensor(shape, elements.map { it + scalar }.toDoubleArray())
+    override operator fun plus(scalar: Double): Tensor {
+        return commutativeBinaryOperation(
+            DoublesTensor(Shape(1), scalar)
+        ) { lhs, rhs -> lhs + rhs }
     }
 
-    operator fun minus(tensor: Tensor<Double>): Tensor<Double> {
-        return noncommutativeBinaryOperation(
+    override fun plus(other: Int): Tensor {
+        return commutativeBinaryOperation(
+            DoublesTensor(Shape(1), other.toDouble())
+        ) { lhs, rhs -> lhs + rhs }
+    }
+
+    override operator fun minus(tensor: Tensor): Tensor {
+        return nonCommutativeBinaryOperation(
             tensor as DoublesTensor,
             { lhs, rhs -> lhs - rhs },
             { lhs, rhs -> rhs - lhs })
     }
 
-    operator fun minus(scalar: Double): Tensor<Double> {
-        return noncommutativeBinaryOperation(
+    override operator fun minus(scalar: Double): TypedTensor<Double> {
+        return nonCommutativeBinaryOperation(
             DoublesTensor(Shape(1), scalar),
             { lhs, rhs -> lhs - rhs },
             { lhs, rhs -> rhs - lhs })
     }
 
+    override fun minus(other: Int): Tensor {
+        return nonCommutativeBinaryOperation(
+            DoublesTensor(Shape(1), other.toDouble()),
+            { lhs, rhs -> lhs - rhs },
+            { lhs, rhs -> rhs - lhs })
+    }
 
-    operator fun times(tensor: Tensor<Double>): Tensor<Double> {
+
+    operator fun times(tensor: TypedTensor<Double>): TypedTensor<Double> {
         return commutativeBinaryOperation(tensor as DoublesTensor) { lhs, rhs -> lhs * rhs }
     }
 
-    operator fun div(tensor: Tensor<Double>): Tensor<Double> {
-        return noncommutativeBinaryOperation(
+    operator fun div(tensor: TypedTensor<Double>): TypedTensor<Double> {
+        return nonCommutativeBinaryOperation(
             tensor as DoublesTensor,
             { lhs, rhs -> lhs / rhs },
             { lhs, rhs -> rhs / lhs })
     }
 
-    operator fun times(scalar: Double): Tensor<Double> {
+    operator fun times(scalar: Double): TypedTensor<Double> {
         return DoublesTensor(shape, elements.map { it * scalar }.toDoubleArray())
     }
 
-    operator fun div(scalar: Double): Tensor<Double> {
+    operator fun div(scalar: Double): TypedTensor<Double> {
         return DoublesTensor(shape, elements.map { it / scalar }.toDoubleArray())
     }
 
-    fun matmul(other: Tensor<Double>): Tensor<Double> {
+    override fun toString(): String {
+        return when (shape.dimensions.size) {
+            1 -> { // 1D tensor
+                //println(shape)
+                vectorToString()
+            }
+
+            2 -> { // 2D tensor
+                //println(shape)
+                matrixToString()
+            }
+
+            else -> "Tensor(${shape}, ${elements.contentToString()})" // higher dimensions
+        }
+    }
+
+    private fun vectorToString(): String {
+        return elements.joinToString(prefix = "[", postfix = "]")
+    }
+
+    private fun matrixToString(): String {
+        val (rows, cols) = shape.dimensions
+        return (0 until rows).joinToString(separator = "\n", prefix = "[\n", postfix = "\n]") { r ->
+            (0 until cols).joinToString(prefix = " [", postfix = "]") { c ->
+                elements[r * cols + c].toString()
+            }
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as DoublesTensor
+
+        if (shape != other.shape) return false
+        if (!elements.contentEquals(other.elements)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = shape.hashCode()
+        result = 31 * result + elements.contentHashCode()
+        return result
+    }
+
+
+    override fun matmul(other: Tensor): Tensor {
         // Scalar multiplication
         if (shape.dimensions.isEmpty() && other.shape.dimensions.isEmpty()) {
             return DoublesTensor(Shape(), doubleArrayOf(elements[0] * (other as DoublesTensor).elements[0]))
@@ -203,60 +268,145 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
         throw IllegalArgumentException("Unsupported tensor shapes for multiplication.")
     }
 
-    override fun toString(): String {
-        return when (shape.dimensions.size) {
-            1 -> { // 1D tensor
-                //println(shape)
-                vectorToString()
-            }
-
-            2 -> { // 2D tensor
-                //println(shape)
-                matrixToString()
-            }
-
-            else -> "Tensor(${shape}, ${elements.contentToString()})" // higher dimensions
+    override fun t(): Tensor {
+        // Ensure the tensor is 2D
+        if (this.shape.dimensions.size != 2) {
+            throw IllegalArgumentException("Transpose is only implemented for 2D tensors.")
         }
-    }
 
-    private fun vectorToString(): String {
-        return elements.joinToString(prefix = "[", postfix = "]")
-    }
+        // New shape with dimensions swapped
+        val newShape = Shape(this.shape.dimensions[1], this.shape.dimensions[0])
 
-    private fun matrixToString(): String {
-        val (rows, cols) = shape.dimensions
-        return (0 until rows).joinToString(separator = "\n", prefix = "[\n", postfix = "\n]") { r ->
-            (0 until cols).joinToString(prefix = " [", postfix = "]") { c ->
-                elements[r * cols + c].toString()
+        // Create a new elements array to hold the transposed elements
+        val newElements = DoubleArray(this.elements.size)
+
+        // Populate the new elements array with the transposed elements
+        for (i in 0 until shape.dimensions[0]) { // Original rows
+            for (j in 0 until shape.dimensions[1]) { // Original columns
+                // Calculate the index in the original flat array and the new index in the transposed array
+                val originalIndex = i * shape.dimensions[1] + j
+                val newIndex = j * shape.dimensions[0] + i
+                // Assign the transposed value
+                newElements[newIndex] = this.elements[originalIndex]
             }
         }
+
+        // Return a new tensor with the transposed shape and elements
+        return DoublesTensor(newShape, newElements)
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
+    override fun relu(): Tensor =
+        DoublesTensor(shape, elements.map { elem -> if (elem > 0) elem else 0.0 }.toDoubleArray())
 
-        other as DoublesTensor
-
-        if (shape != other.shape) return false
-        if (!elements.contentEquals(other.elements)) return false
-
-        return true
+    override fun softmax(): Tensor {
+        val sum = elements.fold(0.0) { r, x -> r + x }
+        return this / sum
     }
 
-    override fun hashCode(): Int {
-        var result = shape.hashCode()
-        result = 31 * result + elements.contentHashCode()
-        return result
+    override fun pow(tensor: Tensor): Tensor {
+        assert(
+            { shape == tensor.shape },
+            { "Incompatible shapes of tensors: this.shape = ${shape}, tensor.shape = ${tensor.shape}" })
+        return DoublesTensor(shape, zipMap(elements, (tensor as DoublesTensor).elements) { a, b -> a.pow(b) })
     }
-}
 
-fun Tensor<Double>.matmul(other: Tensor<Double>): Tensor<Double> {
-    return (this as DoublesTensor).matmul(other)
-}
+    override fun pow(scalar: Double): Tensor {
+        TODO("Not yet implemented")
+    }
 
-fun Tensor<Double>.elements() = (this as DoublesTensor).elements
 
-operator fun Tensor<Double>.plus(other: Tensor<Double>): Tensor<Double> {
-    return (this as DoublesTensor).matmul(other)
+    override fun sin(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.sin(it) }.toDoubleArray())
+
+    override fun cos(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.cos(it) }.toDoubleArray())
+
+    override fun tan(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.tan(it) }.toDoubleArray())
+
+    override fun asin(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.asin(it) }.toDoubleArray())
+
+    override fun acos(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.acos(it) }.toDoubleArray())
+
+    override fun atan(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.atan(it) }.toDoubleArray())
+
+    override fun sinh(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.sinh(it) }.toDoubleArray())
+
+    override fun cosh(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.cosh(it) }.toDoubleArray())
+
+    override fun tanh(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.tanh(it) }.toDoubleArray())
+
+    override fun exp(): Tensor =
+        DoublesTensor(shape, elements.map { exp(it) }.toDoubleArray())
+
+    override fun log(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.ln(it) }.toDoubleArray())
+
+    override fun sqrt(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.sqrt(it) }.toDoubleArray())
+
+    override fun cbrt(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.cbrt(it) }.toDoubleArray())
+
+    override fun sigmoid(): Tensor =
+        DoublesTensor(shape, elements.map { (1.0 / exp(-it)) }.toDoubleArray())
+
+
+    override fun ln(): Tensor =
+        DoublesTensor(shape, elements.map { kotlin.math.ln(it) }.toDoubleArray())
+
+    fun computeStrides(dimensions: IntArray): IntArray {
+        val strides = IntArray(dimensions.size) { 1 }
+        for (i in dimensions.lastIndex - 1 downTo 0) {
+            strides[i] = strides[i + 1] * dimensions[i + 1]
+        }
+        return strides
+    }
+
+    fun unravelIndex(index: Int, dimensions: IntArray, strides: IntArray): IntArray {
+        var idx = index
+        val indices = IntArray(dimensions.size)
+        for (i in strides.indices) {
+            indices[i] = idx / strides[i]
+            idx %= strides[i]
+        }
+        return indices
+    }
+
+
+    override fun softmax(dim: Int): Tensor {
+        val actualDim = if (dim < 0) shape.dimensions.size + dim else dim
+        if (actualDim < 0 || actualDim >= shape.dimensions.size) {
+            throw IllegalArgumentException("Dimension out of range")
+        }
+
+        // Compute the exponential of each element and the sum of exponential along the specified dimension.
+        val exps = DoubleArray(elements.size)
+        val sumExps = DoubleArray(shape.volume / shape.dimensions[actualDim]) { 0.0 }
+
+        val strides = computeStrides(shape.dimensions)
+        for (index in elements.indices) {
+            val indices = unravelIndex(index, shape.dimensions, strides)
+            val dimIndex = indices[actualDim]
+            val exp = exp(elements[index])
+            exps[index] = exp
+            sumExps[dimIndex] += exp
+        }
+
+        // Normalize by the sum of exponential to get softmax probabilities.
+        val softmaxElements = DoubleArray(elements.size)
+        for (index in elements.indices) {
+            val indices = unravelIndex(index, shape.dimensions, strides)
+            val dimIndex = indices[actualDim]
+            softmaxElements[index] = exps[index] / sumExps[dimIndex]
+        }
+
+        return DoublesTensor(shape, softmaxElements)
+    }
 }

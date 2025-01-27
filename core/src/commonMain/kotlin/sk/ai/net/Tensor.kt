@@ -1,11 +1,23 @@
 package sk.ai.net
 
+import kotlin.math.acos
+import kotlin.math.asin
+import kotlin.math.atan
+import kotlin.math.cbrt
+import kotlin.math.cos
+import kotlin.math.cosh
+import kotlin.math.exp
+import kotlin.math.ln
+import kotlin.math.sin
+import kotlin.math.sinh
+import kotlin.math.sqrt
+import kotlin.math.tan
+import kotlin.math.tanh
+
 /**
- * An interface to describe tensor data type. An internar representation of a tensor can differ
- * from the {@see DataDescriptor} data type. It provides an access the tensor data via getter method using built-in
- * types(Int, Float etc).
+ * An interface to a tensor data type. Its provide operations method signatures for tensor manipulation.
  */
-interface Tensor<T> {
+interface Tensor {
 
     /**
      * shape indicates the number of dimension of a tensor and the length of each dimension.
@@ -34,12 +46,61 @@ interface Tensor<T> {
      * */
     val dataDescriptor: DataDescriptor
 
-    operator fun get(vararg indices: Int): T
+    operator fun plus(other: Tensor): Tensor
 
-    operator fun get(vararg ranges: IntRange): Tensor<T>
+    operator fun plus(other: Double): Tensor
+
+    operator fun plus(other: Int): Tensor
+
+    operator fun minus(other: Double): Tensor
+
+    operator fun minus(other: Int): Tensor
+
+    operator fun minus(other: Tensor): Tensor
+
+    fun matmul(other: Tensor): Tensor
+
+    fun t(): Tensor
+
+    fun relu(): Tensor
+
+    fun softmax(i: Int): Tensor
+
+    fun softmax(): Tensor
+
+    fun pow(tensor: Tensor): Tensor
+
+    fun pow(scalar: Double): Tensor
+
+    fun sin(): Tensor
+
+    fun cos(): Tensor
+
+    fun tan(): Tensor
+    
+    fun asin(): Tensor
+
+    fun acos(): Tensor
+    
+    fun atan(): Tensor
+
+    fun sinh():Tensor
+
+    fun cosh():Tensor
+
+    fun tanh():Tensor
+
+    fun exp():Tensor
+
+    fun log():Tensor
+
+    fun sqrt():Tensor
+
+    fun cbrt():Tensor
+
+    fun sigmoid():Tensor
+
+    fun ln():Tensor
+
 }
-
-fun <T> Tensor<T>.isScalar() = rank == 0
-
-fun <T> Tensor<T>.isVector() = rank == 1
 
