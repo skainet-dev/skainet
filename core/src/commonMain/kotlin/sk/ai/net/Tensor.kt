@@ -1,19 +1,5 @@
 package sk.ai.net
 
-import kotlin.math.acos
-import kotlin.math.asin
-import kotlin.math.atan
-import kotlin.math.cbrt
-import kotlin.math.cos
-import kotlin.math.cosh
-import kotlin.math.exp
-import kotlin.math.ln
-import kotlin.math.sin
-import kotlin.math.sinh
-import kotlin.math.sqrt
-import kotlin.math.tan
-import kotlin.math.tanh
-
 /**
  * An interface to a tensor data type. Its provide operations method signatures for tensor manipulation.
  */

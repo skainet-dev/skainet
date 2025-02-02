@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "skainet"
 include(":core")
+include(":io")
