@@ -4,11 +4,15 @@ kotlin = "2.1.0"
 android-minSdk = "24"
 android-compileSdk = "35"
 nexus-publish = "2.0.0"
+jetbrainsKotlinJvm = "1.9.22"
+testng = "6.9.6"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
+testng = { group = "org.testng", name = "testng", version.ref = "testng" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
