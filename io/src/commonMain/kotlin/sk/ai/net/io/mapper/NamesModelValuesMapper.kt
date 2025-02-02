@@ -24,7 +24,7 @@ class NamesBasedValuesModelMapper(
                             weightParam.value = newWeightValue
                         }
                     }
-                    val biasKey = "fc${index + 1}.bias"
+                    val biasKey = biasKeyRule(index)
                     layer.params.firstOrNull { it.name.startsWith("b") }?.let { biasParam ->
                         wandb[biasKey]?.let { newWeightValue ->
                             biasParam.value = newWeightValue
