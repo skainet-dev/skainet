@@ -1,6 +1,5 @@
-package io.github.kotlin.fibonacci
+package sk.ai.net
 
-import sk.ai.net.Shape
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

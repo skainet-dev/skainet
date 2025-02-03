@@ -1,6 +1,5 @@
-package io.github.kotlin.fibonacci.sk.ai.net.sk.ai.net
+package sk.ai.net
 
-import sk.ai.net.Shape
 import sk.ai.net.impl.createTensor
 
 val tensorMap = mapOf(

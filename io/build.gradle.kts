@@ -24,7 +24,6 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    linuxX64()
     wasmJs().nodejs()
 
 
@@ -34,8 +33,6 @@ kotlin {
                 implementation(project(":core"))
                 implementation(libs.okio)
                 implementation(libs.kotlinx.serialization.json)
-
-
             }
         }
 
