@@ -41,16 +41,36 @@ private fun getDefaultName(id: String, s: String, size: Int): String {
 }
 
 
+fun createLinear(
+    inFeatures: Int,
+    outFeatures: Int,
+    myInitWeights: Tensor? = null,
+    myInitBias: Tensor? = null
+): Linear {
+    return when {
+        myInitWeights != null && myInitBias != null ->
+            Linear(inFeatures, outFeatures, initWeights = myInitWeights, initBias = myInitBias)
+        myInitWeights != null ->
+            Linear(inFeatures, outFeatures, initWeights = myInitWeights)
+        myInitBias != null ->
+            Linear(inFeatures, outFeatures, initBias = myInitBias)
+        else ->
+            Linear(inFeatures, outFeatures)
+    }
+}
+
 class DenseImpl(
     private val inputDimension: Int, private val outputDimension: Int, private val id: String
 ) : DENSE {
 
     private var weightsValue: Tensor? = null
+    private var biasValue: Tensor? = null
     private var _activation: (Tensor) -> Tensor = { tensor -> tensor }
 
     fun create(): List<Module> {
+
         return listOf(
-            Linear(inputDimension, outputDimension, id, weightsValue!!, weightsValue!!),
+            createLinear(inputDimension, outputDimension, weightsValue, biasValue),
             ActivationsWrapperModule(activation, "activation")
         )
     }
@@ -66,7 +86,7 @@ class DenseImpl(
     }
 
     override fun bias(initBlock: (Shape) -> Tensor) {
-        weightsValue = initBlock(Shape(outputDimension))
+        biasValue = initBlock(Shape(outputDimension))
     }
 }
 

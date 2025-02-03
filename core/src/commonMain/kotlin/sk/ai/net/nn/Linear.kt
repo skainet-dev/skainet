@@ -1,6 +1,8 @@
 package sk.ai.net.nn
 
+import sk.ai.net.Shape
 import sk.ai.net.Tensor
+import sk.ai.net.impl.DoublesTensor
 
 /**
  * Linear layer (a.k.a. fully connected dense layer). This layer applies a linear transformation to the input data.
@@ -17,8 +19,14 @@ class Linear(
     inFeatures: Int,
     outFeatures: Int,
     override val name: String = "Linear",
-    val initWeights: Tensor,
-    val initBias: Tensor,
+    val initWeights: Tensor = DoublesTensor(
+        Shape(outFeatures, inFeatures),
+        List(inFeatures * outFeatures) { 0.0 }.map { it }.toDoubleArray()
+    ),
+    val initBias: Tensor = DoublesTensor(
+        Shape(outFeatures),
+        List(outFeatures) { 0.0 }.map { it }.toDoubleArray()
+    ),
     override val params: List<ModuleParameter> = listOf(
         ModuleParameter("weight", initWeights),
         ModuleParameter("bias", initBias)
