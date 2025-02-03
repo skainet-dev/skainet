@@ -4,6 +4,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinSerialization)
+
     id("module.publication")
 }
 
@@ -24,12 +26,16 @@ kotlin {
     iosSimulatorArm64()
     wasmJs().nodejs()
 
+
     sourceSets {
         val commonMain by getting {
             dependencies {
-                //put your multiplatform dependencies here
+                implementation(project(":core"))
+                implementation(libs.okio)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
+
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
@@ -39,7 +45,7 @@ kotlin {
 }
 
 android {
-    namespace = "sk.ai.net.core"
+    namespace = "sk.ai.net.io"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()

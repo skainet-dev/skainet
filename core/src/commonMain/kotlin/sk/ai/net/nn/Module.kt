@@ -17,3 +17,4 @@ abstract class Module {
 
     //abstract fun createTensor(descriptor: DataDescriptor, shape: Shape, list: List<Any?>): Tensor<T>
 }
+

@@ -18,4 +18,7 @@ interface DataDescriptor {
 
     /** Maximum value that can be represented by the data type. */
     val maxValue: Double
+
+    /** True if value is a floating point */
+    val isFloatingPoint: Boolean
 }

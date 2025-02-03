@@ -1,4 +1,4 @@
-package io.github.kotlin.fibonacci
+package sk.ai.net.factory
 
 import sk.ai.net.Shape
 import sk.ai.net.impl.DoublesTensor

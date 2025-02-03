@@ -18,8 +18,12 @@ class Linear(
     outFeatures: Int,
     override val name: String = "Linear",
     val initWeights: Tensor,
-    val initBias: Tensor
-) : Module() {
+    val initBias: Tensor,
+    override val params: List<ModuleParameter> = listOf(
+        ModuleParameter("weight", initWeights),
+        ModuleParameter("bias", initBias)
+    ),
+) : Module(), ModuleParameters {
 
     override val modules: List<Module>
         get() = emptyList()
