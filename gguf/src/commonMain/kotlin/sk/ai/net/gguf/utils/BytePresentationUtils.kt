@@ -1,7 +1,5 @@
 package sk.ai.net.gguf.utils
 
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.reflect.KClass
 
 
@@ -67,40 +65,89 @@ fun UByteArray.toInt(endian: Endian): Int {
     }
 }
 
-//TODO add support for more data type (see GGUF support data types)
-inline fun <reified T> ByteBuffer.readDataByType(
+
+/** Converts a List<UByte> (of size 4) to a UInt, taking endianness into account. */
+fun List<UByte>.toUInt(endian: Endian): UInt {
+    require(size == 4) { "Expected 4 bytes for UInt, got $size" }
+    return if (endian == Endian.LITTLE_ENDIAN)
+        (this[0].toUInt()
+                or (this[1].toUInt() shl 8)
+                or (this[2].toUInt() shl 16)
+                or (this[3].toUInt() shl 24))
+    else
+        (this[3].toUInt()
+                or (this[2].toUInt() shl 8)
+                or (this[1].toUInt() shl 16)
+                or (this[0].toUInt() shl 24))
+}
+
+/** Converts a List<UByte> (of size 8) to a ULong, taking endianness into account. */
+fun List<UByte>.toULong(endian: Endian): ULong {
+    require(size == 8) { "Expected 8 bytes for ULong, got $size" }
+    return if (endian == Endian.LITTLE_ENDIAN) {
+        (this[0].toULong()
+                or (this[1].toULong() shl 8)
+                or (this[2].toULong() shl 16)
+                or (this[3].toULong() shl 24)
+                or (this[4].toULong() shl 32)
+                or (this[5].toULong() shl 40)
+                or (this[6].toULong() shl 48)
+                or (this[7].toULong() shl 56))
+    } else {
+        (this[7].toULong()
+                or (this[6].toULong() shl 8)
+                or (this[5].toULong() shl 16)
+                or (this[4].toULong() shl 24)
+                or (this[3].toULong() shl 32)
+                or (this[2].toULong() shl 40)
+                or (this[1].toULong() shl 48)
+                or (this[0].toULong() shl 56))
+    }
+}
+
+/** Converts a List<UByte> (of size 4) to an Int, taking endianness into account. */
+fun List<UByte>.toInt(endian: Endian): Int = toUInt(endian).toInt()
+
+/**
+ * Multiplatform version of readDataByType.
+ *
+ * This function reads data of type [T] from the ByteArray starting at [offset].
+ * It uses the provided [dataCount] and [endian] parameters to convert the raw bytes.
+ */
+inline fun <reified T> ByteArray.readDataByType(
     offset: Int,
     dataCount: Int = 1,
     endian: Endian = Endian.LITTLE_ENDIAN,
 ): List<T> {
-    val bytes = getSizeInByte(T::class)
-    val length = bytes * dataCount
+    val bytesPerItem = getSizeInByte(T::class)
+    val length = bytesPerItem * dataCount
 
-    val buffer = this.duplicate().apply {
-        position(offset)
-        limit(offset + length)
-    }
-
-    val destinationArray = ByteArray(length).also {
-        buffer.get(it)
-    }.map {
-        it.toUByte()
-    }
+    // Get the sub-array representing the bytes we want to read.
+    val subArray = this.copyOfRange(offset, offset + length)
+    // Convert each byte to UByte so we can perform unsigned arithmetic.
+    val ubytes = subArray.map { it.toUByte() }
 
     return when (T::class) {
-        UByte::class -> destinationArray.map { it as T }
-        UInt::class -> destinationArray.chunked(4).map { it.toUByteArray().toUInt(endian) as T }
-        ULong::class -> destinationArray.chunked(8)
-            .map { it.toUByteArray().toULong(endian) as T }
+        UByte::class -> ubytes.map { it as T }
 
-        Int::class -> destinationArray.chunked(4).map { it.toUByteArray().toInt(endian) as T }
-        Float::class -> destinationArray.chunked(4).map {
-            ByteBuffer.wrap(it.toUByteArray().toByteArray())
-                .order(if (endian == Endian.BIG_ENDIAN) ByteOrder.BIG_ENDIAN else ByteOrder.LITTLE_ENDIAN)
-                .float as T
-        }
+        UInt::class -> ubytes.chunked(4)
+            .map { chunk: List<UByte> -> chunk.toUInt(endian) as T }
 
-        Boolean::class -> destinationArray.map { (it != 0.toUByte()) as T }
+        ULong::class -> ubytes.chunked(8)
+            .map { chunk -> chunk.toULong(endian) as T }
+
+        Int::class -> ubytes.chunked(4)
+            .map { chunk -> chunk.toInt(endian) as T }
+
+        Float::class -> ubytes.chunked(4)
+            .map { chunk ->
+                // Get the 4 bytes as UInt bits, then convert to Float.
+                val intBits = chunk.toUInt(endian)
+                Float.fromBits(intBits.toInt()) as T
+            }
+
+        Boolean::class -> ubytes.map { (it != 0.toUByte()) as T }
+
         else -> throw IllegalArgumentException("readDataByType: Unsupported type: ${T::class}")
     }
 }

@@ -1,12 +1,10 @@
 package sk.ai.net.gguf
 
+import okio.BufferedSource
 import sk.ai.net.gguf.utils.Endian
 import sk.ai.net.gguf.utils.numberOfBytes
 import sk.ai.net.gguf.utils.readDataByType
 import sk.ai.net.gguf.utils.reshape
-import java.io.RandomAccessFile
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
 import kotlin.reflect.KClass
 
 /**
@@ -53,9 +51,7 @@ data class FieldParts(
 )
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class GGUFReader(path: String, mode: String = "r") {
-    //'r', 'r+', 'c'
-
+class GGUFReader(bufferedSource: BufferedSource) {
     // Properties
     var byteOrder: Char = 'I' // 'I' - same as host, 'S' - swapped
     var alignment: Int = GGUF_DEFAULT_ALIGNMENT
@@ -63,7 +59,7 @@ class GGUFReader(path: String, mode: String = "r") {
     val fields: LinkedHashMap<String, ReaderField> = linkedMapOf()
     var tensors: MutableList<ReaderTensor> = mutableListOf()
 
-    private val data: ByteBuffer
+    private val data: ByteArray
     private var offs = 0
     private var tensorCount: ULong = 0u
 
@@ -83,7 +79,7 @@ class GGUFReader(path: String, mode: String = "r") {
     )
 
     init {
-        data = initDataSource(path, mode)
+        data = bufferedSource.readByteArray()
 
         checkGGUFMagicNumber().then {
             checkGGUFVersion().then {
@@ -167,19 +163,6 @@ class GGUFReader(path: String, mode: String = "r") {
         offs += 4
     }
 
-    private fun initDataSource(path: String, mode: String): ByteBuffer {
-        val file = RandomAccessFile(path, mode)
-        val channel = file.channel
-        val size = channel.size().toInt()
-        val data = channel.map(
-            if (mode == "r") FileChannel.MapMode.READ_ONLY
-            else FileChannel.MapMode.READ_WRITE,
-            0,
-            size.toLong()
-        )
-        channel.close()
-        return data
-    }
 
     private fun pushField(field: ReaderField, skipSum: Boolean = false): Int {
         if (fields.contains(field.name)) {
@@ -288,9 +271,11 @@ class GGUFReader(path: String, mode: String = "r") {
         val offsetTensor = data.readDataByType<ULong>(offs)
         offs += offsetTensor.numberOfBytes()
 
+        val utf8String: String = nameData.toUByteArray().toByteArray().decodeToString()
+
         return ReaderField(
             origOffs,
-            String(nameData.toUByteArray().toByteArray(), Charsets.UTF_8),
+            utf8String,
             listOf(nameLen, nameData, nDims, dims, rawDtype, offsetTensor),
             listOf(1, 3, 4, 5)
         )
@@ -312,11 +297,14 @@ class GGUFReader(path: String, mode: String = "r") {
             val fieldIdxs = temp.idxs
             val fieldTypes = temp.types
 
+            val kvKdataUtf8String: String = kvKdata.toUByteArray().toByteArray().decodeToString()
+
+
             parts.addAll(fieldParts)
             pushField(
                 ReaderField(
                     offset = origOffs,
-                    name = String(kvKdata.toUByteArray().toByteArray(), Charsets.UTF_8),
+                    name = kvKdataUtf8String,
                     parts = parts,
                     data = fieldIdxs.map { it + idxsOffs },
                     types = fieldTypes
@@ -353,7 +341,9 @@ class GGUFReader(path: String, mode: String = "r") {
             val offsetTensor = field.parts[5] as List<ULong>
 
             // Check if there's any tensor with the same name already in the list
-            val tensorName = String(nameData.toUByteArray().toByteArray(), Charsets.UTF_8)
+            val tensorName: String = nameData.toUByteArray().toByteArray().decodeToString()
+
+            //val tensorName = String(nameData.toUByteArray().toByteArray(), Charsets.UTF_8)
             if (tensorNames.contains(tensorName)) {
                 throw IllegalArgumentException("buildTensors: Found duplicated tensor with name $tensorName")
             }
