@@ -44,16 +44,20 @@ private fun getDefaultName(id: String, s: String, size: Int): String {
 fun createLinear(
     inFeatures: Int,
     outFeatures: Int,
+    id: String,
     myInitWeights: Tensor? = null,
     myInitBias: Tensor? = null
 ): Linear {
     return when {
         myInitWeights != null && myInitBias != null ->
-            Linear(inFeatures, outFeatures, initWeights = myInitWeights, initBias = myInitBias)
+            Linear(inFeatures, outFeatures, name = id, initWeights = myInitWeights, initBias = myInitBias)
+
         myInitWeights != null ->
-            Linear(inFeatures, outFeatures, initWeights = myInitWeights)
+            Linear(inFeatures, outFeatures, name = id, initWeights = myInitWeights)
+
         myInitBias != null ->
-            Linear(inFeatures, outFeatures, initBias = myInitBias)
+            Linear(inFeatures, outFeatures, name = id, initBias = myInitBias)
+
         else ->
             Linear(inFeatures, outFeatures)
     }
@@ -70,7 +74,13 @@ class DenseImpl(
     fun create(): List<Module> {
 
         return listOf(
-            createLinear(inputDimension, outputDimension, weightsValue, biasValue),
+            createLinear(
+                inFeatures = inputDimension,
+                outFeatures = outputDimension,
+                id = id,
+                myInitWeights = weightsValue,
+                myInitBias = biasValue
+            ),
             ActivationsWrapperModule(activation, "activation")
         )
     }

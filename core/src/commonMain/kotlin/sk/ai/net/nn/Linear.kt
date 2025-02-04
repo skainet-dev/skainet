@@ -3,6 +3,8 @@ package sk.ai.net.nn
 import sk.ai.net.Shape
 import sk.ai.net.Tensor
 import sk.ai.net.impl.DoublesTensor
+import sk.ai.net.nn.reflection.ModuleParameter
+import sk.ai.net.nn.reflection.ModuleParameters
 
 /**
  * Linear layer (a.k.a. fully connected dense layer). This layer applies a linear transformation to the input data.
@@ -28,8 +30,8 @@ class Linear(
         List(outFeatures) { 0.0 }.map { it }.toDoubleArray()
     ),
     override val params: List<ModuleParameter> = listOf(
-        ModuleParameter("weight", initWeights),
-        ModuleParameter("bias", initBias)
+        ModuleParameter("weight-$name", initWeights),
+        ModuleParameter("bias-$name", initBias)
     ),
 ) : Module(), ModuleParameters {
 

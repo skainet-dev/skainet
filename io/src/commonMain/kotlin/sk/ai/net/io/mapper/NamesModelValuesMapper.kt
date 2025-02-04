@@ -2,7 +2,7 @@ package sk.ai.net.io.mapper
 
 import sk.ai.net.Tensor
 import sk.ai.net.nn.Module
-import sk.ai.net.nn.ModuleParameters
+import sk.ai.net.nn.reflection.ModuleParameters
 
 class NamesBasedValuesModelMapper(
     private val weightKeyRule: (Int) -> String = { index -> "fc${index + 1}.weight" },

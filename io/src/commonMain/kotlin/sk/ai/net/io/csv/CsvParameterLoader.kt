@@ -16,7 +16,7 @@ class CsvParametersLoader(private val handleSource: () -> BufferedSource) :
             // Initialize Json object
             val json = Json { ignoreUnknownKeys = true }
             // Deserialize JSON to Kotlin objects
-            json.decodeFromString<List<ArrayValues>>(source.readUtf8()).also { values ->
+            json.decodeFromString<List<Parameter>>(source.readUtf8()).also { values ->
                 values.forEach { (name, array) ->
                     val tensor = DoublesTensor(Shape(*array.shape.toIntArray()), array.values.toDoubleArray())
                     onTensorLoaded(name, tensor)
