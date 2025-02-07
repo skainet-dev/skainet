@@ -1,6 +1,8 @@
 package sk.ai.net.gguf
 
-import okio.BufferedSource
+import kotlinx.io.Buffer
+import kotlinx.io.Source
+import kotlinx.io.readByteArray
 import sk.ai.net.gguf.utils.Endian
 import sk.ai.net.gguf.utils.numberOfBytes
 import sk.ai.net.gguf.utils.readDataByType
@@ -51,7 +53,7 @@ data class FieldParts(
 )
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class GGUFReader(bufferedSource: BufferedSource) {
+class GGUFReader(bufferedSource: Source) {
     // Properties
     var byteOrder: Char = 'I' // 'I' - same as host, 'S' - swapped
     var alignment: Int = GGUF_DEFAULT_ALIGNMENT

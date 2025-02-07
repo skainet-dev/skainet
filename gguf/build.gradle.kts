@@ -27,7 +27,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(libs.okio)
+                implementation(libs.kotlinx.io.core)
             }
         }
         val commonTest by getting {

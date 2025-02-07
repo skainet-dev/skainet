@@ -31,7 +31,8 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":core"))
-                implementation(libs.okio)
+                implementation(libs.kotlinx.io.core)
+
                 implementation(libs.kotlinx.serialization.json)
             }
         }

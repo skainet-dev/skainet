@@ -1,7 +1,7 @@
 package sk.ai.net.gguf
 
-import okio.buffer
-import okio.source
+import kotlinx.io.asSource
+import kotlinx.io.buffered
 import org.junit.Assert
 import org.junit.Test
 import sk.ai.net.gguf.utils.reshape
@@ -46,8 +46,9 @@ class GGUFReaderTest {
         javaClass.getResourceAsStream("/test_experiment.gguf").use { inputStream ->
             assertNotNull(inputStream, "Test resource file not found!")
 
+            // Convert it to a RawSource and then buffer it to get a Source:
 
-            val reader = GGUFReader(inputStream.source().buffer())
+            val reader = GGUFReader(inputStream.asSource().buffered())
             // List all key-value pairs in a columned format
             println("Key-Value Pairs:")
             val maxKeyLength = reader.fields.keys.maxOf { it.length }

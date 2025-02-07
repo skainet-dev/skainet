@@ -2,9 +2,9 @@ package sk.ai.net.io
 
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
-import okio.buffer
-import okio.source
-import org.junit.Test
+import kotlinx.io.asSource
+import kotlinx.io.buffered
+
 import sk.ai.net.Shape
 import sk.ai.net.dsl.network
 import sk.ai.net.impl.DoublesTensor
@@ -16,9 +16,11 @@ import sk.ai.net.nn.reflection.flattenParams
 import sk.ai.net.nn.reflection.summary
 import sk.ai.net.nn.reflection.toVisualString
 import java.io.InputStream
+import kotlin.io.path.Path
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CsvParametersLoaderTest {
@@ -47,7 +49,12 @@ class CsvParametersLoaderTest {
         print(sineModule.toVisualString())
 
         javaClass.getResourceAsStream("/sinus-approximator.json")?.use { inputStream: InputStream ->
-            val parametersLoader = CsvParametersLoader { inputStream.source().buffer() }
+
+            // Convert it to a RawSource and then buffer it to get a Source:
+            val source = inputStream.asSource().buffered()
+
+            // Convert the InputStream to a kotlinx-io Input:
+            val parametersLoader = CsvParametersLoader { source }
 
             val mapper = NamesBasedValuesModelMapper()
 
