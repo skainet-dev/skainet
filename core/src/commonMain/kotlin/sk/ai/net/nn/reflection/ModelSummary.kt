@@ -33,7 +33,7 @@ class Summary {
 
 
         return NodeSummary(
-            "${module::class.simpleName}-$index",
+            module.name,
             input,
             output.shape,
             params
@@ -64,7 +64,6 @@ class Summary {
             header {
                 row {
                     cell("Layer (type)")
-                    //cell("Input Shape")
                     cell("Output Shape")
                     cell("Param #")
                 }
@@ -72,7 +71,6 @@ class Summary {
             nodes.forEach { node ->
                 row {
                     cell(node.name)
-                    //cell(node.input.toString())
                     cell(node.output.toString())
                     cell(node.params)
                 }
