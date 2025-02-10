@@ -23,6 +23,9 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     wasmJs().nodejs()
+    macosX64 ()
+    linuxX64 ()
+
 
     sourceSets {
         val commonMain by getting {

@@ -1,6 +1,5 @@
 package sk.ai.net.gguf
 
-import kotlinx.io.Buffer
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
 import sk.ai.net.gguf.utils.Endian
@@ -53,7 +52,7 @@ data class FieldParts(
 )
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class GGUFReader(bufferedSource: Source) {
+class GGUFReader(source: Source) {
     // Properties
     var byteOrder: Char = 'I' // 'I' - same as host, 'S' - swapped
     var alignment: Int = GGUF_DEFAULT_ALIGNMENT
@@ -81,7 +80,7 @@ class GGUFReader(bufferedSource: Source) {
     )
 
     init {
-        data = bufferedSource.readByteArray()
+        data = source.readByteArray()
 
         checkGGUFMagicNumber().then {
             checkGGUFVersion().then {
