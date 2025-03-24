@@ -4,8 +4,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinJvm) apply false
     alias(libs.plugins.binaryCompatibility) apply false
     alias(libs.plugins.modulegraph.souza) apply true
-
-
+    alias(libs.plugins.spotless) apply false
 }
 
 allprojects {
