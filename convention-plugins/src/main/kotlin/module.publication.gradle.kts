@@ -8,6 +8,17 @@ plugins {
 }
 
 publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/sk-ai-net/skainet")
+            credentials {
+                username = System.getenv("USERNAME")
+                password = System.getenv("TOKEN")
+            }
+
+        }
+    }
     // Configure all publications
     publications.withType<MavenPublication> {
         // Stub javadoc.jar artifact
@@ -19,7 +30,6 @@ publishing {
         // Provide artifacts information required by Maven Central
         pom {
             name.set("skainet -  Kotlin Multiplatform library")
-
             licenses {
                 license {
                     name.set("MIT")
