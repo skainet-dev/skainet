@@ -9,7 +9,6 @@ plugins {
 }
 
 group = "sk.ai.net"
-version = "0.0.1"
 
 kotlin {
     jvm()
