@@ -25,13 +25,15 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     wasmJs().nodejs()
-
+    macosX64 ()
+    linuxX64 ()
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation(project(":core"))
-                implementation(libs.okio)
+                implementation(libs.kotlinx.io.core)
+
                 implementation(libs.kotlinx.serialization.json)
             }
         }
@@ -41,6 +43,13 @@ kotlin {
                 implementation(libs.kotlin.test)
             }
         }
+
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.kotlinx.coroutines)
+            }
+        }
+
     }
 }
 

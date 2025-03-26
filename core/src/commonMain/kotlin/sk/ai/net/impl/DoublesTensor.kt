@@ -410,3 +410,5 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
         return DoublesTensor(shape, softmaxElements)
     }
 }
+
+fun DoublesTensor.prod(): Double = this.elements.fold(1.0) { acc, element -> acc * element }

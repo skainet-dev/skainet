@@ -1,23 +1,26 @@
 [versions]
-agp = "8.5.2"
-kotlin = "2.1.0"
+agp = "8.7.2"
+kotlin = "2.0.21"
+kotlinx-coroutines = "1.10.1"
 android-minSdk = "24"
 android-compileSdk = "35"
-kotlinxSerializationJson = "1.8.0"
+kotlinxSerializationJson = "1.7.3"
 nexus-publish = "2.0.0"
 jetbrainsKotlinJvm = "1.9.22"
 testng = "7.10.2"
-okio = "3.9.1"
-okioNodefilesystem = "3.9.0"
+kotlinxIo = "0.6.0"
 binaryCompatibility = "0.17.0"
+picnic = "0.7.0"
 
 [libraries]
+kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
+picnic = { module = "com.jakewharton.picnic:picnic", version.ref = "picnic" }
 testng = { group = "org.testng", name = "testng", version.ref = "testng" }
-okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
-okio-nodefilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "okioNodefilesystem" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
+kotlinx-io-bytestring = { module = "org.jetbrains.kotlinx:kotlinx-io-bytestring", version.ref = "kotlinxIo" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
