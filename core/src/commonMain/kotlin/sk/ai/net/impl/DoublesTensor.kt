@@ -111,13 +111,13 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
         }
     }
 
-    override operator fun plus(tensor: Tensor): Tensor {
-        return commutativeBinaryOperation(tensor as DoublesTensor) { lhs, rhs -> lhs + rhs }
+    override operator fun plus(other: Tensor): Tensor {
+        return commutativeBinaryOperation(other as DoublesTensor) { lhs, rhs -> lhs + rhs }
     }
 
-    override operator fun plus(scalar: Double): Tensor {
+    override operator fun plus(other: Double): Tensor {
         return commutativeBinaryOperation(
-            DoublesTensor(Shape(1), scalar)
+            DoublesTensor(Shape(1), other)
         ) { lhs, rhs -> lhs + rhs }
     }
 
@@ -127,16 +127,16 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
         ) { lhs, rhs -> lhs + rhs }
     }
 
-    override operator fun minus(tensor: Tensor): Tensor {
+    override operator fun minus(other: Tensor): Tensor {
         return nonCommutativeBinaryOperation(
-            tensor as DoublesTensor,
+            other as DoublesTensor,
             { lhs, rhs -> lhs - rhs },
             { lhs, rhs -> rhs - lhs })
     }
 
-    override operator fun minus(scalar: Double): TypedTensor<Double> {
+    override operator fun minus(other: Double): TypedTensor<Double> {
         return nonCommutativeBinaryOperation(
-            DoublesTensor(Shape(1), scalar),
+            DoublesTensor(Shape(1), other),
             { lhs, rhs -> lhs - rhs },
             { lhs, rhs -> rhs - lhs })
     }
