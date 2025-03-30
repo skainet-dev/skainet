@@ -50,7 +50,7 @@ interface Tensor {
 
     fun relu(): Tensor
 
-    fun softmax(i: Int): Tensor
+    fun softmax(dim: Int): Tensor
 
     fun softmax(): Tensor
 

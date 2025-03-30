@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinSerialization)
+    id("com.vanniktech.maven.publish.base")
 
-    id("module.publication")
 }
 
 group = "sk.ai.net"
