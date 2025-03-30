@@ -12,7 +12,7 @@ plugins {
 }
 
 allprojects {
-    version = "0.0.3"
+    version = "0.0.5"
     group = "sk.ai.net"
 
     repositories {
