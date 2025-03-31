@@ -59,3 +59,43 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }
+
+publishing {
+    repositories {
+        maven {
+            name = "githubPackages"
+            url = uri("https://maven.pkg.github.com/sk-ai-net/skainet")
+            credentials {
+                credentials(PasswordCredentials::class)
+            }
+        }
+    }
+}
+
+mavenPublishing {
+
+    coordinates(group.toString(), "io", version.toString())
+
+    pom {
+        description.set("skainet")
+        name.set(project.name)
+        url.set("https://github.com/sk-ai-net/skainet/")
+        licenses {
+            license {
+                name.set("MIT")
+                distribution.set("repo")
+            }
+        }
+        scm {
+            url.set("https://github.com/sk-ai-net/skainet/")
+            connection.set("scm:git:git@github.com:sk-ai-net/skainet.git")
+            developerConnection.set("scm:git:ssh://git@github.com:sk-ai-net/skainet.git")
+        }
+        developers {
+            developer {
+                id.set("sk-ai-net")
+                name.set("sk-ai-net")
+            }
+        }
+    }
+}
