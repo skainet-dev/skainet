@@ -1,5 +1,4 @@
 pluginManagement {
-    includeBuild("convention-plugins")
     repositories {
         google()
         mavenCentral()
@@ -16,5 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "skainet"
 include(":core")
-include(":io")
-include(":gguf")
+//include(":io")
+//include(":gguf")

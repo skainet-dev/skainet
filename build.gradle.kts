@@ -9,7 +9,8 @@ plugins {
 }
 
 allprojects {
-    version = "0.0.3"
+    group = "sk.ai.net"
+    version = "0.0.4"
 }
 
 moduleGraphConfig {

@@ -8,10 +8,8 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.binaryCompatibility)
-    id("module.publication")
+    alias(libs.plugins.vanniktech.mavenPublish)
 }
-
-group = "sk.ai.net"
 
 kotlin {
     jvm()
@@ -48,5 +46,46 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/sk-ai-net/skainet")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
+mavenPublishing {
+
+    coordinates(group.toString(), "core", version.toString())
+
+    pom {
+        description.set("skainet")
+        name.set(project.name)
+        url.set("https://github.com/sk-ai-net/skainet/")
+        licenses {
+            license {
+                name.set("MIT")
+                distribution.set("repo")
+            }
+        }
+        scm {
+            url.set("https://github.com/sk-ai-net/skainet/")
+            connection.set("scm:git:git@github.com:sk-ai-net/skainet.git")
+            developerConnection.set("scm:git:ssh://git@github.com:sk-ai-net/skainet.git")
+        }
+        developers {
+            developer {
+                id.set("sk-ai-net")
+                name.set("sk-ai-net")
+            }
+        }
     }
 }
