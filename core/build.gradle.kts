@@ -24,8 +24,8 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     wasmJs().nodejs()
-    macosX64 ()
-    linuxX64 ()
+    macosX64()
+    linuxX64()
 
 
     sourceSets {
@@ -52,7 +52,7 @@ android {
 publishing {
     repositories {
         maven {
-            name = "GitHubPackages"
+            name = "githubPackages"
             url = uri("https://maven.pkg.github.com/sk-ai-net/skainet")
             credentials {
                 credentials(PasswordCredentials::class)
