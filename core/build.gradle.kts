@@ -24,8 +24,8 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     wasmJs().nodejs()
-    macosX64 ()
-    linuxX64 ()
+    macosX64()
+    linuxX64()
 
 
     sourceSets {
