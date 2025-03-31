@@ -6,10 +6,8 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinSerialization)
 
-    id("module.publication")
+    alias(libs.plugins.vanniktech.mavenPublish)
 }
-
-group = "sk.ai.net"
 
 kotlin {
     jvm()
