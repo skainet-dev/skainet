@@ -2,9 +2,36 @@
 
 *skainet* is an open-source deep learning framework written in Kotlin, designed with developers in mind to enable the creation modern AI powered applications with ease.
 
-== publishing into local maven repository
+Here’s a concise instruction snippet for setting up dependencies in Gradle KTS to consume your open-source project:
 
-[source, shell]
-----
-./gradlew clean publishToMavenLocal
-----
+---
+
+### Usage:
+
+1. **Configure repository**  
+   Add the following to your project's `build.gradle.kts`:
+
+```kotlin
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/sk-ai-net/skainet")
+        credentials {
+            username = providers.gradleProperty("gpr.user")
+                .orElse(System.getenv("GITHUB_ACTOR"))
+                .get()
+            password = providers.gradleProperty("gpr.token")
+                .orElse(System.getenv("GITHUB_TOKEN"))
+                .get()
+        }
+    }
+}
+```
+
+2. **Set GitHub credentials**  
+Ensure you provide your GitHub username (`gpr.user`) and a personal access token (`gpr.token`) with package read permission.
+
+[See the official GitHub docs for more details](https://docs.github.com/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry)  
+
+
+
+---
