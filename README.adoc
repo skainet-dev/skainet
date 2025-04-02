@@ -4,9 +4,7 @@
 
 Here’s a concise instruction snippet for setting up dependencies in Gradle KTS to consume your open-source project:
 
----
-
-### Usage:
+== Usage:
 
 1. **Configure repository**  
    Add the following to your project's `build.gradle.kts`:
@@ -30,8 +28,4 @@ repositories {
 2. **Set GitHub credentials**  
 Ensure you provide your GitHub username (`gpr.user`) and a personal access token (`gpr.token`) with package read permission.
 
-[See the official GitHub docs for more details](https://docs.github.com/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry)  
-
-
-
----
+https://docs.github.com/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry[See the official GitHub docs for more details]
