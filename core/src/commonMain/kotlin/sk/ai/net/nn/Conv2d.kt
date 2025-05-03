@@ -4,6 +4,7 @@ import sk.ai.net.Shape
 import sk.ai.net.Tensor
 import sk.ai.net.impl.DoublesTensor
 import sk.ai.net.rand
+import sk.ai.net.zeros
 import kotlin.math.sqrt
 
 class Conv2d(
@@ -13,9 +14,15 @@ class Conv2d(
     val stride: Int = 1,
     val padding: Int = 0,
     useBias: Boolean = true
-) {
+) : Module() {
     val weight: Tensor
     val bias: Tensor?
+    override val name: String
+        get() = "Conv2d"
+    override val modules: List<Module>
+        get() = emptyList()
+
+    override fun forward(input: Tensor): Tensor = con2d(input)
 
     init {
         // Initialize weights and bias
@@ -38,7 +45,7 @@ class Conv2d(
         }
     }
 
-    operator fun invoke(input: Tensor): Tensor {
+    fun con2d(input: Tensor): Tensor {
         // Ensure input has 3D or 4D shape
         val shape = input.shape  // assume shape is a list or array of dimensions
         require(shape.rank == 3 || shape.rank == 4) {
@@ -76,12 +83,12 @@ class Conv2d(
         val paddedInput: Tensor = if (padding > 0) {
             val paddedH = inH + 2 * padding
             val paddedW = inW + 2 * padding
-            val temp = Tensor.zeros(batchSize, inC, paddedH, paddedW)
+            val temp = zeros(Shape(batchSize, inC, paddedH, paddedW))
             for (n in 0 until batchSize) {
                 for (c in 0 until inC) {
                     for (i in 0 until inH) {
                         for (j in 0 until inW) {
-                            temp[n, c, i + padding, j + padding] = input[n, c, i, j]
+                            // temp[n, c, i + padding, j + padding] = input[n, c, i, j]
                         }
                     }
                 }
@@ -92,12 +99,12 @@ class Conv2d(
         }
 
         // Prepare output tensor
-        val output = Tensor.zeros(batchSize, outChannels, outH, outW)
+        val output = zeros(Shape(batchSize, outChannels, outH, outW))
 
         // Convolution: iterate over batch, out channels, and output spatial positions
         for (n in 0 until batchSize) {
             for (oc in 0 until outChannels) {
-                val biasVal = if (bias != null) bias[oc] else 0f
+                val biasVal = 0f // if (bias != null) 0f// bias[oc] else 0f
                 for (i in 0 until outH) {
                     for (j in 0 until outW) {
                         var sum = 0f
@@ -105,13 +112,12 @@ class Conv2d(
                         for (c in 0 until inChannels) {
                             for (ki in 0 until kernelSize) {
                                 for (kj in 0 until kernelSize) {
-                                    sum += paddedInput[n, c, i * stride + ki, j * stride + kj] *
-                                            weight[oc, c, ki, kj]
+                                    //sum += paddedInput[n, c, i * stride + ki, j * stride + kj] *                                            weight[oc, c, ki, kj]
                                 }
                             }
                         }
                         // Add bias and assign to output
-                        output[n, oc, i, j] = sum + biasVal
+                        //output[n, oc, i, j] = sum //+ biasVal
                     }
                 }
             }
