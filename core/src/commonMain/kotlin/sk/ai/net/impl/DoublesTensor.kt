@@ -6,6 +6,7 @@ import sk.ai.net.Tensor
 import kotlin.collections.map
 import kotlin.math.exp
 import kotlin.math.pow
+import kotlin.random.Random
 
 data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) : TypedTensor<Double> {
     constructor(shape: Shape, element: Double = 0.0) : this(

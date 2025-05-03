@@ -92,8 +92,8 @@ class GGUFReader(source: Source) {
     }
 
     /** Retrieve a metadata field as a list of Strings (for array-of-string fields) */
-    fun getStringList(key: String): List<String>? {
-        val field = this.fields[key] ?: return null
+    fun getStringList(key: String): List<String> {
+        val field = this.fields[key] ?: return emptyList()
         // Expect an array of strings: types[0] == ARRAY and types[1] == STRING (per format)
         if (field.types.size >= 2 &&
             field.types[0] == GGUFValueType.ARRAY && field.types[1] == GGUFValueType.STRING
@@ -104,7 +104,7 @@ class GGUFReader(source: Source) {
                 byteList.toUByteArray().toByteArray().decodeToString()
             }
         }
-        return null  // Not an array-of-strings field
+        return emptyList()  // Not an array-of-strings field
     }
 
 
