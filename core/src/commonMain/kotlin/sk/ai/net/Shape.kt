@@ -1,5 +1,6 @@
 package sk.ai.net
 
+import sk.ai.net.impl.assert
 import sk.ai.net.impl.zipFold
 
 class Shape(vararg dimensions: Int) {
@@ -10,6 +11,20 @@ class Shape(vararg dimensions: Int) {
 
     val rank: Int
         get() = dimensions.size
+
+    internal fun index(indices: IntArray): Int {
+        assert(
+            { indices.size == dimensions.size },
+            { "`indices.size` must be ${dimensions.size}: ${indices.size}" })
+        return dimensions.zip(indices).fold(0) { a, x ->
+            assert({ 0 <= x.second && x.second < x.first }, { "Illegal index: indices = ${indices}, shape = $shape" })
+            a * x.first + x.second
+        }
+    }
+
+    operator fun get(vararg indices: Int): Int {
+        return dimensions[index(indices)]
+    }
 
     override fun equals(other: Any?): Boolean {
         if (other !is Shape) {

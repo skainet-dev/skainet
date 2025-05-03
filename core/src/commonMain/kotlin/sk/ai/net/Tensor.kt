@@ -63,30 +63,29 @@ interface Tensor {
     fun cos(): Tensor
 
     fun tan(): Tensor
-    
+
     fun asin(): Tensor
 
     fun acos(): Tensor
-    
+
     fun atan(): Tensor
 
-    fun sinh():Tensor
+    fun sinh(): Tensor
 
-    fun cosh():Tensor
+    fun cosh(): Tensor
 
-    fun tanh():Tensor
+    fun tanh(): Tensor
 
-    fun exp():Tensor
+    fun exp(): Tensor
 
-    fun log():Tensor
+    fun log(): Tensor
 
-    fun sqrt():Tensor
+    fun sqrt(): Tensor
 
-    fun cbrt():Tensor
+    fun cbrt(): Tensor
 
-    fun sigmoid():Tensor
+    fun sigmoid(): Tensor
 
-    fun ln():Tensor
-
+    fun ln(): Tensor
 }
 
