@@ -17,7 +17,9 @@ class Shape(vararg dimensions: Int) {
             { indices.size == dimensions.size },
             { "`indices.size` must be ${dimensions.size}: ${indices.size}" })
         return dimensions.zip(indices).fold(0) { a, x ->
-            assert({ 0 <= x.second && x.second < x.first }, { "Illegal index: indices = ${indices}, shape = $shape" })
+            assert(
+                { 0 <= x.second && x.second < x.first },
+                { "Illegal index: indices = ${indices}, shape = $dimensions" })
             a * x.first + x.second
         }
     }

@@ -13,3 +13,7 @@ fun rand(shape: Shape, dataDescriptor: DataDescriptor = BuiltInDoubleDataDescrip
 
     return DoublesTensor(shape, DoubleArray(shape.volume) { random.nextFloat().toDouble() })
 }
+
+fun zeros(shape: Shape, dataDescriptor: DataDescriptor = BuiltInDoubleDataDescriptor()): Tensor {
+    return DoublesTensor(shape, DoubleArray(shape.volume))
+}
