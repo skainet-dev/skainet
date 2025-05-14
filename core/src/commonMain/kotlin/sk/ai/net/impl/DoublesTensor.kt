@@ -3,10 +3,15 @@ package sk.ai.net.impl
 import sk.ai.net.DataDescriptor
 import sk.ai.net.Shape
 import sk.ai.net.Tensor
+import sk.ai.net.core.Slice
+import sk.ai.net.core.TypedTensor
+import sk.ai.net.core.end
+import sk.ai.net.core.start
 import kotlin.collections.map
 import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.random.Random
+import kotlin.text.toInt
 
 data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) : TypedTensor<Double> {
     constructor(shape: Shape, element: Double = 0.0) : this(
@@ -36,6 +41,17 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
     override operator fun get(vararg indices: Int): Double {
         return elements[index(indices)]
     }
+
+    override operator fun get(vararg ranges: Slice): Tensor {
+        val intRanges = ranges.toList().map { s ->
+            IntRange(s.startIndex.toInt(), s.endIndex.toInt() - 1)
+        }.toTypedArray()
+        return this.get(*intRanges)
+    }
+
+    override val allElements: List<Double>
+        get() = elements.toList()
+
 
     override operator fun get(vararg ranges: IntRange): TypedTensor<Double> {
         val size = ranges.size

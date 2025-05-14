@@ -1,6 +1,7 @@
 package sk.ai.net.impl
 
 import sk.ai.net.DataDescriptor
+import sk.ai.net.DataDescriptorFactory
 import sk.ai.net.Shape
 import sk.ai.net.Tensor
 import sk.ai.net.TensorFactory
@@ -12,5 +13,11 @@ class DefaultTensorFactory : TensorFactory {
         } else {
             throw IllegalArgumentException("Unsupported data descriptor type: $dataDescriptor")
         }
+    }
+}
+
+class DefaultDataDescriptorFactory : DataDescriptorFactory {
+    override fun createDataDescriptor(): DataDescriptor {
+        return BuiltInDoubleDataDescriptor()
     }
 }

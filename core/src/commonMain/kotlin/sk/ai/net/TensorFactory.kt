@@ -8,6 +8,11 @@ interface TensorFactory {
     fun createTensor(shape: Shape, dataDescriptor: DataDescriptor, elements: DoubleArray): Tensor
 }
 
+interface DataDescriptorFactory {
+    fun createDataDescriptor(): DataDescriptor
+}
+
+
 fun rand(shape: Shape, dataDescriptor: DataDescriptor = BuiltInDoubleDataDescriptor()): Tensor {
     val random: Random = Random.Default
 
