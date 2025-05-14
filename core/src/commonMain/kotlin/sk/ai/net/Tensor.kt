@@ -89,3 +89,7 @@ interface Tensor {
     fun ln(): Tensor
 }
 
+fun Shape.toRanges(): Array<IntRange> {
+    return dimensions.map { 0 until it -1 }.toTypedArray()
+}
+
