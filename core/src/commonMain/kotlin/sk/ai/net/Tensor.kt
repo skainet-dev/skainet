@@ -87,6 +87,8 @@ interface Tensor {
     fun sigmoid(): Tensor
 
     fun ln(): Tensor
+
+    fun flatten(startDim: Int = 1, endDim: Int = -1): Tensor
 }
 
 fun Shape.toRanges(): Array<IntRange> {

@@ -378,6 +378,23 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
     override fun ln(): Tensor =
         DoublesTensor(shape, elements.map { kotlin.math.ln(it) }.toDoubleArray())
 
+    override fun flatten(startDim: Int, endDim: Int): Tensor {
+        val dims = shape.dimensions.toMutableList()
+        var s = if (startDim < 0) dims.size + startDim else startDim
+        var e = if (endDim < 0) dims.size + endDim else endDim
+
+        // handle tensors without batch dimension by prepending 1
+        while (dims.size <= e) {
+            dims.add(0, 1)
+            s += 1
+            e += 1
+        }
+
+        val flatSize = dims.subList(s, e + 1).fold(1) { acc, v -> acc * v }
+        val newDims = dims.take(s) + flatSize + dims.drop(e + 1)
+        return DoublesTensor(Shape(*newDims.toIntArray()), elements.copyOf())
+    }
+
     fun computeStrides(dimensions: IntArray): IntArray {
         val strides = IntArray(dimensions.size) { 1 }
         for (i in dimensions.lastIndex - 1 downTo 0) {
