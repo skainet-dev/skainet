@@ -3,6 +3,7 @@ package sk.ai.net.dsl
 import sk.ai.net.nn.activations.ActivationsWrapperModule
 import sk.ai.net.Shape
 import sk.ai.net.Tensor
+import sk.ai.net.nn.Flatten
 import sk.ai.net.nn.Input
 import sk.ai.net.nn.Linear
 import sk.ai.net.nn.Module
@@ -25,6 +26,8 @@ interface NetworkDslItem
 interface NeuralNetworkDsl : NetworkDslItem {
     fun input(inputSize: Int, id: String = "")
 
+    fun flatten(id: String = "", content: FLATTEN.() -> Unit = {})
+
     fun dense(outputDimension: Int, id: String = "", content: DENSE.() -> Unit = {})
 }
 
@@ -34,6 +37,13 @@ interface DENSE : NetworkDslItem {
     fun weights(initBlock: (Shape) -> Tensor)
     fun bias(initBlock: (Shape) -> Tensor)
 }
+
+@NetworkDsl
+interface FLATTEN : NetworkDslItem {
+    var startDim: Int
+    var endDim: Int
+}
+
 
 private fun getDefaultName(id: String, s: String, size: Int): String {
     if (id.isNotEmpty()) return id
@@ -66,6 +76,16 @@ fun createLinear(
 
         else ->
             Linear(inFeatures = inFeatures, outFeatures = outFeatures, name = id)
+    }
+}
+
+class FlattenImpl(
+    override var startDim: Int = 1,
+    override var endDim: Int = -1,
+    private val id: String
+) : FLATTEN {
+    fun create(): Module {
+        return Flatten(startDim, endDim, id)
     }
 }
 
@@ -117,6 +137,14 @@ private class NeuralNetworkDslImpl : NeuralNetworkDsl {
     override fun input(inputSize: Int, id: String) {
         lastDimension = inputSize
         modules.add(Input(Shape(inputSize), name = getDefaultName(id, "Input", modules.size)))
+    }
+
+    override fun flatten(id: String, content: FLATTEN.() -> Unit) {
+        val impl = FlattenImpl(
+            id = getDefaultName(id, "flatten", modules.size)
+        )
+        impl.content()
+        modules += impl.create()
     }
 
     override fun dense(outputDimension: Int, id: String, content: DENSE.() -> Unit) {
