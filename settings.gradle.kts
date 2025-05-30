@@ -17,3 +17,4 @@ rootProject.name = "skainet"
 include(":core")
 include(":io")
 include(":gguf")
+include(":samples:mnist-mlp-cli")
