@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     id("com.android.library")
-    //alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.vanniktech.mavenPublish)
 }
 
 kotlin {
@@ -31,8 +31,8 @@ kotlin {
                 implementation(project(":core"))
                 implementation(libs.kotlinx.io.core)
                 implementation(libs.kotlinx.serialization.json)
-                implementation("io.ktor:ktor-client-core:3.1.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+                implementation(libs.ktor.client.core)
+                implementation(libs.kotlinx.coroutines)
             }
         }
 
@@ -44,12 +44,12 @@ kotlin {
 
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-cio:3.1.3")
-                implementation("io.ktor:ktor-client-plugins:3.1.1")
-                implementation("io.ktor:ktor-client-logging:3.1.3")
-                implementation("io.ktor:ktor-client-content-negotiation:3.1.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.1")
-                implementation("ch.qos.logback:logback-classic:1.4.14") // For logging
+                implementation(libs.ktor.client.cio)
+                implementation(libs.ktor.client.plugins)
+                implementation(libs.ktor.client.logging)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.kotlinx.coroutines.core.jvm)
+                implementation(libs.logback.classic) // For logging
             }
         }
 
@@ -91,5 +91,45 @@ android {
     compileSdk = 34
     defaultConfig {
         minSdk = 24
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "githubPackages"
+            url = uri("https://maven.pkg.github.com/sk-ai-net/skainet")
+            credentials {
+                credentials(PasswordCredentials::class)
+            }
+        }
+    }
+}
+
+mavenPublishing {
+
+    coordinates(group.toString(), "model-zoo", version.toString())
+
+    pom {
+        description.set("skainet")
+        name.set(project.name)
+        url.set("https://github.com/sk-ai-net/skainet/")
+        licenses {
+            license {
+                name.set("MIT")
+                distribution.set("repo")
+            }
+        }
+        scm {
+            url.set("https://github.com/sk-ai-net/skainet/")
+            connection.set("scm:git:git@github.com:sk-ai-net/skainet.git")
+            developerConnection.set("scm:git:ssh://git@github.com:sk-ai-net/skainet.git")
+        }
+        developers {
+            developer {
+                id.set("sk-ai-net")
+                name.set("sk-ai-net")
+            }
+        }
     }
 }

@@ -29,15 +29,21 @@ kotlin {
                 implementation(project(":io"))
                 implementation(project(":gguf"))
                 implementation(project(":core"))
+                implementation(project(":model-zoo"))
                 implementation(libs.kotlinx.io.core)
                 implementation(libs.kotlinx.coroutines)
 
                 implementation(libs.kotlinx.cli)
+
+                implementation(libs.ktor.client.plugins)
+                implementation(libs.ktor.client.logging)
+
             }
         }
 
         val jvmMain by getting {
             dependencies {
+                implementation(libs.ktor.client.cio)
             }
         }
     }
@@ -50,7 +56,7 @@ tasks.register<Jar>("jvmFatJar") {
 
     manifest {
         attributes(
-            "Main-Class" to "sk.ai.net.samples.sinus.mlp.MainKt"
+            "Main-Class" to "sk.ai.net.samples.mnist.mlp.MainKt"
         )
     }
 
