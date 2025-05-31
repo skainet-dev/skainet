@@ -392,10 +392,7 @@ class GGUFReader(source: Source) {
                     nElements = nElems.toInt(),
                     nBytes = nBytes,
                     dataOffset = dataOffs,
-                    data = if (npDims.size == 1) tempData else tempData.reshape(
-                        npDims[0].toInt(),
-                        npDims[1].toInt()
-                    ),
+                    data =  tempData,
                     field = field
                 )
             )

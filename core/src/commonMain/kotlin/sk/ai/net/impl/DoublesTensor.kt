@@ -180,7 +180,15 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
                 matrixToString()
             }
 
-            else -> "Tensor(${shape}, ${elements.contentToString()})" // higher dimensions
+            else -> {
+                val values = if (elements.size < 100) {
+                    elements.contentToString()
+                } else {
+                    elements.slice(0..100).toDoubleArray().contentToString()
+                }
+
+                "Tensor($shape, $values)" // higher dimensions
+            }
         }
     }
 
@@ -265,7 +273,7 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
             return DoublesTensor(newShape, result)
         }
 
-        throw IllegalArgumentException("Unsupported tensor shapes for multiplication.")
+        throw IllegalArgumentException("Unsupported tensor shapes for multiplication. $this $other")
     }
 
     override fun t(): Tensor {
