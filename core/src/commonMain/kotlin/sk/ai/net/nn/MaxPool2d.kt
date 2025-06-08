@@ -29,15 +29,15 @@ class MaxPool2d(
         val height: Int
         val width: Int
         if (shape.rank == 4) {
-            batchSize = shape[0]
-            channels = shape[1]
-            height = shape[2]
-            width = shape[3]
+            batchSize = shape.dimensions[0]
+            channels = shape.dimensions[1]
+            height = shape.dimensions[2]
+            width = shape.dimensions[3]
         } else {
             batchSize = 1
-            channels = shape[0]
-            height = shape[1]
-            width = shape[2]
+            channels = shape.dimensions[0]
+            height = shape.dimensions[1]
+            width = shape.dimensions[2]
         }
 
         val outH = (height - kernelSize) / stride + 1
@@ -54,9 +54,9 @@ class MaxPool2d(
                                 val h = i * stride + ki
                                 val w = j * stride + kj
                                 val value = if (shape.rank == 4) {
-                                    tensor[n, c, h, w]
+                                    tensor.elements[n * channels * height * width + c * height * width + h * width + w]
                                 } else {
-                                    tensor[c, h, w]
+                                    tensor.elements[c * height * width + h * width + w]
                                 }
                                 if (value > maxVal) maxVal = value
                             }
