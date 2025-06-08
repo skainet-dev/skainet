@@ -27,19 +27,27 @@ class Conv2d(
     init {
         // Initialize weights and bias
         val fanIn = inChannels * kernelSize * kernelSize
-        val bound = 1f / sqrt(fanIn.toDouble()).toFloat()  // 1/sqrt(fanIn)
+        val bound = 1.0 / sqrt(fanIn.toDouble())  // 1/sqrt(fanIn)
+
         // Weight: uniform in [-bound, bound]
-        weight = (((rand(
-            Shape(
-                outChannels,
-                inChannels,
-                kernelSize,
-                kernelSize
-            )
-        ) as DoublesTensor) * (2f * bound).toDouble()) as DoublesTensor) - bound.toDouble()
+        // Create a tensor with random values in [0,1]
+        val weightShape = Shape(outChannels, inChannels, kernelSize, kernelSize)
+        val randomWeight = rand(weightShape) as DoublesTensor
+
+        // Scale to [0, 2*bound]
+        val scaledWeight = randomWeight.times(2.0 * bound)
+
+        // Shift to [-bound, bound]
+        val boundTensor = DoublesTensor(weightShape, DoubleArray(weightShape.volume) { bound })
+        weight = scaledWeight.minus(boundTensor)
+
         // Bias: uniform in [-bound, bound] if enabled
         bias = if (useBias) {
-            ((rand(Shape(outChannels)) as DoublesTensor) * (2f * bound).toDouble()) - bound.toDouble()
+            val biasShape = Shape(outChannels)
+            val randomBias = rand(biasShape) as DoublesTensor
+            val scaledBias = randomBias.times(2.0 * bound)
+            val boundBiasTensor = DoublesTensor(biasShape, DoubleArray(biasShape.volume) { bound })
+            scaledBias.minus(boundBiasTensor)
         } else {
             null
         }
@@ -58,15 +66,15 @@ class Conv2d(
         val inW: Int
         if (shape.rank == 4) {
             batchSize = shape.dimensions[0]
-            inC = shape[1]
-            inH = shape[2]
-            inW = shape[3]
+            inC = shape.dimensions[1]
+            inH = shape.dimensions[2]
+            inW = shape.dimensions[3]
         } else {
             // if 3D (C, H, W), treat as batch of size 1
             batchSize = 1
-            inC = shape[0]
-            inH = shape[1]
-            inW = shape[2]
+            inC = shape.dimensions[0]
+            inH = shape.dimensions[1]
+            inW = shape.dimensions[2]
         }
         require(inC == inChannels) {
             "Conv2d expected input channel count $inChannels, but got $inC."
