@@ -6,6 +6,56 @@ The `Conv2d` class implements a 2D convolution layer for neural networks. Convol
 
 In the context of neural networks, convolution layers are used to automatically and adaptively learn spatial hierarchies of features from input data. For image processing, early convolution layers might detect simple features like edges, while deeper layers can recognize more complex patterns like textures or even entire objects.
 
+### Why Conv2D is Differentiable
+A Conv2D layer is differentiable because its operations are mathematically well-defined and have computable derivatives:
+
+  * Convolution: For an input tensor $ X $ (e.g., shape (1, 28, 28) for MNIST), a kernel $ W $ (e.g., 5x5), and bias $ b $, the output at position $(i, j)$ for output channel $ k $ is:
+$$Y_k[i, j] = \sum_{m,n,c} X[c, i+m, j+n] \cdot W_k[c, m, n] + b_k$$
+where $ m, n $ iterate over the kernel size, and $ c $ iterates over input channels.
+
+This is a linear operation (sum of products plus a constant), which is differentiable.
+Partial derivatives with respect to weights ($ \frac{\partial Y}{\partial W} $) and input ($ \frac{\partial Y}{\partial X} $) are straightforward:
+
+$ \frac{\partial Y_k[i, j]}{\partial W_k[c, m, n]} = X[c, i+m, j+n] $
+$ \frac{\partial Y_k[i, j]}{\partial X[c, i+m, j+n]} = W_k[c, m, n] $
+$ \frac{\partial Y_k[i, j]}{\partial b_k} = 1 $
+
+
+
+
+Stride and Padding: Stride controls the step size of the kernel, and padding adds zeros around the input. Both are fixed operations that don’t affect differentiability, as they only modify indexing.
+Output: The output $ Y $ is passed to the next layer (e.g., ReLU in your CNN), which is also differentiable.
+
+3. Role in Learning (Backpropagation)
+   The Conv2D layer supports learning through backpropagation, where gradients of the loss function $ L $ with respect to the weights and biases are computed and used to update parameters:
+
+Forward Pass:
+
+Input (e.g., MNIST image) passes through the Conv2D layer, producing feature maps (e.g., 16 channels of 28x28 for conv1, due to padding=2).
+These feature maps are transformed by subsequent layers (ReLU, MaxPool2D, etc.) and eventually produce a prediction (e.g., probabilities for 10 digit classes).
+The loss $ L $ (e.g., cross-entropy) compares the prediction to the true label.
+
+
+Backward Pass:
+
+The gradient of the loss with respect to the output of Conv2D ($ \frac{\partial L}{\partial Y} $) is received from the next layer (e.g., ReLU).
+Gradients for weights and biases are computed:
+
+Weight gradient: $ \frac{\partial L}{\partial W_k[c, m, n]} = \sum_{i,j} \frac{\partial L}{\partial Y_k[i, j]} \cdot X[c, i+m, j+n] $
+Bias gradient: $ \frac{\partial L}{\partial b_k} = \sum_{i,j} \frac{\partial L}{\partial Y_k[i, j]} $
+Input gradient (for backprop to earlier layers): $ \frac{\partial L}{\partial X[c, i+m, j+n]} = \sum_k \frac{\partial L}{\partial Y_k[i, j]} \cdot W_k[c, m, n] $
+
+
+These gradients are computed efficiently using cross-correlation (a convolution-like operation).
+
+
+Parameter Update:
+
+An optimizer (e.g., SGD, Adam) updates the weights and biases:
+$$W \gets W - \eta \cdot \frac{\partial L}{\partial W}, \quad b \gets b - \eta \cdot \frac{\partial L}{\partial b}$$
+where $ \eta $ is the learning rate.
+This adjusts the kernels to better detect features (e.g., edges, shapes in MNIST digits) that minimize the loss.
+
 ## Class Parameters
 
 The `Conv2d` class in the SK-AI-Net library has the following parameters:
