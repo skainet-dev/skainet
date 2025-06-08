@@ -3,9 +3,15 @@ package sk.ai.net.impl
 import sk.ai.net.DataDescriptor
 import sk.ai.net.Shape
 import sk.ai.net.Tensor
+import sk.ai.net.core.Slice
+import sk.ai.net.core.TypedTensor
+import sk.ai.net.core.end
+import sk.ai.net.core.start
 import kotlin.collections.map
 import kotlin.math.exp
 import kotlin.math.pow
+import kotlin.random.Random
+import kotlin.text.toInt
 
 data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) : TypedTensor<Double> {
     constructor(shape: Shape, element: Double = 0.0) : this(
@@ -35,6 +41,17 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
     override operator fun get(vararg indices: Int): Double {
         return elements[index(indices)]
     }
+
+    override operator fun get(vararg ranges: Slice): Tensor {
+        val intRanges = ranges.toList().map { s ->
+            IntRange(s.startIndex.toInt(), s.endIndex.toInt() - 1)
+        }.toTypedArray()
+        return this.get(*intRanges)
+    }
+
+    override val allElements: List<Double>
+        get() = elements.toList()
+
 
     override operator fun get(vararg ranges: IntRange): TypedTensor<Double> {
         val size = ranges.size
@@ -180,15 +197,7 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
                 matrixToString()
             }
 
-            else -> {
-                val values = if (elements.size < 100) {
-                    elements.contentToString()
-                } else {
-                    elements.slice(0..100).toDoubleArray().contentToString()
-                }
-
-                "Tensor($shape, $values)" // higher dimensions
-            }
+            else -> "Tensor(${shape}, ${elements.contentToString()})" // higher dimensions
         }
     }
 
@@ -273,7 +282,7 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
             return DoublesTensor(newShape, result)
         }
 
-        throw IllegalArgumentException("Unsupported tensor shapes for multiplication. $this $other")
+        throw IllegalArgumentException("Unsupported tensor shapes for multiplication.")
     }
 
     override fun t(): Tensor {
@@ -368,6 +377,23 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
 
     override fun ln(): Tensor =
         DoublesTensor(shape, elements.map { kotlin.math.ln(it) }.toDoubleArray())
+
+    override fun flatten(startDim: Int, endDim: Int): Tensor {
+        val dims = shape.dimensions.toMutableList()
+        var s = if (startDim < 0) dims.size + startDim else startDim
+        var e = if (endDim < 0) dims.size + endDim else endDim
+
+        // handle tensors without batch dimension by prepending 1
+        while (dims.size <= e) {
+            dims.add(0, 1)
+            s += 1
+            e += 1
+        }
+
+        val flatSize = dims.subList(s, e + 1).fold(1) { acc, v -> acc * v }
+        val newDims = dims.take(s) + flatSize + dims.drop(e + 1)
+        return DoublesTensor(Shape(*newDims.toIntArray()), elements.copyOf())
+    }
 
     fun computeStrides(dimensions: IntArray): IntArray {
         val strides = IntArray(dimensions.size) { 1 }

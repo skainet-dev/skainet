@@ -3,8 +3,11 @@ package sk.ai.net.dsl
 import sk.ai.net.nn.activations.ActivationsWrapperModule
 import sk.ai.net.Shape
 import sk.ai.net.Tensor
+import sk.ai.net.nn.Flatten
 import sk.ai.net.nn.Input
 import sk.ai.net.nn.Linear
+import sk.ai.net.nn.Conv2d
+import sk.ai.net.nn.MaxPool2d
 import sk.ai.net.nn.Module
 import sk.ai.net.nn.topology.MLP
 
@@ -25,7 +28,15 @@ interface NetworkDslItem
 interface NeuralNetworkDsl : NetworkDslItem {
     fun input(inputSize: Int, id: String = "")
 
+    fun flatten(id: String = "", content: FLATTEN.() -> Unit = {})
+
+    fun conv2d(id: String = "", content: CONV2D.() -> Unit = {})
+
+    fun maxPool2d(id: String = "", content: MAXPOOL2D.() -> Unit = {})
+
     fun dense(outputDimension: Int, id: String = "", content: DENSE.() -> Unit = {})
+
+    fun activation(id: String = "", activation: (Tensor) -> Tensor)
 }
 
 @NetworkDsl
@@ -34,6 +45,27 @@ interface DENSE : NetworkDslItem {
     fun weights(initBlock: (Shape) -> Tensor)
     fun bias(initBlock: (Shape) -> Tensor)
 }
+
+@NetworkDsl
+interface FLATTEN : NetworkDslItem {
+    var startDim: Int
+    var endDim: Int
+}
+
+@NetworkDsl
+interface CONV2D : NetworkDslItem {
+    var outChannels: Int
+    var kernelSize: Int
+    var stride: Int
+    var padding: Int
+}
+
+@NetworkDsl
+interface MAXPOOL2D : NetworkDslItem {
+    var kernelSize: Int
+    var stride: Int
+}
+
 
 private fun getDefaultName(id: String, s: String, size: Int): String {
     if (id.isNotEmpty()) return id
@@ -66,6 +98,16 @@ fun createLinear(
 
         else ->
             Linear(inFeatures = inFeatures, outFeatures = outFeatures, name = id)
+    }
+}
+
+class FlattenImpl(
+    override var startDim: Int = 1,
+    override var endDim: Int = -1,
+    private val id: String
+) : FLATTEN {
+    fun create(): Module {
+        return Flatten(startDim, endDim, id)
     }
 }
 
@@ -108,6 +150,36 @@ class DenseImpl(
     }
 }
 
+class Conv2dImpl(
+    private val inChannels: Int,
+    override var outChannels: Int = 1,
+    override var kernelSize: Int = 3,
+    override var stride: Int = 1,
+    override var padding: Int = 0,
+    private val id: String
+) : CONV2D {
+    fun create(): Module = Conv2d(
+        inChannels = inChannels,
+        outChannels = outChannels,
+        kernelSize = kernelSize,
+        stride = stride,
+        padding = padding,
+        name = id
+    )
+}
+
+class MaxPool2dImpl(
+    override var kernelSize: Int = 2,
+    override var stride: Int = 2,
+    private val id: String
+) : MAXPOOL2D {
+    fun create(): Module = MaxPool2d(
+        kernelSize = kernelSize,
+        stride = stride,
+        name = id
+    )
+}
+
 private class NeuralNetworkDslImpl : NeuralNetworkDsl {
 
     val modules = mutableListOf<Module>()
@@ -117,6 +189,32 @@ private class NeuralNetworkDslImpl : NeuralNetworkDsl {
     override fun input(inputSize: Int, id: String) {
         lastDimension = inputSize
         modules.add(Input(Shape(inputSize), name = getDefaultName(id, "Input", modules.size)))
+    }
+
+    override fun flatten(id: String, content: FLATTEN.() -> Unit) {
+        val impl = FlattenImpl(
+            id = getDefaultName(id, "flatten", modules.size)
+        )
+        impl.content()
+        modules += impl.create()
+    }
+
+    override fun conv2d(id: String, content: CONV2D.() -> Unit) {
+        val impl = Conv2dImpl(
+            inChannels = lastDimension,
+            id = getDefaultName(id, "conv2d", modules.size)
+        )
+        impl.content()
+        lastDimension = impl.outChannels
+        modules += impl.create()
+    }
+
+    override fun maxPool2d(id: String, content: MAXPOOL2D.() -> Unit) {
+        val impl = MaxPool2dImpl(
+            id = getDefaultName(id, "maxPool2d", modules.size)
+        )
+        impl.content()
+        modules += impl.create()
     }
 
     override fun dense(outputDimension: Int, id: String, content: DENSE.() -> Unit) {
@@ -130,6 +228,10 @@ private class NeuralNetworkDslImpl : NeuralNetworkDsl {
         impl.content()
         // dense layer consinst from linear module and activation function module (2 modules)
         modules += impl.create()
+    }
+
+    override fun activation(id: String, activation: (Tensor) -> Tensor) {
+        modules += ActivationsWrapperModule(activation, getDefaultName(id, "activation", modules.size))
     }
 }
 
