@@ -8,6 +8,7 @@ import sk.ai.net.nn.Input
 import sk.ai.net.nn.Linear
 import sk.ai.net.nn.Conv2d
 import sk.ai.net.nn.MaxPool2d
+import sk.ai.net.nn.AvgPool2d
 import sk.ai.net.nn.Module
 import sk.ai.net.nn.topology.MLP
 
@@ -34,14 +35,16 @@ interface NeuralNetworkDsl : NetworkDslItem {
 
     fun maxPool2d(id: String = "", content: MAXPOOL2D.() -> Unit = {})
 
+    fun avgPool2d(id: String = "", content: AVGPOOL2D.() -> Unit = {})
+
     fun dense(outputDimension: Int, id: String = "", content: DENSE.() -> Unit = {})
-    
+
     fun dense(id: String = "", content: DENSE.() -> Unit = {})
 
     fun activation(id: String = "", activation: (Tensor) -> Tensor)
-    
+
     fun sequential(content: NeuralNetworkDsl.() -> Unit)
-    
+
     fun stage(id: String, content: NeuralNetworkDsl.() -> Unit)
 }
 
@@ -69,6 +72,12 @@ interface CONV2D : NetworkDslItem {
 
 @NetworkDsl
 interface MAXPOOL2D : NetworkDslItem {
+    var kernelSize: Int
+    var stride: Int
+}
+
+@NetworkDsl
+interface AVGPOOL2D : NetworkDslItem {
     var kernelSize: Int
     var stride: Int
 }
@@ -196,6 +205,18 @@ class MaxPool2dImpl(
     )
 }
 
+class AvgPool2dImpl(
+    override var kernelSize: Int = 2,
+    override var stride: Int = 2,
+    private val id: String
+) : AVGPOOL2D {
+    fun create(): Module = AvgPool2d(
+        kernelSize = kernelSize,
+        stride = stride,
+        name = id
+    )
+}
+
 // Stage implementation
 class StageImpl(private val id: String) : NeuralNetworkDsl {
     val modules = mutableListOf<Module>()
@@ -230,6 +251,14 @@ class StageImpl(private val id: String) : NeuralNetworkDsl {
     override fun maxPool2d(id: String, content: MAXPOOL2D.() -> Unit) {
         val impl = MaxPool2dImpl(
             id = getDefaultName(id, "maxPool2d", modules.size)
+        )
+        impl.content()
+        modules += impl.create()
+    }
+
+    override fun avgPool2d(id: String, content: AVGPOOL2D.() -> Unit) {
+        val impl = AvgPool2dImpl(
+            id = getDefaultName(id, "avgPool2d", modules.size)
         )
         impl.content()
         modules += impl.create()
@@ -316,6 +345,14 @@ private class NeuralNetworkDslImpl : NeuralNetworkDsl {
     override fun maxPool2d(id: String, content: MAXPOOL2D.() -> Unit) {
         val impl = MaxPool2dImpl(
             id = getDefaultName(id, "maxPool2d", modules.size)
+        )
+        impl.content()
+        modules += impl.create()
+    }
+
+    override fun avgPool2d(id: String, content: AVGPOOL2D.() -> Unit) {
+        val impl = AvgPool2dImpl(
+            id = getDefaultName(id, "avgPool2d", modules.size)
         )
         impl.content()
         modules += impl.create()
