@@ -388,6 +388,152 @@ class TensorTest {
         ) { lhs: Double, rhs: Double -> lhs - rhs }
 
         assertFalse(a.any { it > 1e-4 })
+    }
 
+    @Test
+    fun matmulOf4DNCHWTensorAnd2DMatrix() {
+        // Create a 4D NCHW tensor with shape [2, 3, 2, 4]
+        // 2 batches, 3 channels, 2 height, 4 width
+        val tensor4D = createTensor(
+            Shape(2, 3, 2, 4),
+            doubleArrayOf(
+                // Batch 0, Channel 0
+                1.0, 2.0, 3.0, 4.0,  // Row 0
+                5.0, 6.0, 7.0, 8.0,  // Row 1
+
+                // Batch 0, Channel 1
+                9.0, 10.0, 11.0, 12.0,  // Row 0
+                13.0, 14.0, 15.0, 16.0,  // Row 1
+
+                // Batch 0, Channel 2
+                17.0, 18.0, 19.0, 20.0,  // Row 0
+                21.0, 22.0, 23.0, 24.0,  // Row 1
+
+                // Batch 1, Channel 0
+                25.0, 26.0, 27.0, 28.0,  // Row 0
+                29.0, 30.0, 31.0, 32.0,  // Row 1
+
+                // Batch 1, Channel 1
+                33.0, 34.0, 35.0, 36.0,  // Row 0
+                37.0, 38.0, 39.0, 40.0,  // Row 1
+
+                // Batch 1, Channel 2
+                41.0, 42.0, 43.0, 44.0,  // Row 0
+                45.0, 46.0, 47.0, 48.0   // Row 1
+            )
+        )
+
+        // Create a 2D matrix with shape [4, 3]
+        // 4 input features, 3 output features
+        val matrix2D = createTensor(
+            Shape(4, 3),
+            doubleArrayOf(
+                0.1, 0.2, 0.3,  // Row 0
+                0.4, 0.5, 0.6,  // Row 1
+                0.7, 0.8, 0.9,  // Row 2
+                1.0, 1.1, 1.2   // Row 3
+            )
+        )
+
+        // Perform matrix multiplication
+        val result = tensor4D.matmul(matrix2D)
+
+        // Check the shape of the result
+        assertEquals(Shape(2, 3, 2, 3), result.shape)
+
+        // Expected result calculation:
+        // For batch 0, channel 0, row 0:
+        // [1.0, 2.0, 3.0, 4.0] × [0.1, 0.2, 0.3; 0.4, 0.5, 0.6; 0.7, 0.8, 0.9; 1.0, 1.1, 1.2]
+        // = [1.0*0.1 + 2.0*0.4 + 3.0*0.7 + 4.0*1.0, 1.0*0.2 + 2.0*0.5 + 3.0*0.8 + 4.0*1.1, 1.0*0.3 + 2.0*0.6 + 3.0*0.9 + 4.0*1.2]
+        // = [0.1 + 0.8 + 2.1 + 4.0, 0.2 + 1.0 + 2.4 + 4.4, 0.3 + 1.2 + 2.7 + 4.8]
+        // = [7.0, 8.0, 9.0]
+
+        // Expected values for the first few elements
+        val expectedFirstBatch = doubleArrayOf(
+            // Batch 0, Channel 0
+            7.0, 8.0, 9.0,      // Row 0
+            15.8, 18.4, 21.0,   // Row 1
+
+            // Batch 0, Channel 1
+            24.6, 28.8, 33.0,   // Row 0
+            33.4, 39.2, 45.0,   // Row 1
+
+            // Batch 0, Channel 2
+            42.2, 49.6, 57.0,   // Row 0
+            51.0, 60.0, 69.0    // Row 1
+        )
+
+        // Check the first batch values
+        for (i in expectedFirstBatch.indices) {
+            assertEquals(expectedFirstBatch[i], (result as DoublesTensor).elements[i], 1e-10)
+        }
+    }
+
+    @Test
+    fun matmulOf3DTensorAnd2DMatrix() {
+        // Create a 3D tensor with shape [3, 2, 4]
+        // 3 channels, 2 height, 4 width
+        val tensor3D = createTensor(
+            Shape(3, 2, 4),
+            doubleArrayOf(
+                // Channel 0
+                1.0, 2.0, 3.0, 4.0,  // Row 0
+                5.0, 6.0, 7.0, 8.0,  // Row 1
+
+                // Channel 1
+                9.0, 10.0, 11.0, 12.0,  // Row 0
+                13.0, 14.0, 15.0, 16.0,  // Row 1
+
+                // Channel 2
+                17.0, 18.0, 19.0, 20.0,  // Row 0
+                21.0, 22.0, 23.0, 24.0   // Row 1
+            )
+        )
+
+        // Create a 2D matrix with shape [4, 3]
+        // 4 input features, 3 output features
+        val matrix2D = createTensor(
+            Shape(4, 3),
+            doubleArrayOf(
+                0.1, 0.2, 0.3,  // Row 0
+                0.4, 0.5, 0.6,  // Row 1
+                0.7, 0.8, 0.9,  // Row 2
+                1.0, 1.1, 1.2   // Row 3
+            )
+        )
+
+        // Perform matrix multiplication
+        val result = tensor3D.matmul(matrix2D)
+
+        // Check the shape of the result
+        assertEquals(Shape(3, 2, 3), result.shape)
+
+        // Expected result calculation:
+        // For channel 0, row 0:
+        // [1.0, 2.0, 3.0, 4.0] × [0.1, 0.2, 0.3; 0.4, 0.5, 0.6; 0.7, 0.8, 0.9; 1.0, 1.1, 1.2]
+        // = [1.0*0.1 + 2.0*0.4 + 3.0*0.7 + 4.0*1.0, 1.0*0.2 + 2.0*0.5 + 3.0*0.8 + 4.0*1.1, 1.0*0.3 + 2.0*0.6 + 3.0*0.9 + 4.0*1.2]
+        // = [0.1 + 0.8 + 2.1 + 4.0, 0.2 + 1.0 + 2.4 + 4.4, 0.3 + 1.2 + 2.7 + 4.8]
+        // = [7.0, 8.0, 9.0]
+
+        // Expected values for all elements
+        val expectedValues = doubleArrayOf(
+            // Channel 0
+            7.0, 8.0, 9.0,      // Row 0
+            15.8, 18.4, 21.0,   // Row 1
+
+            // Channel 1
+            24.6, 28.8, 33.0,   // Row 0
+            33.4, 39.2, 45.0,   // Row 1
+
+            // Channel 2
+            42.2, 49.6, 57.0,   // Row 0
+            51.0, 60.0, 69.0    // Row 1
+        )
+
+        // Check all values with a small tolerance for floating-point precision
+        val resultElements = (result as DoublesTensor).elements
+        for (i in expectedValues.indices) {
+            assertEquals(expectedValues[i], resultElements[i], 1e-10)
+        }
     }
 }

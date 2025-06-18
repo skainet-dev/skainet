@@ -5,13 +5,9 @@ import sk.ai.net.Shape
 import sk.ai.net.Tensor
 import sk.ai.net.core.Slice
 import sk.ai.net.core.TypedTensor
-import sk.ai.net.core.end
-import sk.ai.net.core.start
 import kotlin.collections.map
 import kotlin.math.exp
 import kotlin.math.pow
-import kotlin.random.Random
-import kotlin.text.toInt
 
 data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) : TypedTensor<Double> {
     constructor(shape: Shape, element: Double = 0.0) : this(
@@ -282,7 +278,85 @@ data class DoublesTensor(override val shape: Shape, val elements: DoubleArray) :
             return DoublesTensor(newShape, result)
         }
 
-        throw IllegalArgumentException("Unsupported tensor shapes for multiplication.")
+        // 4D NCHW tensor and 2D matrix multiplication (for CNN operations)
+        if (shape.dimensions.size == 4 && other.shape.dimensions.size == 2) {
+            val (batchSize, channels, height, width) = shape.dimensions
+            val (inputFeatures, outputFeatures) = other.shape.dimensions
+
+            // Check if the last dimension of the 4D tensor matches the first dimension of the 2D tensor
+            if (width != inputFeatures) throw IllegalArgumentException(
+                "Shapes do not align for 4D-2D multiplication. Expected width=$inputFeatures, got width=$width"
+            )
+
+            // Result shape will be [batchSize, channels, height, outputFeatures]
+            val newShape = Shape(batchSize, channels, height, outputFeatures)
+            val result = DoubleArray(newShape.volume) { 0.0 }
+
+            val otherTensor = other as DoublesTensor
+
+            // Perform the matrix multiplication
+            var resultIdx = 0
+            for (n in 0 until batchSize) {
+                for (c in 0 until channels) {
+                    for (h in 0 until height) {
+                        // Get the row from the 4D tensor
+                        val rowStartIdx = ((n * channels + c) * height + h) * width
+                        val row = DoubleArray(width) { w -> elements[rowStartIdx + w] }
+
+                        // Multiply the row by each column of the weight matrix
+                        for (outIdx in 0 until outputFeatures) {
+                            var sum = 0.0
+                            for (w in 0 until width) {
+                                sum += row[w] * otherTensor.elements[w * outputFeatures + outIdx]
+                            }
+                            result[resultIdx++] = sum
+                        }
+                    }
+                }
+            }
+
+            return DoublesTensor(newShape, result)
+        }
+
+        // 3D tensor and 2D matrix multiplication (for CNN operations without batch dimension)
+        if (shape.dimensions.size == 3 && other.shape.dimensions.size == 2) {
+            val (channels, height, width) = shape.dimensions
+            val (inputFeatures, outputFeatures) = other.shape.dimensions
+
+            // Check if the last dimension of the 3D tensor matches the first dimension of the 2D tensor
+            if (width != inputFeatures) throw IllegalArgumentException(
+                "Shapes do not align for 3D-2D multiplication. Expected width=$inputFeatures, got width=$width"
+            )
+
+            // Result shape will be [channels, height, outputFeatures]
+            val newShape = Shape(channels, height, outputFeatures)
+            val result = DoubleArray(newShape.volume) { 0.0 }
+
+            val otherTensor = other as DoublesTensor
+
+            // Perform the matrix multiplication
+            var resultIdx = 0
+            for (c in 0 until channels) {
+                for (h in 0 until height) {
+                    // Get the row from the 3D tensor
+                    val rowStartIdx = (c * height + h) * width
+                    val row = DoubleArray(width) { w -> elements[rowStartIdx + w] }
+
+                    // Multiply the row by each column of the weight matrix
+                    for (outIdx in 0 until outputFeatures) {
+                        var sum = 0.0
+                        for (w in 0 until width) {
+                            sum += row[w] * otherTensor.elements[w * outputFeatures + outIdx]
+                        }
+                        result[resultIdx++] = sum
+                    }
+                }
+            }
+
+            return DoublesTensor(newShape, result)
+        }
+
+        throw IllegalArgumentException("Unsupported tensor shapes for multiplication: ${shape.dimensions.toList()} and ${other.shape.dimensions.toList()}")
     }
 
     override fun t(): Tensor {
