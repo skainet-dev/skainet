@@ -1,6 +1,6 @@
 [versions]
-agp = "8.10.0"
-kotlin = "2.1.21"
+agp = "8.11.0"
+kotlin = "2.2.0"
 kotlinx-coroutines = "1.10.2"
 android-minSdk = "24"
 android-compileSdk = "35"
@@ -8,10 +8,12 @@ kotlinxSerializationJson = "1.8.1"
 ktorClientCore = "3.1.3"
 ktorClientPlugins = "3.1.1"
 logbackClassic = "1.5.18"
-binaryCompatibility = "0.17.0"
-moduleGraphSouza = "0.12.0"
 kotlinxIo = "0.7.0"
 kotlinxCli = "0.3.5"
+nexus-publish = "2.0.0"
+testng = "7.10.2"
+binaryCompatibility = "0.18.0"
+moduleGraphSouza = "0.12.0"
 
 [libraries]
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
@@ -34,4 +36,4 @@ jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 binaryCompatibility = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binaryCompatibility" }
 modulegraph-souza = { id = "dev.iurysouza.modulegraph", version.ref = "moduleGraphSouza" }
-vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.32.0" }
+vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.33.0" }
