@@ -1,4 +1,4 @@
-package sk.ai.net.impl
+package sk.ai.net.core
 
 import sk.ai.net.Tensor
 
@@ -11,7 +11,9 @@ interface TypedTensor<T> : Tensor {
     operator fun get(vararg indices: Int): T
 
     operator fun get(vararg ranges: IntRange): TypedTensor<T>
+
+    operator fun get(vararg ranges: Slice): Tensor
+
+    val allElements: List<T>
+
 }
-
-
-
