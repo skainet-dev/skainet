@@ -19,7 +19,7 @@ public data class Shape(val dimensions: IntArray) {
     val rank: Int
         get() = dimensions.size
 
-    internal fun index(indices: IntArray): Int {
+    public fun index(indices: IntArray): Int {
         assert(
             { indices.size == dimensions.size },
             { "`indices.size` must be ${dimensions.size}: ${indices.size}" })
