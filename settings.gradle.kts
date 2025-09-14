@@ -14,3 +14,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "skainet"
+
+include("skainet-core:skainet-tensors-api")
