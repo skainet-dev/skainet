@@ -58,8 +58,8 @@ Create `src/commonMain/kotlin/Main.kt` with this simple example:
 
 [source,kotlin]
 ----
-import sk.ai.net.core.tensor.*
-import sk.ai.net.core.tensor.backend.*
+import sk.ainet.core.tensor.*
+import sk.ainet.core.tensor.backend.*
 
 fun main() {
     // Initialize the CPU backend
@@ -111,10 +111,10 @@ For most SKaiNET operations, you'll need these imports:
 [source,kotlin]
 ----
 // Core tensor interfaces and data types
-import sk.ai.net.core.tensor.*
+import sk.ainet.core.tensor.*
 
 // Backend implementations
-import sk.ai.net.core.tensor.backend.*
+import sk.ainet.core.tensor.backend.*
 ----
 
 == Development Environment Tips
