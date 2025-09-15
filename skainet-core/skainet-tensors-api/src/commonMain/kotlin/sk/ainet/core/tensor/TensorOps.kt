@@ -10,11 +10,28 @@ public interface  TensorOps<T: Tensor<*, *>> {
     /**
      * Performs matrix multiplication of two tensors.
      *
-     * @param other The tensor to multiply with.
+     * @param a The first tensor.
+     * @param b The second tensor.
      * @return The result of matrix multiplication.
      */
     public fun matmul(a: T, b: T): T
+
+    /**
+     * Scales a tensor by a scalar value.
+     *
+     * @param a The tensor to scale.
+     * @param scalar The scalar value to scale by.
+     * @return The scaled tensor.
+     */
     public fun scale(a: T, scalar: Double): T
+
+    /**
+     * Computes the dot product of two tensors.
+     *
+     * @param a The first tensor.
+     * @param b The second tensor.
+     * @return The dot product as a Double.
+     */
     public fun dot(a: T, b: T): Double
 
     // Tensor–Tensor
@@ -25,7 +42,15 @@ public interface  TensorOps<T: Tensor<*, *>> {
      * @return The result of adding the two tensors.
      */
     public operator fun T.plus(other: T): T
+
+    /**
+     * Subtracts one tensor from another element-wise.
+     *
+     * @param other The tensor to subtract.
+     * @return The result of subtracting the two tensors.
+     */
     public operator fun T.minus(other: T): T
+
     /**
      * Multiplies two tensors element-wise.
      *
@@ -33,6 +58,13 @@ public interface  TensorOps<T: Tensor<*, *>> {
      * @return The result of multiplying the two tensors.
      */
     public operator fun T.times(other: T): T   // elementwise multiply
+
+    /**
+     * Divides one tensor by another element-wise.
+     *
+     * @param other The tensor to divide by.
+     * @return The result of dividing the two tensors.
+     */
     public operator fun T.div(other: T): T     // elementwise divide
 
     // Tensor–Scalar
