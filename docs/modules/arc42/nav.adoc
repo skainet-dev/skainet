@@ -1,0 +1,3 @@
+= SKaiNET
+
+* xref:index.adoc[Introduction and Goals]

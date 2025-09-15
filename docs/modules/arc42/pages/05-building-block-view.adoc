@@ -1,0 +1,225 @@
+= Building Block View
+
+[role="arc42help"]
+****
+The building block view shows the static decomposition of the system into building blocks (modules, components, subsystems, classes, interfaces, packages, libraries, frameworks, layers, partitions, tiers, functions, macros, operations, datas structures, ...) as well as their dependencies (relationships, associations, ...)
+****
+
+== Level 1: System Overview
+
+[plantuml, level1-overview, svg]
+....
+!theme plain
+
+package "SKaiNET Framework" {
+  [SKaiNET-tensors-api] as api
+  [SKaiNET-tensors] as impl
+  [Performance Framework] as perf
+}
+
+package "External Systems" {
+  [AI/ML Applications] as apps
+  [Hardware Platforms] as hardware
+  [Kotlin Multiplatform] as kmp
+}
+
+apps --> api : "uses"
+api --> impl : "implemented by"
+impl --> perf : "includes"
+impl --> hardware : "executes on"
+api --> kmp : "built with"
+impl --> kmp : "built with"
+....
+
+=== System Decomposition
+
+[options="header",cols="1,3,2"]
+|===
+| Component | Responsibility | Technology
+
+| SKaiNET-tensors-api
+| Defines public interfaces for tensor operations, data types, and compute backends
+| Kotlin Multiplatform interfaces
+
+| SKaiNET-tensors
+| Reference implementation with CPU backend and performance benchmarking
+| Kotlin Multiplatform implementation
+
+| Performance Framework
+| Benchmarking, measurement, and performance analysis tools
+| Integrated testing framework
+|===
+
+== Level 2: API Module Decomposition
+
+[plantuml, level2-api, svg]
+....
+!theme plain
+
+package "SKaiNET-tensors-api" {
+  
+  package "Core Types" {
+    interface "DType" as dtype
+    interface "Shape" as shape
+    interface "TensorData<T,V>" as data
+  }
+  
+  package "Operations" {
+    interface "TensorOps<T>" as ops
+    interface "Tensor<T,V>" as tensor
+  }
+  
+  package "Backend" {
+    interface "ComputeBackend<T,V>" as backend
+  }
+}
+
+tensor --|> data : "extends"
+tensor --|> ops : "extends" 
+backend --|> ops : "extends"
+tensor --> dtype : "uses"
+tensor --> shape : "uses"
+data --> shape : "uses"
+....
+
+=== Core Components Description
+
+==== DType (Data Type)
+*Purpose*: Sealed interface defining supported numerical data types.
+
+*Responsibilities*:
+* Type-safe representation of tensor element types
+* Compile-time type checking for operations
+* Platform-specific optimizations
+
+*Key Types*:
+* `FP32`: 32-bit floating point
+* `FP64`: 64-bit floating point  
+* `INT32`: 32-bit integer
+* `INT64`: 64-bit integer
+
+==== Shape
+*Purpose*: Immutable representation of tensor dimensions.
+
+*Responsibilities*:
+* Multi-dimensional array shape definition
+* Dimension validation and computation
+* Broadcasting compatibility checks
+
+*Key Operations*:
+* Dimension access and validation
+* Total element count calculation
+* Shape compatibility verification
+
+==== Tensor<T, V>
+*Purpose*: Primary interface for multi-dimensional arrays.
+
+*Type Parameters*:
+* `T : DType`: Compile-time data type
+* `V`: Runtime value type (Float, Double, Int, Long)
+
+*Responsibilities*:
+* Element access with multi-dimensional indexing
+* Integration with TensorData for data management
+* Integration with TensorOps for operations
+
+== Level 3: Implementation Module Decomposition
+
+[plantuml, level3-impl, svg]
+....
+!theme plain
+
+package "SKaiNET-tensors" {
+  
+  package "CPU Backend" {
+    class "CpuBackend" as cpu_backend
+    class "CpuTensorFP32" as cpu_tensor
+  }
+  
+  package "Benchmarking" {
+    class "BenchmarkRunner" as runner
+    class "TensorBenchmarkSuite" as suite
+    class "BaselinePerformanceTest" as baseline
+  }
+  
+  package "Test Support" {
+    class "TestUtils" as utils
+  }
+}
+
+package "API Dependencies" {
+  interface "ComputeBackend<FP32,Float>" as backend_if
+  interface "Tensor<FP32,Float>" as tensor_if
+}
+
+cpu_backend ..|> backend_if : implements
+cpu_tensor ..|> tensor_if : implements
+cpu_backend --> cpu_tensor : creates
+suite --> runner : uses
+baseline --> suite : uses
+baseline --> utils : uses
+....
+
+=== Implementation Components
+
+==== CpuBackend
+*Purpose*: CPU-optimized implementation of ComputeBackend.
+
+*Key Features*:
+* Matrix multiplication with O(n³) complexity
+* Element-wise operations (add, subtract, multiply, divide)
+* Scalar operations with broadcasting
+* Memory-efficient array operations
+
+*Performance Characteristics*:
+* Optimized for single-threaded CPU execution
+* Uses native array operations where possible
+* Baseline implementation for performance comparison
+
+==== CpuTensorFP32
+*Purpose*: Concrete tensor implementation for 32-bit floating point data.
+
+*Internal Structure*:
+```kotlin
+class CpuTensorFP32(
+    override val shape: Shape,
+    internal val data: FloatArray
+) : Tensor<FP32, Float>
+```
+
+*Key Methods*:
+* Factory methods: `zeros()`, `ones()`, `full()`, `fromArray()`
+* Element access: `get(vararg indices: Int)`
+* Operator overloading for mathematical operations
+
+==== Performance Framework
+*Purpose*: Comprehensive benchmarking and performance analysis.
+
+*Components*:
+* `BenchmarkRunner`: Core benchmarking execution engine
+* `TensorBenchmarkSuite`: Predefined benchmark scenarios  
+* `BaselinePerformanceTest`: Automated performance regression testing
+
+*Metrics Collected*:
+* Execution time statistics (mean, std dev, percentiles)
+* Memory usage patterns
+* Performance scaling analysis
+* Operation throughput measurements
+
+== Dependencies and Relationships
+
+=== Internal Dependencies
+* API module defines contracts, implementation module fulfills them
+* Performance framework depends on both API and implementation
+* Test utilities support both unit and performance testing
+
+=== External Dependencies
+* Kotlin Standard Library (collections, math functions)
+* Kotlin Test framework for testing infrastructure
+* Platform-specific optimizations (JVM arrays, native BLAS)
+
+=== Design Principles Applied
+* *Separation of Concerns*: Clear boundary between API and implementation
+* *Open/Closed Principle*: Easy to add new backends without API changes
+* *Dependency Inversion*: High-level modules depend on abstractions
+* *Single Responsibility*: Each component has focused, well-defined purpose

@@ -1,0 +1,160 @@
+= Context and Scope
+
+[role="arc42help"]
+****
+System scope and context - as the name suggests - delimits your system (i.e. your scope) from all its communication partners (neighboring systems and users, i.e. the context of your system). It thereby specifies the external interfaces.
+****
+
+== Business Context
+
+[plantuml, business-context, svg]
+....
+!theme plain
+
+package "AI/ML Application Ecosystem" {
+  [Mobile Apps] as mobile
+  [Desktop Applications] as desktop  
+  [Web Applications] as web
+  [Backend Services] as backend
+  [Research Tools] as research
+}
+
+package "SKaiNET Framework" {
+  [Tensor Operations API] as api
+  [Compute Backends] as backends
+  [Performance Framework] as perf
+}
+
+package "Hardware Platforms" {
+  [CPU] as cpu
+  [GPU] as gpu
+  [Mobile Hardware] as mobile_hw
+}
+
+package "Development Ecosystem" {
+  [Kotlin Multiplatform] as kmp
+  [JVM Runtime] as jvm
+  [Native Runtime] as native
+  [JavaScript Runtime] as js
+}
+
+mobile --> api : "Tensor computations"
+desktop --> api : "AI model inference"
+web --> api : "ML operations"
+backend --> api : "Batch processing"
+research --> api : "Experimental algorithms"
+
+api --> backends : "Delegates operations"
+backends --> cpu : "CPU computations"
+backends --> gpu : "GPU acceleration"
+backends --> mobile_hw : "Mobile optimization"
+
+api --> perf : "Performance monitoring"
+backends --> kmp : "Multiplatform support"
+kmp --> jvm : "JVM deployment"
+kmp --> native : "Native compilation"
+kmp --> js : "Browser/Node.js"
+....
+
+=== External Interfaces
+
+[options="header",cols="1,2,3,2"]
+|===
+| Partner | Interface | Purpose | Technology
+
+| AI/ML Applications
+| Tensor API
+| Primary interface for tensor operations, model building, and inference
+| Kotlin API, strongly typed
+
+| Hardware Platforms
+| Compute Backend SPI
+| Abstraction layer for different hardware acceleration
+| Plugin architecture, native bindings
+
+| Development Tools
+| Build Integration
+| Framework distribution and dependency management  
+| Gradle, Maven, package managers
+
+| Monitoring Systems
+| Performance Metrics
+| Runtime performance data and benchmarking results
+| Structured logging, metrics APIs
+|===
+
+== Technical Context
+
+[plantuml, technical-context, svg]
+....
+!theme plain
+
+package "SKaiNET Core" {
+  component "SKaiNET-tensors-api" as api {
+    interface "Tensor<T,V>" as tensor_if
+    interface "ComputeBackend<T,V>" as backend_if
+    interface "TensorOps<T>" as ops_if
+  }
+  
+  component "SKaiNET-tensors" as impl {
+    class "CpuBackend" as cpu_backend
+    class "CpuTensorFP32" as cpu_tensor
+    class "BenchmarkRunner" as benchmark
+  }
+}
+
+package "Platform Runtime" {
+  component "Kotlin/JVM" as kjvm
+  component "Kotlin/Native" as knative  
+  component "Kotlin/JS" as kjs
+}
+
+package "System Libraries" {
+  component "JVM Math Libraries" as jvm_math
+  component "Native BLAS" as native_blas
+  component "WASM Runtime" as wasm
+}
+
+api ..> impl : implements
+impl --> kjvm : "JVM bytecode"
+impl --> knative : "Native binary"
+impl --> kjs : "JavaScript"
+
+kjvm --> jvm_math : "Java Math, Arrays"
+knative --> native_blas : "CBLAS, LAPACK"
+kjs --> wasm : "WebAssembly modules"
+
+cpu_backend ..|> backend_if : implements
+cpu_tensor ..|> tensor_if : implements
+....
+
+=== Technology Stack
+
+[options="header",cols="1,2,3"]
+|===
+| Layer | Technology | Purpose
+
+| Language
+| Kotlin Multiplatform
+| Cross-platform development with type safety
+
+| Runtime Targets  
+| JVM, Native, JavaScript
+| Deployment across different environments
+
+| Build System
+| Gradle with Kotlin DSL
+| Dependency management and multiplatform builds
+
+| Testing
+| Kotlin Test, JUnit
+| Unit testing and integration testing
+
+| Performance
+| Custom benchmarking framework
+| Performance measurement and regression detection
+
+| Documentation
+| KDoc, Antora, Arc42
+| API documentation and architecture documentation
+|===
