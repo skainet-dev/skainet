@@ -1,0 +1,70 @@
+= Performance Measurement Framework
+:toc:
+:toclevels: 3
+:sectanchors:
+:sectlinks:
+
+The SKaiNET Performance Measurement Framework provides comprehensive tools for benchmarking tensor operations and analyzing computational performance across different backends and configurations.
+
+== Overview
+
+The performance measurement framework is designed to:
+
+* Measure execution time and throughput of tensor operations
+* Compare performance between different compute backends
+* Provide statistical analysis of benchmark results
+* Generate detailed performance reports
+* Support multiplatform benchmarking
+
+== Key Components
+
+=== BenchmarkRunner
+
+The `BenchmarkRunner` class is the core component that executes performance measurements:
+
+[source,kotlin]
+----
+val runner = BenchmarkRunner()
+val result = runner.benchmark(
+    name = "Matrix Multiplication 256x256",
+    warmupRuns = 10,
+    measurementRuns = 100
+) {
+    // Your operation to benchmark
+    backend.matmul(matrixA, matrixB)
+}
+----
+
+=== Benchmark Results
+
+The framework provides comprehensive result analysis:
+
+* **TimeStatistics**: Mean, median, standard deviation, min/max execution times
+* **MemoryStatistics**: Memory usage tracking (platform-dependent)
+* **BenchmarkResult**: Complete benchmark results with metadata
+* **BenchmarkReport**: Comprehensive reports for multiple operations
+
+=== Performance Analysis
+
+Advanced analysis capabilities include:
+
+* Statistical analysis of execution times
+* Throughput calculations (operations per second)
+* Performance comparison between backends
+* Speedup analysis and regression detection
+
+== Quick Start
+
+. Add the performance module dependency to your test configuration
+. Create a `BenchmarkRunner` instance
+. Use the `benchmark()` method to measure your operations
+. Analyze results using the provided data classes
+
+== Module Structure
+
+The performance module (`skainet-core:skainet-performance`) contains:
+
+* Core benchmarking infrastructure
+* Result analysis and reporting tools
+* Statistical utilities
+* Multiplatform compatibility layer
