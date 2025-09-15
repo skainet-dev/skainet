@@ -20,9 +20,9 @@ kotlin {
 
     iosArm64()
     iosSimulatorArm64()
-    macosArm64 ()
-    linuxX64 ()
-    linuxArm64 ()
+    macosArm64()
+    linuxX64()
+    linuxArm64()
 
     jvm()
 
@@ -33,10 +33,8 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":skainet-core:skainet-tensors-api"))
-            }
+        commonMain.dependencies {
+            implementation(project(":skainet-core:skainet-tensors-api"))
         }
 
         commonTest.dependencies {
