@@ -7,53 +7,53 @@ System scope and context - as the name suggests - delimits your system (i.e. you
 
 == Business Context
 
-[plantuml, business-context, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
-
-package "AI/ML Application Ecosystem" {
-  [Mobile Apps] as mobile
-  [Desktop Applications] as desktop  
-  [Web Applications] as web
-  [Backend Services] as backend
-  [Research Tools] as research
-}
-
-package "SKaiNET Framework" {
-  [Tensor Operations API] as api
-  [Compute Backends] as backends
-  [Performance Framework] as perf
-}
-
-package "Hardware Platforms" {
-  [CPU] as cpu
-  [GPU] as gpu
-  [Mobile Hardware] as mobile_hw
-}
-
-package "Development Ecosystem" {
-  [Kotlin Multiplatform] as kmp
-  [JVM Runtime] as jvm
-  [Native Runtime] as native
-  [JavaScript Runtime] as js
-}
-
-mobile --> api : "Tensor computations"
-desktop --> api : "AI model inference"
-web --> api : "ML operations"
-backend --> api : "Batch processing"
-research --> api : "Experimental algorithms"
-
-api --> backends : "Delegates operations"
-backends --> cpu : "CPU computations"
-backends --> gpu : "GPU acceleration"
-backends --> mobile_hw : "Mobile optimization"
-
-api --> perf : "Performance monitoring"
-backends --> kmp : "Multiplatform support"
-kmp --> jvm : "JVM deployment"
-kmp --> native : "Native compilation"
-kmp --> js : "Browser/Node.js"
+graph TB
+    subgraph AIML["AI/ML Application Ecosystem"]
+        mobile["Mobile Apps"]
+        desktop["Desktop Applications"]
+        web["Web Applications"]
+        backend["Backend Services"]
+        research["Research Tools"]
+    end
+    
+    subgraph SKaiNET["SKaiNET Framework"]
+        api["Tensor Operations API"]
+        backends["Compute Backends"]
+        perf["Performance Framework"]
+    end
+    
+    subgraph Hardware["Hardware Platforms"]
+        cpu["CPU"]
+        gpu["GPU"]
+        mobile_hw["Mobile Hardware"]
+    end
+    
+    subgraph DevEco["Development Ecosystem"]
+        kmp["Kotlin Multiplatform"]
+        jvm["JVM Runtime"]
+        native["Native Runtime"]
+        js["JavaScript Runtime"]
+    end
+    
+    mobile -->|"Tensor computations"| api
+    desktop -->|"AI model inference"| api
+    web -->|"ML operations"| api
+    backend -->|"Batch processing"| api
+    research -->|"Experimental algorithms"| api
+    
+    api -->|"Delegates operations"| backends
+    backends -->|"CPU computations"| cpu
+    backends -->|"GPU acceleration"| gpu
+    backends -->|"Mobile optimization"| mobile_hw
+    
+    api -->|"Performance monitoring"| perf
+    backends -->|"Multiplatform support"| kmp
+    kmp -->|"JVM deployment"| jvm
+    kmp -->|"Native compilation"| native
+    kmp -->|"Browser/Node.js"| js
 ....
 
 === External Interfaces
@@ -85,47 +85,47 @@ kmp --> js : "Browser/Node.js"
 
 == Technical Context
 
-[plantuml, technical-context, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
-
-package "SKaiNET Core" {
-  component "SKaiNET-tensors-api" as api {
-    interface "Tensor<T,V>" as tensor_if
-    interface "ComputeBackend<T,V>" as backend_if
-    interface "TensorOps<T>" as ops_if
-  }
-  
-  component "SKaiNET-tensors" as impl {
-    class "CpuBackend" as cpu_backend
-    class "CpuTensorFP32" as cpu_tensor
-    class "BenchmarkRunner" as benchmark
-  }
-}
-
-package "Platform Runtime" {
-  component "Kotlin/JVM" as kjvm
-  component "Kotlin/Native" as knative  
-  component "Kotlin/JS" as kjs
-}
-
-package "System Libraries" {
-  component "JVM Math Libraries" as jvm_math
-  component "Native BLAS" as native_blas
-  component "WASM Runtime" as wasm
-}
-
-api ..> impl : implements
-impl --> kjvm : "JVM bytecode"
-impl --> knative : "Native binary"
-impl --> kjs : "JavaScript"
-
-kjvm --> jvm_math : "Java Math, Arrays"
-knative --> native_blas : "CBLAS, LAPACK"
-kjs --> wasm : "WebAssembly modules"
-
-cpu_backend ..|> backend_if : implements
-cpu_tensor ..|> tensor_if : implements
+graph TB
+    subgraph SKaiNET["SKaiNET Core"]
+        subgraph API["SKaiNET-tensors-api"]
+            tensor_if["Tensor&lt;T,V&gt;"]
+            backend_if["ComputeBackend&lt;T,V&gt;"]
+            ops_if["TensorOps&lt;T&gt;"]
+        end
+        
+        subgraph IMPL["SKaiNET-tensors"]
+            cpu_backend["CpuBackend"]
+            cpu_tensor["CpuTensorFP32"]
+            benchmark["BenchmarkRunner"]
+        end
+    end
+    
+    subgraph Platform["Platform Runtime"]
+        kjvm["Kotlin/JVM"]
+        knative["Kotlin/Native"]
+        kjs["Kotlin/JS"]
+    end
+    
+    subgraph SysLib["System Libraries"]
+        jvm_math["JVM Math Libraries"]
+        native_blas["Native BLAS"]
+        wasm["WASM Runtime"]
+    end
+    
+    API -.->|implements| IMPL
+    IMPL -->|"JVM bytecode"| kjvm
+    IMPL -->|"Native binary"| knative
+    IMPL -->|"JavaScript"| kjs
+    
+    kjvm -->|"Java Math, Arrays"| jvm_math
+    knative -->|"CBLAS, LAPACK"| native_blas
+    kjs -->|"WebAssembly modules"| wasm
+    
+    cpu_backend -.->|implements| backend_if
+    cpu_tensor -.->|implements| tensor_if
 ....
 
 === Technology Stack

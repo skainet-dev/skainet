@@ -14,32 +14,26 @@ The runtime view describes concrete behavior and interactions of the system's bu
 
 === Scenario: Creating a Tensor from Data
 
-[plantuml, tensor-creation, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+sequenceDiagram
+    participant App as Application
+    participant Tensor as CpuTensorFP32
+    participant Shape as Shape
+    participant Data as FloatArray
 
-actor "Application" as app
-participant "CpuTensorFP32" as tensor
-participant "Shape" as shape
-participant "FloatArray" as data
-
-app -> tensor : fromArray(shape, data)
-activate tensor
-
-tensor -> shape : validate dimensions
-activate shape
-shape --> tensor : validation result
-deactivate shape
-
-alt validation successful
-    tensor -> tensor : create instance
-    tensor -> data : copy/reference data
-    tensor --> app : Tensor<FP32, Float>
-else validation failed
-    tensor --> app : throw IllegalArgumentException
-end
-
-deactivate tensor
+    App->>+Tensor: fromArray(shape, data)
+    Tensor->>+Shape: validate dimensions
+    Shape-->>-Tensor: validation result
+    
+    alt validation successful
+        Tensor->>Tensor: create instance
+        Tensor->>Data: copy/reference data
+        Tensor-->>-App: Tensor<FP32, Float>
+    else validation failed
+        Tensor-->>-App: throw IllegalArgumentException
+    end
 ....
 
 *Description*: Application creates a tensor by providing shape and data array.
@@ -59,43 +53,40 @@ deactivate tensor
 
 === Scenario: Matrix Multiplication
 
-[plantuml, matrix-multiplication, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+sequenceDiagram
+    participant App as Application
+    participant Backend as CpuBackend
+    participant TensorA as Tensor A
+    participant TensorB as Tensor B
+    participant Result as Result Tensor
 
-actor "Application" as app
-participant "CpuBackend" as backend
-participant "Tensor A" as tensorA
-participant "Tensor B" as tensorB
-participant "Result Tensor" as result
+    App->>+Backend: matmul(tensorA, tensorB)
+    Backend->>TensorA: validate shape
+    Backend->>TensorB: validate shape
 
-app -> backend : matmul(tensorA, tensorB)
-activate backend
-
-backend -> tensorA : validate shape
-backend -> tensorB : validate shape
-
-alt shapes compatible
-    backend -> backend : calculate result shape
-    backend -> result : create result tensor
-    activate result
-    
-    loop for each row i
-        loop for each column j
-            backend -> tensorA : get row i
-            backend -> tensorB : get column j
-            backend -> backend : dot product
-            backend -> result : set(i, j, value)
+    alt shapes compatible
+        Backend->>Backend: calculate result shape
+        Backend->>+Result: create result tensor
+        
+        loop for each row i
+            loop for each column j
+                Backend->>TensorA: get row i
+                Backend->>TensorB: get column j
+                Backend->>Backend: dot product
+                Backend->>Result: set(i, j, value)
+            end
         end
+        
+        Backend-->>App: result tensor
+        deactivate Result
+    else incompatible shapes
+        Backend-->>App: throw IllegalArgumentException
     end
-    
-    backend --> app : result tensor
-    deactivate result
-else incompatible shapes
-    backend --> app : throw IllegalArgumentException
-end
 
-deactivate backend
+    deactivate Backend
 ....
 
 *Description*: Matrix multiplication between two tensors using CPU backend.
@@ -114,39 +105,35 @@ deactivate backend
 
 === Scenario: Benchmark Execution
 
-[plantuml, benchmark-execution, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+sequenceDiagram
+    participant Test as Test Runner
+    participant Runner as BenchmarkRunner
+    participant Op as Operation
+    participant Stats as Statistics
 
-actor "Test Runner" as test
-participant "BenchmarkRunner" as runner
-participant "Operation" as op
-participant "Statistics" as stats
+    Test->>+Runner: benchmark(name, warmup, measurement, operation)
 
-test -> runner : benchmark(name, warmup, measurement, operation)
-activate runner
+    loop warmup runs
+        Runner->>Op: execute()
+        Runner->>Runner: discard result
+    end
 
-loop warmup runs
-    runner -> op : execute()
-    runner -> runner : discard result
-end
+    loop measurement runs
+        Runner->>Runner: start timer
+        Runner->>Op: execute()
+        Runner->>Runner: stop timer
+        Runner->>Runner: record time
+    end
 
-loop measurement runs
-    runner -> runner : start timer
-    runner -> op : execute()
-    runner -> runner : stop timer
-    runner -> runner : record time
-end
+    Runner->>+Stats: calculate statistics
+    Stats->>Stats: compute mean, std dev
+    Stats->>Stats: detect outliers
+    Stats-->>-Runner: performance metrics
 
-runner -> stats : calculate statistics
-activate stats
-stats -> stats : compute mean, std dev
-stats -> stats : detect outliers
-stats --> runner : performance metrics
-deactivate stats
-
-runner --> test : BenchmarkResult
-deactivate runner
+    Runner-->>-Test: BenchmarkResult
 ....
 
 *Description*: Performance benchmarking framework measuring operation execution time.
@@ -167,32 +154,25 @@ deactivate runner
 
 === Scenario: Invalid Tensor Operation
 
-[plantuml, error-handling, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+sequenceDiagram
+    participant App as Application
+    participant Backend as CpuBackend
+    participant Validator as ValidationUtils
 
-actor "Application" as app
-participant "CpuBackend" as backend
-participant "ValidationUtils" as validator
+    App->>+Backend: plus(tensorA, tensorB)
+    Backend->>+Validator: validateShapeCompatibility(shapeA, shapeB)
 
-app -> backend : plus(tensorA, tensorB)
-activate backend
-
-backend -> validator : validateShapeCompatibility(shapeA, shapeB)
-activate validator
-
-alt shapes compatible
-    validator --> backend : validation passed
-    deactivate validator
-    backend -> backend : perform addition
-    backend --> app : result tensor
-else shapes incompatible
-    validator --> backend : validation failed
-    deactivate validator
-    backend --> app : throw ShapeIncompatibilityException
-end
-
-deactivate backend
+    alt shapes compatible
+        Validator-->>-Backend: validation passed
+        Backend->>Backend: perform addition
+        Backend-->>-App: result tensor
+    else shapes incompatible
+        Validator-->>-Backend: validation failed
+        Backend-->>-App: throw ShapeIncompatibilityException
+    end
 ....
 
 *Common Error Scenarios*:
@@ -211,42 +191,38 @@ deactivate backend
 
 === JVM Runtime Scenario
 
-[plantuml, jvm-runtime, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+sequenceDiagram
+    participant App as Application
+    participant Backend as CpuBackend
+    participant Array as FloatArray
+    participant Math as JVM Math
 
-package "JVM Platform" {
-    participant "Application" as app
-    participant "CpuBackend" as backend
-    participant "FloatArray" as array
-    participant "JVM Math" as math
-}
-
-app -> backend : matrix operation
-backend -> array : create native array
-backend -> math : utilize JVM optimizations
-math -> backend : optimized result
-backend -> app : tensor result
+    App->>Backend: matrix operation
+    Backend->>Array: create native array
+    Backend->>Math: utilize JVM optimizations
+    Math->>Backend: optimized result
+    Backend->>App: tensor result
 ....
 
 === Native Runtime Scenario
 
-[plantuml, native-runtime, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+sequenceDiagram
+    participant App as Application
+    participant Backend as CpuBackend
+    participant Array as NativeArray
+    participant BLAS as BLAS Library
 
-package "Native Platform" {
-    participant "Application" as app
-    participant "CpuBackend" as backend
-    participant "NativeArray" as array
-    participant "BLAS Library" as blas
-}
-
-app -> backend : matrix operation
-backend -> array : allocate native memory
-backend -> blas : call optimized routines
-blas -> backend : native computation result
-backend -> app : tensor result
+    App->>Backend: matrix operation
+    Backend->>Array: allocate native memory
+    Backend->>BLAS: call optimized routines
+    BLAS->>Backend: native computation result
+    Backend->>App: tensor result
 ....
 
 *Platform-Specific Optimizations*:

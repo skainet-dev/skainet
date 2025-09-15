@@ -7,28 +7,28 @@ The building block view shows the static decomposition of the system into buildi
 
 == Level 1: System Overview
 
-[plantuml, level1-overview, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
-
-package "SKaiNET Framework" {
-  [SKaiNET-tensors-api] as api
-  [SKaiNET-tensors] as impl
-  [Performance Framework] as perf
-}
-
-package "External Systems" {
-  [AI/ML Applications] as apps
-  [Hardware Platforms] as hardware
-  [Kotlin Multiplatform] as kmp
-}
-
-apps --> api : "uses"
-api --> impl : "implemented by"
-impl --> perf : "includes"
-impl --> hardware : "executes on"
-api --> kmp : "built with"
-impl --> kmp : "built with"
+graph TB
+    subgraph SKaiNET["SKaiNET Framework"]
+        api["SKaiNET-tensors-api"]
+        impl["SKaiNET-tensors"]
+        perf["Performance Framework"]
+    end
+    
+    subgraph External["External Systems"]
+        apps["AI/ML Applications"]
+        hardware["Hardware Platforms"]
+        kmp["Kotlin Multiplatform"]
+    end
+    
+    apps -->|"uses"| api
+    api -->|"implemented by"| impl
+    impl -->|"includes"| perf
+    impl -->|"executes on"| hardware
+    api -->|"built with"| kmp
+    impl -->|"built with"| kmp
 ....
 
 === System Decomposition
@@ -52,34 +52,33 @@ impl --> kmp : "built with"
 
 == Level 2: API Module Decomposition
 
-[plantuml, level2-api, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
-
-package "SKaiNET-tensors-api" {
-  
-  package "Core Types" {
-    interface "DType" as dtype
-    interface "Shape" as shape
-    interface "TensorData<T,V>" as data
-  }
-  
-  package "Operations" {
-    interface "TensorOps<T>" as ops
-    interface "Tensor<T,V>" as tensor
-  }
-  
-  package "Backend" {
-    interface "ComputeBackend<T,V>" as backend
-  }
-}
-
-tensor --|> data : "extends"
-tensor --|> ops : "extends" 
-backend --|> ops : "extends"
-tensor --> dtype : "uses"
-tensor --> shape : "uses"
-data --> shape : "uses"
+graph TD
+    subgraph API["SKaiNET-tensors-api"]
+        subgraph CoreTypes["Core Types"]
+            dtype["DType"]
+            shape["Shape"]
+            data["TensorData&lt;T,V&gt;"]
+        end
+        
+        subgraph Operations["Operations"]
+            ops["TensorOps&lt;T&gt;"]
+            tensor["Tensor&lt;T,V&gt;"]
+        end
+        
+        subgraph Backend["Backend"]
+            backend["ComputeBackend&lt;T,V&gt;"]
+        end
+    end
+    
+    tensor -.->|extends| data
+    tensor -.->|extends| ops
+    backend -.->|extends| ops
+    tensor -->|uses| dtype
+    tensor -->|uses| shape
+    data -->|uses| shape
 ....
 
 === Core Components Description
@@ -125,39 +124,38 @@ data --> shape : "uses"
 
 == Level 3: Implementation Module Decomposition
 
-[plantuml, level3-impl, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
-
-package "SKaiNET-tensors" {
-  
-  package "CPU Backend" {
-    class "CpuBackend" as cpu_backend
-    class "CpuTensorFP32" as cpu_tensor
-  }
-  
-  package "Benchmarking" {
-    class "BenchmarkRunner" as runner
-    class "TensorBenchmarkSuite" as suite
-    class "BaselinePerformanceTest" as baseline
-  }
-  
-  package "Test Support" {
-    class "TestUtils" as utils
-  }
-}
-
-package "API Dependencies" {
-  interface "ComputeBackend<FP32,Float>" as backend_if
-  interface "Tensor<FP32,Float>" as tensor_if
-}
-
-cpu_backend ..|> backend_if : implements
-cpu_tensor ..|> tensor_if : implements
-cpu_backend --> cpu_tensor : creates
-suite --> runner : uses
-baseline --> suite : uses
-baseline --> utils : uses
+graph TD
+    subgraph IMPL["SKaiNET-tensors"]
+        subgraph CPUBackend["CPU Backend"]
+            cpu_backend["CpuBackend"]
+            cpu_tensor["CpuTensorFP32"]
+        end
+        
+        subgraph Benchmarking["Benchmarking"]
+            runner["BenchmarkRunner"]
+            suite["TensorBenchmarkSuite"]
+            baseline["BaselinePerformanceTest"]
+        end
+        
+        subgraph TestSupport["Test Support"]
+            utils["TestUtils"]
+        end
+    end
+    
+    subgraph APIDeps["API Dependencies"]
+        backend_if["ComputeBackend&lt;FP32,Float&gt;"]
+        tensor_if["Tensor&lt;FP32,Float&gt;"]
+    end
+    
+    cpu_backend -.->|implements| backend_if
+    cpu_tensor -.->|implements| tensor_if
+    cpu_backend -->|creates| cpu_tensor
+    suite -->|uses| runner
+    baseline -->|uses| suite
+    baseline -->|uses| utils
 ....
 
 === Implementation Components

@@ -13,46 +13,46 @@ The deployment view describes:
 
 === Multiplatform Deployment Architecture
 
-[plantuml, deployment-overview, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+graph TD
+    subgraph JVM["JVM Platform"]
+        jvm_runtime["JVM Runtime"]
+        jvm_jar["SKaiNET-tensors-jvm.jar"]
+        app_server["Application Server"]
+        
+        jvm_runtime --> jvm_jar
+        app_server --> jvm_runtime
+    end
 
-node "JVM Platform" {
-    component "JVM Runtime" as jvm
-    artifact "SKaiNET-tensors-jvm.jar" as jvm_jar
-    component "Application Server" as app_server
-    
-    jvm --> jvm_jar
-    app_server --> jvm
-}
+    subgraph Native["Native Platform"]
+        native_runtime["Native Runtime"]
+        native_lib["SKaiNET-tensors.klib"]
+        desktop["Desktop Application"]
+        
+        native_runtime --> native_lib
+        desktop --> native_runtime
+    end
 
-node "Native Platform" {
-    component "Native Runtime" as native
-    artifact "SKaiNET-tensors.klib" as native_lib
-    component "Desktop Application" as desktop
-    
-    native --> native_lib
-    desktop --> native
-}
+    subgraph JS["JavaScript Platform"]
+        nodejs["Node.js Runtime"]
+        browser["Browser Engine"]
+        js_lib["SKaiNET-tensors.js"]
+        
+        nodejs --> js_lib
+        browser --> js_lib
+    end
 
-node "JavaScript Platform" {
-    component "Node.js Runtime" as nodejs
-    component "Browser Engine" as browser
-    artifact "SKaiNET-tensors.js" as js_lib
-    
-    nodejs --> js_lib
-    browser --> js_lib
-}
-
-node "Mobile Platform" {
-    component "Android Runtime" as android
-    component "iOS Runtime" as ios
-    artifact "SKaiNET-tensors-android.aar" as android_lib
-    artifact "SKaiNET-tensors.framework" as ios_lib
-    
-    android --> android_lib
-    ios --> ios_lib
-}
+    subgraph Mobile["Mobile Platform"]
+        android["Android Runtime"]
+        ios["iOS Runtime"]
+        android_lib["SKaiNET-tensors-android.aar"]
+        ios_lib["SKaiNET-tensors.framework"]
+        
+        android --> android_lib
+        ios --> ios_lib
+    end
 ....
 
 == Deployment Scenarios
@@ -88,20 +88,20 @@ node "Mobile Platform" {
 
 === Desktop Application Deployment (Native)
 
-[plantuml, desktop-deployment, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
-
-node "Desktop Computer" {
-    component "Operating System" as os
-    component "Native Application" as app
-    artifact "SKaiNET-tensors.klib" as lib
-    component "BLAS Library" as blas
-    
-    app --> lib : "links to"
-    lib --> blas : "utilizes"
-    os --> blas : "provides"
-}
+graph TD
+    subgraph Desktop["Desktop Computer"]
+        os["Operating System"]
+        app["Native Application"]
+        lib["SKaiNET-tensors.klib"]
+        blas["BLAS Library"]
+        
+        app -->|"links to"| lib
+        lib -->|"utilizes"| blas
+        os -->|"provides"| blas
+    end
 ....
 
 *Benefits*:
@@ -157,31 +157,31 @@ node "Desktop Computer" {
 
 === Web Deployment (JavaScript)
 
-[plantuml, web-deployment, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+graph TD
+    subgraph CDN["Content Delivery Network"]
+        js_lib["SKaiNET-tensors.js"]
+    end
 
-cloud "Content Delivery Network" {
-    artifact "SKaiNET-tensors.js" as js_lib
-}
+    subgraph Browser["Client Browser"]
+        js_engine["JavaScript Engine"]
+        wasm["WebAssembly Runtime"]
+        webapp["Web Application"]
+        
+        webapp -->|"imports"| js_lib
+        js_lib -->|"executes on"| js_engine
+        js_lib -->|"utilizes for performance"| wasm
+    end
 
-node "Client Browser" {
-    component "JavaScript Engine" as js_engine
-    component "WebAssembly Runtime" as wasm
-    component "Web Application" as webapp
-    
-    webapp --> js_lib : "imports"
-    js_lib --> js_engine : "executes on"
-    js_lib --> wasm : "utilizes for performance"
-}
-
-node "Node.js Server" {
-    component "Node.js Runtime" as nodejs
-    component "Server Application" as server_app
-    
-    server_app --> js_lib : "requires"
-    js_lib --> nodejs : "executes on"
-}
+    subgraph NodeJS["Node.js Server"]
+        nodejs["Node.js Runtime"]
+        server_app["Server Application"]
+        
+        server_app -->|"requires"| js_lib
+        js_lib -->|"executes on"| nodejs
+    end
 ....
 
 *Deployment Options*:

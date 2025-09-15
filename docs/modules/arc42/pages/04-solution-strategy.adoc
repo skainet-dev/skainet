@@ -46,47 +46,48 @@ A short summary and explanation of the fundamental decisions and solution strate
 
 === Layered Architecture
 
-[plantuml, layered-architecture, svg]
+
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
-
-package "Application Layer" {
-  [AI/ML Applications] as apps
-}
-
-package "API Layer" {
-  [Tensor Operations API] as api
-  [Type System] as types
-}
-
-package "Backend Abstraction Layer" {
-  [ComputeBackend Interface] as backend_if
-  [Backend Registry] as registry
-}
-
-package "Implementation Layer" {
-  [CpuBackend] as cpu
-  [GpuBackend] as gpu
-  [OptimizedBackend] as opt
-}
-
-package "Platform Layer" {
-  [Kotlin/JVM] as jvm
-  [Kotlin/Native] as native
-  [Kotlin/JS] as js
-}
-
-apps --> api
-api --> types
-api --> backend_if
-backend_if --> registry
-registry --> cpu
-registry --> gpu
-registry --> opt
-cpu --> jvm
-cpu --> native
-gpu --> native
-opt --> jvm
+graph TD
+    subgraph AL["Application Layer"]
+        Apps["AI/ML Applications"]
+    end
+    
+    subgraph API["API Layer"]
+        TensorAPI["Tensor Operations API"]
+        TypeSystem["Type System"]
+    end
+    
+    subgraph BAL["Backend Abstraction Layer"]
+        BackendIF["ComputeBackend Interface"]
+        Registry["Backend Registry"]
+    end
+    
+    subgraph IL["Implementation Layer"]
+        CPU["CpuBackend"]
+        GPU["GpuBackend"]
+        OPT["OptimizedBackend"]
+    end
+    
+    subgraph PL["Platform Layer"]
+        JVM["Kotlin/JVM"]
+        Native["Kotlin/Native"]
+        JS["Kotlin/JS"]
+    end
+    
+    Apps --> TensorAPI
+    TensorAPI --> TypeSystem
+    TensorAPI --> BackendIF
+    BackendIF --> Registry
+    Registry --> CPU
+    Registry --> GPU
+    Registry --> OPT
+    CPU --> JVM
+    CPU --> Native
+    GPU --> Native
+    OPT --> JVM
 ....
 
 *Benefits*:

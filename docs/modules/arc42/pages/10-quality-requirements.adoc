@@ -9,45 +9,55 @@ Here you can also capture quality requirements with lesser priority, which will 
 
 == Quality Tree
 
-[plantuml, quality-tree, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
-
-map "SKaiNET Quality Requirements" as quality {
-    Performance => High Priority
-    Type Safety => High Priority
-    Extensibility => High Priority
-    Developer Experience => High Priority
-    Cross-platform Compatibility => High Priority
-    Maintainability => Medium Priority
-    Security => Medium Priority
-    Documentation => Medium Priority
-    Testability => Medium Priority
-}
-
-map "Performance" as perf {
-    Execution Speed => Matrix operations competitive with NumPy
-    Memory Efficiency => Optimal memory usage across platforms
-    Scalability => Linear scaling for element-wise operations
-    Throughput => High operations per second
-}
-
-map "Type Safety" as safety {
-    Compile-time Validation => Shape and type checking at compile time
-    Runtime Stability => Zero tensor-related runtime crashes
-    Error Prevention => Clear compiler errors for invalid operations
-}
-
-map "Developer Experience" as dx {
-    API Intuitiveness => Mathematical notation similarity
-    IDE Support => Full autocompletion and refactoring
-    Learning Curve => Easy adoption for ML developers
-    Documentation Quality => Complete and accurate documentation
-}
-
-quality --> perf
-quality --> safety
-quality --> dx
+graph TD
+    subgraph QualityReq["SKaiNET Quality Requirements"]
+        Performance["Performance<br/>High Priority"]
+        TypeSafety["Type Safety<br/>High Priority"]
+        Extensibility["Extensibility<br/>High Priority"]
+        DevExperience["Developer Experience<br/>High Priority"]
+        CrossPlatform["Cross-platform Compatibility<br/>High Priority"]
+        Maintainability["Maintainability<br/>Medium Priority"]
+        Security["Security<br/>Medium Priority"]
+        Documentation["Documentation<br/>Medium Priority"]
+        Testability["Testability<br/>Medium Priority"]
+    end
+    
+    subgraph PerfDetails["Performance Details"]
+        ExecSpeed["Execution Speed<br/>Matrix operations competitive with NumPy"]
+        MemoryEff["Memory Efficiency<br/>Optimal memory usage across platforms"]
+        Scalability["Scalability<br/>Linear scaling for element-wise operations"]
+        Throughput["Throughput<br/>High operations per second"]
+    end
+    
+    subgraph SafetyDetails["Type Safety Details"]
+        CompileValidation["Compile-time Validation<br/>Shape and type checking at compile time"]
+        RuntimeStability["Runtime Stability<br/>Zero tensor-related runtime crashes"]
+        ErrorPrevention["Error Prevention<br/>Clear compiler errors for invalid operations"]
+    end
+    
+    subgraph DXDetails["Developer Experience Details"]
+        APIIntuitive["API Intuitiveness<br/>Mathematical notation similarity"]
+        IDESupport["IDE Support<br/>Full autocompletion and refactoring"]
+        LearningCurve["Learning Curve<br/>Easy adoption for ML developers"]
+        DocQuality["Documentation Quality<br/>Complete and accurate documentation"]
+    end
+    
+    Performance --> ExecSpeed
+    Performance --> MemoryEff
+    Performance --> Scalability
+    Performance --> Throughput
+    
+    TypeSafety --> CompileValidation
+    TypeSafety --> RuntimeStability
+    TypeSafety --> ErrorPrevention
+    
+    DevExperience --> APIIntuitive
+    DevExperience --> IDESupport
+    DevExperience --> LearningCurve
+    DevExperience --> DocQuality
 ....
 
 == Quality Scenarios

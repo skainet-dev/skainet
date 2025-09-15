@@ -39,36 +39,36 @@ interface ComputeBackend<D : DType, V> : TensorOps<Tensor<D, V>>
 
 === Multiplatform Memory Strategy
 
-[plantuml, memory-management, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+graph TD
+    subgraph JVM["JVM Platform"]
+        gc["Garbage Collector"]
+        jvm_array["FloatArray"]
+        jvm_tensor["Tensor"]
+        
+        jvm_tensor -->|"references"| jvm_array
+        gc -->|"manages"| jvm_array
+    end
 
-package "JVM Platform" {
-    component "Garbage Collector" as gc
-    component "FloatArray" as jvm_array
-    component "Tensor" as jvm_tensor
-    
-    jvm_tensor --> jvm_array : "references"
-    gc --> jvm_array : "manages"
-}
+    subgraph Native["Native Platform"]
+        manual["Manual Memory"]
+        native_array["NativeArray"]
+        native_tensor["Tensor"]
+        
+        native_tensor -->|"owns"| native_array
+        manual -->|"allocates/deallocates"| native_array
+    end
 
-package "Native Platform" {
-    component "Manual Memory" as manual
-    component "NativeArray" as native_array
-    component "Tensor" as native_tensor
-    
-    native_tensor --> native_array : "owns"
-    manual --> native_array : "allocates/deallocates"
-}
-
-package "JavaScript Platform" {
-    component "JS GC" as js_gc
-    component "TypedArray" as js_array
-    component "Tensor" as js_tensor
-    
-    js_tensor --> js_array : "references"
-    js_gc --> js_array : "manages"
-}
+    subgraph JS["JavaScript Platform"]
+        js_gc["JS GC"]
+        js_array["TypedArray"]
+        js_tensor["Tensor"]
+        
+        js_tensor -->|"references"| js_array
+        js_gc -->|"manages"| js_array
+    end
 ....
 
 *Platform-Specific Strategies*:
@@ -113,35 +113,35 @@ class BenchmarkRunner {
 
 === Comprehensive Error Strategy
 
-[plantuml, error-handling, svg]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
-!theme plain
+graph TD
+    subgraph Validation["Validation Layer"]
+        shape_val["ShapeValidator"]
+        type_val["TypeValidator"]
+        range_val["RangeValidator"]
+    end
 
-package "Validation Layer" {
-    class "ShapeValidator" as shape_val
-    class "TypeValidator" as type_val
-    class "RangeValidator" as range_val
-}
+    subgraph Errors["Error Types"]
+        shape_err["ShapeIncompatibilityException"]
+        dim_err["InvalidDimensionException"]
+        type_err["TypeMismatchException"]
+    end
 
-package "Error Types" {
-    exception "ShapeIncompatibilityException" as shape_err
-    exception "InvalidDimensionException" as dim_err
-    exception "TypeMismatchException" as type_err
-}
+    subgraph Recovery["Recovery Strategies"]
+        graceful["GracefulDegradation"]
+        fallback["FallbackOperations"]
+        cleanup["ResourceCleanup"]
+    end
 
-package "Recovery Strategies" {
-    class "GracefulDegradation" as graceful
-    class "FallbackOperations" as fallback
-    class "ResourceCleanup" as cleanup
-}
+    shape_val -->|"throws"| shape_err
+    type_val -->|"throws"| type_err
+    range_val -->|"throws"| dim_err
 
-shape_val --> shape_err : "throws"
-type_val --> type_err : "throws"
-range_val --> dim_err : "throws"
-
-shape_err --> graceful : "triggers"
-type_err --> fallback : "triggers"
-dim_err --> cleanup : "triggers"
+    shape_err -->|"triggers"| graceful
+    type_err -->|"triggers"| fallback
+    dim_err -->|"triggers"| cleanup
 ....
 
 *Error Categories*:
