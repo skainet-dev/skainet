@@ -1,6 +1,6 @@
 package sk.ainet.core.tensor.multiplication
 
-import sk.ai.net.core.tensor.*
+import sk.ainet.core.tensor.*
 import sk.ainet.core.tensor.backend.CpuBackend
 import sk.ainet.core.tensor.backend.CpuTensorFP32
 import sk.ainet.core.tensor.backend.TensorFP32

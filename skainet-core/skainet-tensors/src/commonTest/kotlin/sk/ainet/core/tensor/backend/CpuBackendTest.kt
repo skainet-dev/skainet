@@ -1,6 +1,6 @@
 package sk.ainet.core.tensor.backend
 
-import sk.ai.net.core.tensor.Shape
+import sk.ainet.core.tensor.Shape
 import kotlin.test.*
 
 class CpuBackendTest {

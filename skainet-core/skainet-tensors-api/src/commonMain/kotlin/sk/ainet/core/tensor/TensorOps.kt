@@ -1,4 +1,4 @@
-package sk.ai.net.core.tensor
+package sk.ainet.core.tensor
 
 /**
  * Interface representing mathematical operations on tensors.
@@ -6,7 +6,7 @@ package sk.ai.net.core.tensor
  * Keeps math separate from storage, so the same math API can work
  * with multiple backends (dense, sparse, GPU, etc.).
  */
-public interface  TensorOps<T: Tensor<*, *>> {
+public interface TensorOps<T : Tensor<*, *>> {
     /**
      * Performs matrix multiplication of two tensors.
      *
@@ -100,4 +100,40 @@ public interface  TensorOps<T: Tensor<*, *>> {
     public operator fun Float.minus(t: T): T = this.toDouble() - t
     public operator fun Float.times(t: T): T = this.toDouble() * t
     public operator fun Float.div(t: T): T = this.toDouble() / t
+
+    public fun T.t(): T  // transpose
+
+    public fun T.relu(): T
+
+    /**
+     * Applies the softmax function along the specified dimension of the tensor.
+     */
+    public fun T.softmax(dimension: Int): T
+
+    /**
+     * Applies the sigmoid function element-wise to the tensor.
+     *
+     * @return A new tensor with the sigmoid function applied to each element.
+     */
+    public fun T.sigmoid(): T
+
+
+    /**
+     * Applies the hyperbolic tangent (tanh) function element-wise to the tensor.
+     *
+     * @return A new tensor with the tanh function applied to each element.
+     */
+    public fun T.tanh(): T
+
+
+    /**
+     * Flattens the tensor into a 1D tensor.
+     *
+     * @param startDim The first dimension to flatten (inclusive).
+     * @param endDim The last dimension to flatten (inclusive).
+     * @return A new flattened tensor.
+     */
+    public fun T.flatten(startDim: Int = 1, endDim: Int = -1): T
 }
+
+

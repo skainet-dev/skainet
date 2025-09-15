@@ -1,4 +1,4 @@
-package sk.ai.net.core.tensor
+package sk.ainet.core.tensor
 
 public interface TensorData<T:DType, V> {
     /**

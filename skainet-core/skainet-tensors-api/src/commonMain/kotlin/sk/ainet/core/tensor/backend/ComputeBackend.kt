@@ -1,8 +1,9 @@
-package sk.ai.net.core.tensor.backend
+package sk.ainet.core.tensor.backend
 
-import sk.ai.net.core.tensor.DType
-import sk.ai.net.core.tensor.Tensor
-import sk.ai.net.core.tensor.TensorOps
+import sk.ainet.core.tensor.DType
+import sk.ainet.core.tensor.Tensor
+import sk.ainet.core.tensor.TensorOps
+
 
 /**
  * Interface representing a computation backend for tensor operations.

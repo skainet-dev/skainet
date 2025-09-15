@@ -1,7 +1,8 @@
 package sk.ainet.core.tensor.backend
 
-import sk.ai.net.core.tensor.*
-import sk.ai.net.core.tensor.backend.ComputeBackend
+import sk.ainet.core.tensor.*
+import sk.ainet.core.tensor.backend.ComputeBackend
+import kotlin.math.*
 
 /**
  * Convenient type alias for FP32 tensors with Float values.
@@ -148,6 +149,14 @@ public class CpuTensorFP32(
     override fun Double.minus(t: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@minus.minus(t) }
     override fun Double.times(t: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@times.times(t) }
     override fun Double.div(t: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@div.div(t) }
+
+    // Advanced tensor operations - delegate to backend
+    override fun Tensor<FP32, Float>.t(): Tensor<FP32, Float> = with(backend) { this@t.t() }
+    override fun Tensor<FP32, Float>.relu(): Tensor<FP32, Float> = with(backend) { this@relu.relu() }
+    override fun Tensor<FP32, Float>.sigmoid(): Tensor<FP32, Float> = with(backend) { this@sigmoid.sigmoid() }
+    override fun Tensor<FP32, Float>.tanh(): Tensor<FP32, Float> = with(backend) { this@tanh.tanh() }
+    override fun Tensor<FP32, Float>.softmax(dimension: Int): Tensor<FP32, Float> = with(backend) { this@softmax.softmax(dimension) }
+    override fun Tensor<FP32, Float>.flatten(startDim: Int, endDim: Int): Tensor<FP32, Float> = with(backend) { this@flatten.flatten(startDim, endDim) }
 
     public companion object {
         /**
@@ -368,5 +377,128 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
         require(t is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
         val result = t.data.map { this.toFloat() / it }.toFloatArray()
         return CpuTensorFP32(t.shape, result)
+    }
+
+    // Advanced tensor operations
+    override fun Tensor<FP32, Float>.t(): Tensor<FP32, Float> {
+        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
+        require(this.shape.rank == 2) { "Transpose only supported for 2D tensors (matrices)" }
+        
+        val rows = this.shape[0]
+        val cols = this.shape[1]
+        val result = FloatArray(rows * cols)
+        
+        for (i in 0 until rows) {
+            for (j in 0 until cols) {
+                result[j * rows + i] = this.data[i * cols + j]
+            }
+        }
+        
+        return CpuTensorFP32(Shape(cols, rows), result)
+    }
+
+    override fun Tensor<FP32, Float>.relu(): Tensor<FP32, Float> {
+        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
+        val result = this.data.map { maxOf(0f, it) }.toFloatArray()
+        return CpuTensorFP32(this.shape, result)
+    }
+
+    override fun Tensor<FP32, Float>.sigmoid(): Tensor<FP32, Float> {
+        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
+        val result = this.data.map { 1f / (1f + exp(-it)) }.toFloatArray()
+        return CpuTensorFP32(this.shape, result)
+    }
+
+    override fun Tensor<FP32, Float>.tanh(): Tensor<FP32, Float> {
+        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
+        val result = this.data.map { tanh(it) }.toFloatArray()
+        return CpuTensorFP32(this.shape, result)
+    }
+
+    override fun Tensor<FP32, Float>.softmax(dimension: Int): Tensor<FP32, Float> {
+        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
+        require(dimension in 0 until this.shape.rank) { "Dimension $dimension is out of bounds for tensor with rank ${this.shape.rank}" }
+        
+        when (this.shape.rank) {
+            1 -> {
+                // For 1D tensor, apply softmax across the single dimension
+                val maxVal = this.data.maxOrNull() ?: 0f
+                val expValues = this.data.map { exp(it - maxVal) }
+                val sum = expValues.sum()
+                val result = expValues.map { it / sum }.toFloatArray()
+                return CpuTensorFP32(this.shape, result)
+            }
+            2 -> {
+                // For 2D tensor (matrix), apply softmax along specified dimension
+                val rows = this.shape[0]
+                val cols = this.shape[1]
+                val result = FloatArray(this.data.size)
+                
+                if (dimension == 0) {
+                    // Apply softmax along rows (for each column)
+                    for (j in 0 until cols) {
+                        val columnValues = FloatArray(rows) { i -> this.data[i * cols + j] }
+                        val maxVal = columnValues.maxOrNull() ?: 0f
+                        val expValues = columnValues.map { exp(it - maxVal) }
+                        val sum = expValues.sum()
+                        for (i in 0 until rows) {
+                            result[i * cols + j] = expValues[i] / sum
+                        }
+                    }
+                } else {
+                    // Apply softmax along columns (for each row)
+                    for (i in 0 until rows) {
+                        val rowStart = i * cols
+                        val rowValues = this.data.sliceArray(rowStart until rowStart + cols)
+                        val maxVal = rowValues.maxOrNull() ?: 0f
+                        val expValues = rowValues.map { exp(it - maxVal) }
+                        val sum = expValues.sum()
+                        for (j in 0 until cols) {
+                            result[rowStart + j] = expValues[j] / sum
+                        }
+                    }
+                }
+                return CpuTensorFP32(this.shape, result)
+            }
+            else -> {
+                throw UnsupportedOperationException("Softmax not implemented for tensors with rank > 2")
+            }
+        }
+    }
+
+    override fun Tensor<FP32, Float>.flatten(startDim: Int, endDim: Int): Tensor<FP32, Float> {
+        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
+        
+        val actualEndDim = if (endDim == -1) this.shape.rank - 1 else endDim
+        require(startDim >= 0 && startDim < this.shape.rank) { "startDim $startDim is out of bounds" }
+        require(actualEndDim >= startDim && actualEndDim < this.shape.rank) { "endDim $actualEndDim is out of bounds or less than startDim" }
+        
+        if (startDim == actualEndDim) {
+            // No flattening needed
+            return CpuTensorFP32(this.shape, this.data.copyOf())
+        }
+        
+        // Calculate new shape
+        val newDimensions = mutableListOf<Int>()
+        
+        // Add dimensions before startDim
+        for (i in 0 until startDim) {
+            newDimensions.add(this.shape[i])
+        }
+        
+        // Calculate flattened dimension size
+        var flattenedSize = 1
+        for (i in startDim..actualEndDim) {
+            flattenedSize *= this.shape[i]
+        }
+        newDimensions.add(flattenedSize)
+        
+        // Add dimensions after endDim
+        for (i in (actualEndDim + 1) until this.shape.rank) {
+            newDimensions.add(this.shape[i])
+        }
+        
+        val newShape = Shape(*newDimensions.toIntArray())
+        return CpuTensorFP32(newShape, this.data.copyOf())
     }
 }

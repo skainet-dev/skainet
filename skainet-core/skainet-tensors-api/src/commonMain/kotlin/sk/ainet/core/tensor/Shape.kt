@@ -1,4 +1,4 @@
-package sk.ai.net.core.tensor
+package sk.ainet.core.tensor
 
 /**
  * Data class representing the shape of a multi-dimensional array (tensor).
