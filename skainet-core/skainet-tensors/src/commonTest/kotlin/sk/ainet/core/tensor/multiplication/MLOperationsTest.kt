@@ -1,7 +1,8 @@
-package sk.ai.net.core.tensor.multiplication
+package sk.ainet.core.tensor.multiplication
 
 import sk.ai.net.core.tensor.*
-import sk.ai.net.core.tensor.backend.*
+import sk.ainet.core.tensor.backend.CpuBackend
+import sk.ainet.core.tensor.backend.CpuTensorFP32
 import kotlin.test.*
 
 class MLOperationsTest {
@@ -327,7 +328,7 @@ class MLOperationsTest {
         with(backend) {
             activation = activation.plus(biases[0])
         }
-        
+
         // Apply ReLU activation (max(0, x))
         val relu1Data = FloatArray(activation.shape.volume)
         for (i in relu1Data.indices) {
@@ -341,7 +342,7 @@ class MLOperationsTest {
         with(backend) {
             activation = activation.plus(biases[1])
         }
-        
+
         // Apply ReLU activation
         val relu2Data = FloatArray(activation.shape.volume)
         for (i in relu2Data.indices) {
@@ -355,25 +356,25 @@ class MLOperationsTest {
         // Verify MLP structure
         assertEquals(3, weights.size, "Should have 3 weight matrices")
         assertEquals(3, biases.size, "Should have 3 bias vectors")
-        
+
         // Verify layer shapes
         assertEquals(Shape(inputSize, hiddenSize), weights[0].shape, "Layer 1 weight shape")
-        assertEquals(Shape(hiddenSize, hiddenSize), weights[1].shape, "Layer 2 weight shape") 
+        assertEquals(Shape(hiddenSize, hiddenSize), weights[1].shape, "Layer 2 weight shape")
         assertEquals(Shape(hiddenSize, outputSize), weights[2].shape, "Layer 3 weight shape")
-        
+
         // Verify output shape
         assertEquals(Shape(batchSize, outputSize), output.shape, "Output should be batch_size x output_size")
-        
+
         // Verify output values are reasonable (not NaN or infinite)
         for (i in 0 until batchSize) {
             val outputValue = output[i, 0]
             assertTrue(outputValue.isFinite(), "Output should be finite")
             println("[DEBUG_LOG] Sample $i: input=${inputData[i]}, output=$outputValue")
         }
-        
+
         // Verify different inputs produce different outputs
         assertNotEquals(output[0, 0], output[1, 0], "Different inputs should produce different outputs")
-        
+
         println("[DEBUG_LOG] MLP test completed successfully with ${weights.size} layers")
     }
 }

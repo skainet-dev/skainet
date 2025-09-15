@@ -1,6 +1,12 @@
-package sk.ai.net.core.tensor
+package sk.ainet.core.tensor
 
+import sk.ai.net.core.tensor.Shape
 import sk.ai.net.core.tensor.backend.*
+import sk.ainet.core.tensor.backend.CpuTensorFP32
+import sk.ainet.core.tensor.backend.print
+import sk.ainet.core.tensor.backend.printMatrix
+import sk.ainet.core.tensor.backend.printScalar
+import sk.ainet.core.tensor.backend.printVector
 import kotlin.test.*
 
 class PrintingTest {

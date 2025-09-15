@@ -1,4 +1,4 @@
-package sk.ai.net.core.tensor
+package sk.ainet.core.tensor
 
 import kotlin.test.assertTrue
 import kotlin.math.abs

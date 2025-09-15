@@ -1,6 +1,7 @@
-package sk.ai.net.core.tensor.backend
+package sk.ainet.core.tensor.backend
 
 import sk.ai.net.core.tensor.*
+import sk.ai.net.core.tensor.backend.ComputeBackend
 
 /**
  * Convenient type alias for FP32 tensors with Float values.
@@ -36,7 +37,7 @@ public fun TensorFP32.printMatrix(): String {
     val rows = shape[0]
     val cols = shape[1]
     val result = StringBuilder()
-    
+
     result.append("[\n")
     for (i in 0 until rows) {
         result.append("  [")
@@ -49,7 +50,7 @@ public fun TensorFP32.printMatrix(): String {
         result.append("\n")
     }
     result.append("]")
-    
+
     return result.toString()
 }
 
@@ -100,25 +101,46 @@ public class CpuTensorFP32(
     override fun dot(a: Tensor<FP32, Float>, b: Tensor<FP32, Float>): Double = backend.dot(a, b)
 
     // Tensor-Tensor operations
-    override fun Tensor<FP32, Float>.plus(other: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@plus.plus(other) }
-    override fun Tensor<FP32, Float>.minus(other: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@minus.minus(other) }
-    override fun Tensor<FP32, Float>.times(other: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@times.times(other) }
-    override fun Tensor<FP32, Float>.div(other: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@div.div(other) }
+    override fun Tensor<FP32, Float>.plus(other: Tensor<FP32, Float>): Tensor<FP32, Float> =
+        with(backend) { this@plus.plus(other) }
+
+    override fun Tensor<FP32, Float>.minus(other: Tensor<FP32, Float>): Tensor<FP32, Float> =
+        with(backend) { this@minus.minus(other) }
+
+    override fun Tensor<FP32, Float>.times(other: Tensor<FP32, Float>): Tensor<FP32, Float> =
+        with(backend) { this@times.times(other) }
+
+    override fun Tensor<FP32, Float>.div(other: Tensor<FP32, Float>): Tensor<FP32, Float> =
+        with(backend) { this@div.div(other) }
 
     // Tensor-Scalar operations - delegate to backend
     override fun Tensor<FP32, Float>.plus(scalar: Int): Tensor<FP32, Float> = with(backend) { this@plus.plus(scalar) }
-    override fun Tensor<FP32, Float>.minus(scalar: Int): Tensor<FP32, Float> = with(backend) { this@minus.minus(scalar) }
-    override fun Tensor<FP32, Float>.times(scalar: Int): Tensor<FP32, Float> = with(backend) { this@times.times(scalar) }
+    override fun Tensor<FP32, Float>.minus(scalar: Int): Tensor<FP32, Float> =
+        with(backend) { this@minus.minus(scalar) }
+
+    override fun Tensor<FP32, Float>.times(scalar: Int): Tensor<FP32, Float> =
+        with(backend) { this@times.times(scalar) }
+
     override fun Tensor<FP32, Float>.div(scalar: Int): Tensor<FP32, Float> = with(backend) { this@div.div(scalar) }
 
     override fun Tensor<FP32, Float>.plus(scalar: Float): Tensor<FP32, Float> = with(backend) { this@plus.plus(scalar) }
-    override fun Tensor<FP32, Float>.minus(scalar: Float): Tensor<FP32, Float> = with(backend) { this@minus.minus(scalar) }
-    override fun Tensor<FP32, Float>.times(scalar: Float): Tensor<FP32, Float> = with(backend) { this@times.times(scalar) }
+    override fun Tensor<FP32, Float>.minus(scalar: Float): Tensor<FP32, Float> =
+        with(backend) { this@minus.minus(scalar) }
+
+    override fun Tensor<FP32, Float>.times(scalar: Float): Tensor<FP32, Float> =
+        with(backend) { this@times.times(scalar) }
+
     override fun Tensor<FP32, Float>.div(scalar: Float): Tensor<FP32, Float> = with(backend) { this@div.div(scalar) }
 
-    override fun Tensor<FP32, Float>.plus(scalar: Double): Tensor<FP32, Float> = with(backend) { this@plus.plus(scalar) }
-    override fun Tensor<FP32, Float>.minus(scalar: Double): Tensor<FP32, Float> = with(backend) { this@minus.minus(scalar) }
-    override fun Tensor<FP32, Float>.times(scalar: Double): Tensor<FP32, Float> = with(backend) { this@times.times(scalar) }
+    override fun Tensor<FP32, Float>.plus(scalar: Double): Tensor<FP32, Float> =
+        with(backend) { this@plus.plus(scalar) }
+
+    override fun Tensor<FP32, Float>.minus(scalar: Double): Tensor<FP32, Float> =
+        with(backend) { this@minus.minus(scalar) }
+
+    override fun Tensor<FP32, Float>.times(scalar: Double): Tensor<FP32, Float> =
+        with(backend) { this@times.times(scalar) }
+
     override fun Tensor<FP32, Float>.div(scalar: Double): Tensor<FP32, Float> = with(backend) { this@div.div(scalar) }
 
     // Scalar-Tensor operations - delegate to backend

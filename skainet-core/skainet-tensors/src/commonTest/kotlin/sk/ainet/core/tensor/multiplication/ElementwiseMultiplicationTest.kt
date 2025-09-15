@@ -1,7 +1,8 @@
-package sk.ai.net.core.tensor.multiplication
+package sk.ainet.core.tensor.multiplication
 
 import sk.ai.net.core.tensor.*
-import sk.ai.net.core.tensor.backend.*
+import sk.ainet.core.tensor.backend.CpuBackend
+import sk.ainet.core.tensor.backend.CpuTensorFP32
 import kotlin.test.*
 
 class ElementwiseMultiplicationTest {
