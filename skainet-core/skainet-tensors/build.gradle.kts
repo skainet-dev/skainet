@@ -41,12 +41,13 @@ kotlin {
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(project(":skainet-core:skainet-performance"))
         }
     }
 }
 
 android {
-    namespace = "sk.ai.net.core.api"
+    namespace = "sk.ainet.core.api"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
