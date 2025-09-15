@@ -55,7 +55,8 @@ GitFlow is a branching model for Git that defines specific branch types and thei
 
 == Workflow Diagram
 
-[source,mermaid]
+[mermaid]
+ifdef::env-github[[source,mermaid]]
 ....
 gitGraph
     commit id: "Initial"
