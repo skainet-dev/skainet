@@ -5,7 +5,7 @@
 :sectlinks:
 :source-highlighter: highlight.js
 
-This document describes the GitFlow workflow used in the skainet project for managing feature development, releases, and hotfixes.
+This document describes the GitFlow workflow used in the SKaiNET project for managing feature development, releases, and hotfixes.
 
 == Overview
 
@@ -309,6 +309,6 @@ git reset --hard HEAD~1
 
 == Conclusion
 
-GitFlow provides a structured approach to managing code changes in collaborative environments. By following this workflow consistently, the skainet project maintains code quality, enables parallel development, and ensures stable releases.
+GitFlow provides a structured approach to managing code changes in collaborative environments. By following this workflow consistently, the SKaiNET project maintains code quality, enables parallel development, and ensures stable releases.
 
 For questions or clarifications about this workflow, please refer to the original https://nvie.com/posts/a-successful-git-branching-model/[GitFlow article] or reach out to the project maintainers.

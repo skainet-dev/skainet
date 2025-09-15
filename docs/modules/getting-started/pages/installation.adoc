@@ -1,0 +1,187 @@
+= Installation & Setup
+:toc: left
+:toclevels: 3
+:sectanchors:
+:sectlinks:
+
+This section covers how to set up SKaiNET in your project and configure your development environment.
+
+== Adding SKaiNET to Your Project
+
+=== Kotlin Multiplatform Project
+
+Add SKaiNET to your multiplatform project's `build.gradle.kts`:
+
+[source,kotlin]
+----
+kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation("sk.ainet:tensors-api:1.0.0")
+                implementation("sk.ai.net:skainet-tensors:1.0.0")
+            }
+        }
+    }
+}
+----
+
+=== JVM-only Project
+
+For JVM-only projects, add these dependencies to your `build.gradle.kts`:
+
+[source,kotlin]
+----
+dependencies {
+    implementation("sk.ai.net:skainet-core:1.0.0")
+    implementation("sk.ai.net:skainet-tensors:1.0.0")
+}
+----
+
+== Basic Project Structure
+
+Create a simple project structure to get started:
+
+[source,text]
+----
+my-skainet-project/
+├── build.gradle.kts
+├── settings.gradle.kts
+└── src/
+    └── commonMain/kotlin/
+        └── Main.kt
+----
+
+== Your First SKaiNET Program
+
+Create `src/commonMain/kotlin/Main.kt` with this simple example:
+
+[source,kotlin]
+----
+import sk.ainet.core.tensor.*
+import sk.ainet.core.tensor.backend.*
+
+fun main() {
+    // Initialize the CPU backend
+    val backend = CpuBackend()
+    
+    // Create a simple 2x2 matrix
+    val matrix = CpuTensorFP32.fromArray(
+        Shape(2, 2),
+        floatArrayOf(1.0f, 2.0f, 3.0f, 4.0f)
+    )
+    
+    // Print the matrix values
+    println("Matrix values:")
+    for (i in 0 until 2) {
+        for (j in 0 until 2) {
+            print("${matrix[i, j]} ")
+        }
+        println()
+    }
+    
+    // Perform a simple operation
+    val doubled = backend.scale(matrix, 2.0)
+    println("Doubled matrix:")
+    for (i in 0 until 2) {
+        for (j in 0 until 2) {
+            print("${doubled[i, j]} ")
+        }
+        println()
+    }
+}
+----
+
+Run this program to verify your installation works correctly. You should see:
+
+[source,text]
+----
+Matrix values:
+1.0 2.0 
+3.0 4.0 
+Doubled matrix:
+2.0 4.0 
+6.0 8.0 
+----
+
+== Essential Imports
+
+For most SKaiNET operations, you'll need these imports:
+
+[source,kotlin]
+----
+// Core tensor interfaces and data types
+import sk.ainet.core.tensor.*
+
+// Backend implementations
+import sk.ainet.core.tensor.backend.*
+----
+
+== Development Environment Tips
+
+=== IDE Setup
+
+* **IntelliJ IDEA**: Recommended IDE with excellent Kotlin multiplatform support
+* **Android Studio**: Good for Android-specific tensor operations
+* **VS Code**: Works with Kotlin plugin for lighter development
+
+=== Performance Considerations
+
+* **Debug vs Release**: Tensor operations are significantly faster in release builds
+* **Memory Management**: Consider tensor lifecycle in long-running applications
+* **Backend Selection**: Currently CPU backend is available, GPU backends coming soon
+
+=== Testing Your Setup
+
+Create a simple test to verify everything works:
+
+[source,kotlin]
+----
+import sk.ai.net.core.tensor.*
+import sk.ai.net.core.tensor.backend.*
+import kotlin.test.*
+
+class SetupTest {
+    @Test
+    fun testBasicTensorOperations() {
+        val backend = CpuBackend()
+        
+        val a = CpuTensorFP32.fromArray(Shape(2, 2), floatArrayOf(1f, 2f, 3f, 4f))
+        val b = CpuTensorFP32.fromArray(Shape(2, 2), floatArrayOf(5f, 6f, 7f, 8f))
+        
+        val result = backend.matmul(a, b)
+        
+        // Verify the result: [1*5+2*7, 1*6+2*8] = [19, 22]
+        //                   [3*5+4*7, 3*6+4*8] = [43, 50]
+        assertEquals(19f, result[0, 0])
+        assertEquals(22f, result[0, 1])
+        assertEquals(43f, result[1, 0])
+        assertEquals(50f, result[1, 1])
+    }
+}
+----
+
+== Common Setup Issues
+
+=== Dependency Resolution
+
+If you encounter dependency issues:
+
+1. Check that you're using compatible versions
+2. Ensure your Gradle version supports Kotlin multiplatform
+3. Verify network connectivity for dependency downloads
+
+=== Platform-Specific Issues
+
+* **JVM**: Requires Java 11 or higher
+* **Android**: Minimum SDK 21 (Android 5.0)
+* **Native**: Platform-specific toolchains required
+
+== Next Steps
+
+Now that you have SKaiNET set up, let's explore tensor operations in xref:basic-tensors.adoc[Basic Tensor Operations].
+
+[TIP]
+====
+Keep your first examples simple and gradually build complexity. The tensor operations are the foundation for everything else in SKaiNET.
+====

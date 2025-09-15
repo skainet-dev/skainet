@@ -1,0 +1,281 @@
+= Benchmark Framework
+:toc:
+:toclevels: 3
+:sectanchors:
+:sectlinks:
+
+The SKaiNET Benchmark Framework provides a comprehensive, multiplatform-compatible solution for measuring tensor operation performance. Built on Kotlin's standard library, it offers statistical analysis, warmup strategies, and detailed reporting capabilities.
+
+== Overview
+
+The benchmark framework consists of core components designed for accurate performance measurement:
+
+* **BenchmarkRunner**: Main execution engine for performance tests
+* **BenchmarkResult**: Comprehensive result data structures  
+* **Statistical Analysis**: Time statistics, memory usage, and throughput calculations
+* **Reporting**: Pretty-printed results and comparison reports
+* **Multiplatform Support**: Compatible across JVM, Native, and JS targets
+
+== Core Components
+
+=== BenchmarkRunner
+
+The `BenchmarkRunner` is the primary interface for executing performance measurements. It handles warmup phases, measurement iterations, and statistical calculations.
+
+[source,kotlin]
+----
+val runner = BenchmarkRunner()
+val result = runner.benchmark(
+    name = "Matrix Multiplication 512x512",
+    warmupRuns = 10,
+    measurementRuns = 100
+) {
+    backend.matmul(matrixA, matrixB)
+}
+----
+
+==== Key Methods
+
+**benchmark()**::
+Executes a complete benchmark cycle with warmup and measurement phases.
+
+**warmupWithDuration()**::
+Advanced warmup with time-based minimum duration for more consistent results.
+
+[source,kotlin]
+----
+runner.warmupWithDuration(
+    operation = { heavyComputation() },
+    minRuns = 10,
+    minTime = 5.seconds
+)
+----
+
+=== BenchmarkResult Structure
+
+The framework returns comprehensive results containing multiple metrics:
+
+[source,kotlin]
+----
+data class BenchmarkResult(
+    val name: String,
+    val executionTime: TimeStatistics,
+    val memoryUsage: MemoryStatistics,
+    val throughput: Double, // operations per second
+    val metadata: Map<String, Any>
+)
+----
+
+==== TimeStatistics
+
+Detailed timing analysis including:
+
+* **Mean**: Average execution time in microseconds
+* **Median**: Middle value of sorted execution times
+* **Standard Deviation**: Measure of timing variability
+* **Min/Max**: Fastest and slowest execution times
+* **95th Percentile**: Performance threshold for outlier detection
+
+==== MemoryStatistics
+
+Memory usage tracking (platform-dependent):
+
+* **Allocated Bytes**: Total memory allocated during operation
+* **Peak Heap Usage**: Maximum heap memory consumption
+* **GC Collections**: Number of garbage collection cycles
+* **GC Time**: Total time spent in garbage collection
+
+== Advanced Features
+
+=== Warmup Strategies
+
+The framework provides multiple warmup approaches:
+
+**Fixed Iterations**::
+Traditional approach with a fixed number of warmup runs.
+
+**Duration-Based**::
+Ensures minimum warmup time for consistent JIT compilation effects.
+
+**Adaptive**::
+Automatically determines optimal warmup based on timing stability.
+
+=== Statistical Analysis
+
+Built-in statistical calculations provide:
+
+* **Outlier Detection**: Identifies and handles performance anomalies
+* **Confidence Intervals**: Statistical confidence in measurements
+* **Throughput Calculations**: Operations per second based on timing data
+* **Variance Analysis**: Measure of performance consistency
+
+=== Reporting and Visualization
+
+==== Pretty Printing
+
+Results include formatted output for easy interpretation:
+
+[source,kotlin]
+----
+println(result.prettyPrint())
+// Output:
+// Matrix Multiplication 512x512:
+//   Time: 2.45ms ± 0.12ms
+//   Throughput: 408.2 ops/sec
+//   Memory: 2.1MB
+//   Range: 2.31ms - 2.78ms
+----
+
+==== Comprehensive Reports
+
+Generate detailed reports for multiple operations:
+
+[source,kotlin]
+----
+val report = BenchmarkReport(
+    backendName = "CPU Backend",
+    matrixMultiplication = listOf(result1, result2),
+    elementwiseOperations = mapOf(
+        "Addition" to listOf(addResult),
+        "Multiplication" to listOf(mulResult)
+    ),
+    // ... other operations
+)
+----
+
+== Best Practices
+
+=== Measurement Guidelines
+
+**Warmup Phase**::
+Always include adequate warmup to allow JIT compilation and cache warming.
+
+**Sample Size**::
+Use sufficient measurement runs (100-1000) for statistical significance.
+
+**Environment Control**::
+Run benchmarks in consistent environments, avoiding background processes.
+
+**Multiple Iterations**::
+Execute benchmark suites multiple times and analyze result stability.
+
+=== Code Examples
+
+==== Basic Benchmark
+
+[source,kotlin]
+----
+val runner = BenchmarkRunner()
+
+// Simple operation benchmark
+val result = runner.benchmark(
+    name = "Element-wise Addition",
+    warmupRuns = 5,
+    measurementRuns = 50
+) {
+    tensorA + tensorB
+}
+
+println("Throughput: ${result.throughput} ops/sec")
+----
+
+==== Backend Comparison
+
+[source,kotlin]
+----
+val cpuResult = benchmarkBackend(cpuBackend, "CPU")
+val gpuResult = benchmarkBackend(gpuBackend, "GPU")
+
+val comparison = ComparisonReport(
+    baselineBackend = "CPU",
+    baselineResults = cpuResult,
+    comparisonBackend = "GPU", 
+    comparisonResults = gpuResult,
+    speedupAnalysis = calculateSpeedup(cpuResult, gpuResult)
+)
+
+println(comparison.prettyPrint())
+----
+
+==== Matrix Size Scaling
+
+[source,kotlin]
+----
+val sizes = listOf(64, 128, 256, 512, 1024)
+val results = mutableMapOf<Int, BenchmarkResult>()
+
+sizes.forEach { size ->
+    val matrixA = createRandomMatrix(size, size)
+    val matrixB = createRandomMatrix(size, size)
+    
+    results[size] = runner.benchmark(
+        name = "MatMul ${size}x${size}",
+        measurementRuns = 20
+    ) {
+        backend.matmul(matrixA, matrixB)
+    }
+}
+
+// Analyze scaling behavior
+results.forEach { (size, result) ->
+    println("${size}x${size}: ${result.executionTime.mean/1000}ms")
+}
+----
+
+== Integration
+
+=== Dependency Configuration
+
+Add the performance module to your test dependencies:
+
+[source,kotlin]
+----
+// build.gradle.kts
+dependencies {
+    testImplementation("sk.ainet.core:skainet-performance")
+}
+----
+
+=== Module Structure
+
+The performance module is organized as:
+
+```
+skainet-core/skainet-performance/
+├── src/commonMain/kotlin/sk/ainet/core/performance/
+│   ├── BenchmarkRunner.kt      # Core benchmark execution
+│   └── BenchmarkResult.kt      # Result data structures
+└── src/commonTest/kotlin/      # Framework tests
+```
+
+=== Multiplatform Compatibility
+
+The framework uses only Kotlin stdlib APIs for maximum compatibility:
+
+* **JVM**: Full functionality including memory statistics
+* **Native**: Core timing and throughput measurements
+* **JS**: Basic performance measurement capabilities
+
+== Troubleshooting
+
+=== Common Issues
+
+**Inconsistent Results**::
+Increase warmup runs or use duration-based warmup for JIT stability.
+
+**High Variance**::
+Check for background processes, increase measurement runs, or use median instead of mean.
+
+**Memory Measurement**::
+Memory statistics may be limited or unavailable on some platforms.
+
+**Platform Differences**::
+Timing precision varies between platforms; adjust measurement runs accordingly.
+
+=== Performance Tips
+
+* Use release builds for accurate performance measurements
+* Disable debug logging during benchmarking
+* Close other applications to reduce system noise
+* Run multiple benchmark sessions and compare results
+* Monitor system resources during long benchmark runs
