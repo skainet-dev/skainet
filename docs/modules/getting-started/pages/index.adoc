@@ -1,0 +1,87 @@
+= Getting Started with SKaiNET
+:toc: left
+:toclevels: 3
+:sectanchors:
+:sectlinks:
+
+Welcome to SKaiNET, a modern Kotlin multiplatform tensor computation library designed for machine learning and scientific computing. This guide will help you get started with practical, real-world examples.
+
+== What is SKaiNET?
+
+SKaiNET is a high-performance tensor computation framework that provides:
+
+* **Multi-dimensional tensor operations** - Work with scalars, vectors, matrices, and higher-dimensional arrays
+* **Comprehensive mathematical operations** - Element-wise operations, matrix multiplication, linear algebra
+* **Kotlin multiplatform support** - Run on JVM, Android, iOS, and native platforms
+* **Clean, intuitive API** - Operator overloading makes tensor math feel natural
+* **Performance-focused** - Optimized CPU backend with room for GPU acceleration
+
+== Real-World Use Cases
+
+This guide covers practical scenarios where SKaiNET excels:
+
+=== 🤖 Machine Learning Foundations
+* Neural network forward passes
+* Gradient computations and backpropagation
+* Feature transformations and preprocessing
+
+== Quick Example
+
+Here's a taste of what SKaiNET looks like in action:
+
+[source,kotlin]
+----
+import sk.ainet.core.tensor.*
+import sk.ainet.core.tensor.backend.*
+
+// Create a CPU backend
+val backend = CpuBackend()
+
+// Create some tensors
+val weights = CpuTensorFP32.fromArray(
+    Shape(3, 2), 
+    floatArrayOf(0.5f, -0.3f, 0.8f, 0.2f, -0.1f, 0.9f)
+)
+
+val input = CpuTensorFP32.fromArray(
+    Shape(2, 1),
+    floatArrayOf(1.0f, 0.5f)
+)
+
+// Matrix multiplication - the foundation of neural networks
+val output = backend.matmul(weights, input)
+
+// Element-wise operations with natural syntax
+val scaled = backend.scale(output, 2.0)
+val biased = scaled + 0.1f
+
+println("Neural network output: [${biased[0,0]}, ${biased[1,0]}, ${biased[2,0]}]")
+----
+
+== What You'll Learn
+
+By following this guide, you'll learn to:
+
+1. **Set up your development environment** - Dependencies, imports, and basic project structure
+2. **Master tensor creation and manipulation** - Different ways to create and work with tensors
+3. **Perform matrix operations** - From basic arithmetic to advanced linear algebra
+4. **Build neural network components** - Forward passes, activations, and simple networks
+5. **Process real data** - Practical examples with image and numerical data
+6. **Optimize performance** - Tips for efficient tensor operations
+
+== Prerequisites
+
+This guide assumes you have:
+
+* Basic knowledge of Kotlin programming
+* Understanding of linear algebra concepts (vectors, matrices)
+* Familiarity with machine learning concepts (helpful but not required)
+
+== Next Steps
+
+Ready to dive in? Start with xref:installation.adoc[Installation & Setup] to configure your development environment, then move on to xref:basic-tensors.adoc[Basic Tensor Operations] to learn the fundamentals.
+
+[TIP]
+====
+Each section includes runnable code examples and explains both the "what" and the "why" behind each operation. Feel free to experiment with the examples and modify them to match your specific use case.
+====

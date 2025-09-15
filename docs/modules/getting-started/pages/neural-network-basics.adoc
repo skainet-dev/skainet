@@ -1,0 +1,422 @@
+= Neural Network Basics
+:toc: left
+:toclevels: 3
+:sectanchors:
+:sectlinks:
+
+Learn to build neural networks from scratch using SKaiNET's tensor operations. This section demonstrates the fundamental building blocks of deep learning.
+
+== Neural Network Components
+
+Neural networks consist of layers that transform input data through matrix operations and activation functions.
+
+=== The Linear Layer
+
+The most fundamental component - a fully connected layer:
+
+[source,kotlin]
+----
+class LinearLayer(
+    val inputSize: Int,
+    val outputSize: Int,
+    val backend: CpuBackend
+) {
+    // Weight matrix: outputSize × inputSize
+    val weights: CpuTensorFP32
+    
+    // Bias vector: outputSize × 1
+    val bias: CpuTensorFP32
+    
+    init {
+        // Initialize weights with small random values
+        val weightData = FloatArray(outputSize * inputSize) {
+            (kotlin.random.Random.nextGaussian().toFloat() * 0.1f)
+        }
+        weights = CpuTensorFP32.fromArray(Shape(outputSize, inputSize), weightData)
+        
+        // Initialize bias to zeros
+        val biasData = FloatArray(outputSize) { 0f }
+        bias = CpuTensorFP32.fromArray(Shape(outputSize, 1), biasData)
+    }
+    
+    // Forward pass: output = weights × input + bias
+    fun forward(input: CpuTensorFP32): CpuTensorFP32 {
+        val inputReshaped = input.reshape(Shape(inputSize, 1))
+        val weightedSum = backend.matmul(weights, inputReshaped)
+        
+        return with(backend) {
+            weightedSum + bias
+        }
+    }
+}
+
+// Example usage
+val backend = CpuBackend()
+
+// Create a layer that transforms 3 inputs to 2 outputs
+val layer = LinearLayer(3, 2, backend)
+
+// Sample input
+val input = CpuTensorFP32.fromArray(Shape(3), floatArrayOf(1f, 0.5f, -0.2f))
+val output = layer.forward(input)
+
+println("Input shape: ${input.shape}")
+println("Output shape: ${output.shape}")
+println("Output: [${output[0, 0]}, ${output[1, 0]}]")
+----
+
+== Activation Functions
+
+Activation functions introduce non-linearity, enabling networks to learn complex patterns.
+
+=== ReLU Activation
+
+The most commonly used activation function:
+
+[source,kotlin]
+----
+fun relu(tensor: CpuTensorFP32, backend: CpuBackend): CpuTensorFP32 {
+    val shape = tensor.shape
+    val result = FloatArray(shape.size) { i ->
+        val indices = indexToCoordinates(i, shape)
+        val value = tensor[*indices]
+        if (value > 0f) value else 0f
+    }
+    return CpuTensorFP32.fromArray(shape, result)
+}
+
+// Helper function to convert flat index to coordinates
+fun indexToCoordinates(index: Int, shape: Shape): IntArray {
+    val coords = IntArray(shape.rank)
+    var remaining = index
+    for (i in shape.rank - 1 downTo 0) {
+        val dimSize = shape.dimensions[i]
+        coords[i] = remaining % dimSize
+        remaining /= dimSize
+    }
+    return coords
+}
+
+// Example usage
+val backend = CpuBackend()
+val input = CpuTensorFP32.fromArray(
+    Shape(3), 
+    floatArrayOf(-1f, 0f, 2f)
+)
+
+val activated = relu(input, backend)
+println("Input: [-1, 0, 2]")
+println("ReLU output: [${activated[0]}, ${activated[1]}, ${activated[2]}]")
+// Output: [0, 0, 2]
+----
+
+=== Sigmoid Activation
+
+Useful for binary classification:
+
+[source,kotlin]
+----
+fun sigmoid(tensor: CpuTensorFP32, backend: CpuBackend): CpuTensorFP32 {
+    val shape = tensor.shape
+    val result = FloatArray(shape.size) { i ->
+        val indices = indexToCoordinates(i, shape)
+        val value = tensor[*indices]
+        1f / (1f + kotlin.math.exp(-value))
+    }
+    return CpuTensorFP32.fromArray(shape, result)
+}
+
+// Example usage
+val input = CpuTensorFP32.fromArray(
+    Shape(3), 
+    floatArrayOf(-2f, 0f, 2f)
+)
+
+val activated = sigmoid(input, backend)
+println("Input: [-2, 0, 2]")
+println("Sigmoid output: [${activated[0]}, ${activated[1]}, ${activated[2]}]")
+// Output: [~0.12, 0.5, ~0.88]
+----
+
+== Building a Simple Neural Network
+
+Let's create a 2-layer neural network for binary classification:
+
+[source,kotlin]
+----
+class SimpleNeuralNetwork(
+    val inputSize: Int,
+    val hiddenSize: Int,
+    val outputSize: Int,
+    val backend: CpuBackend
+) {
+    private val layer1 = LinearLayer(inputSize, hiddenSize, backend)
+    private val layer2 = LinearLayer(hiddenSize, outputSize, backend)
+    
+    fun forward(input: CpuTensorFP32): CpuTensorFP32 {
+        // First layer + ReLU activation
+        val hidden = layer1.forward(input)
+        val hiddenActivated = relu(hidden, backend)
+        
+        // Second layer + Sigmoid activation
+        val output = layer2.forward(hiddenActivated.reshape(Shape(hiddenSize)))
+        return sigmoid(output, backend)
+    }
+    
+    // Predict class (0 or 1) based on threshold
+    fun predict(input: CpuTensorFP32): Int {
+        val output = forward(input)
+        return if (output[0, 0] > 0.5f) 1 else 0
+    }
+}
+
+// Example usage
+val backend = CpuBackend()
+
+// Create a network: 2 inputs -> 4 hidden -> 1 output
+val network = SimpleNeuralNetwork(2, 4, 1, backend)
+
+// Test with sample data points
+val testData = arrayOf(
+    floatArrayOf(0f, 0f),      // Class 0
+    floatArrayOf(0f, 1f),      // Class 1  
+    floatArrayOf(1f, 0f),      // Class 1
+    floatArrayOf(1f, 1f)       // Class 0 (XOR pattern)
+)
+
+println("Neural Network Predictions (XOR-like pattern):")
+testData.forEachIndexed { index, data ->
+    val input = CpuTensorFP32.fromArray(Shape(2), data)
+    val output = network.forward(input)
+    val prediction = network.predict(input)
+    
+    println("Input: [${data[0]}, ${data[1]}] -> Output: ${output[0, 0]} -> Prediction: $prediction")
+}
+----
+
+== Practical Example: Linear Regression
+
+Implement simple linear regression using neural networks:
+
+[source,kotlin]
+----
+// Generate synthetic data: y = 2x + 1 + noise
+fun generateLinearData(numSamples: Int): Pair<CpuTensorFP32, CpuTensorFP32> {
+    val inputs = FloatArray(numSamples) { kotlin.random.Random.nextFloat() * 10f }
+    val outputs = FloatArray(numSamples) { i ->
+        2f * inputs[i] + 1f + (kotlin.random.Random.nextGaussian().toFloat() * 0.1f)
+    }
+    
+    return Pair(
+        CpuTensorFP32.fromArray(Shape(numSamples, 1), inputs),
+        CpuTensorFP32.fromArray(Shape(numSamples, 1), outputs)
+    )
+}
+
+// Simple linear regression model
+class LinearRegression(val backend: CpuBackend) {
+    // Single linear layer without bias for simplicity
+    var weight = CpuTensorFP32.fromArray(Shape(1, 1), floatArrayOf(1f))
+    var bias = CpuTensorFP32.fromArray(Shape(1, 1), floatArrayOf(0f))
+    
+    fun forward(input: CpuTensorFP32): CpuTensorFP32 {
+        val prediction = backend.matmul(input, weight)
+        return with(backend) { prediction + bias }
+    }
+    
+    // Simple gradient descent step (simplified)
+    fun trainStep(inputs: CpuTensorFP32, targets: CpuTensorFP32, learningRate: Float) {
+        val predictions = forward(inputs)
+        val numSamples = inputs.shape.dimensions[0].toFloat()
+        
+        // Calculate errors
+        val errors = with(backend) { predictions - targets }
+        
+        // Calculate gradients (simplified)
+        var weightGradient = 0f
+        var biasGradient = 0f
+        
+        for (i in 0 until inputs.shape.dimensions[0]) {
+            val input = inputs[i, 0]
+            val error = errors[i, 0]
+            weightGradient += error * input
+            biasGradient += error
+        }
+        
+        weightGradient /= numSamples
+        biasGradient /= numSamples
+        
+        // Update parameters
+        val newWeight = weight[0, 0] - learningRate * weightGradient
+        val newBias = bias[0, 0] - learningRate * biasGradient
+        
+        weight = CpuTensorFP32.fromArray(Shape(1, 1), floatArrayOf(newWeight))
+        bias = CpuTensorFP32.fromArray(Shape(1, 1), floatArrayOf(newBias))
+    }
+}
+
+// Training example
+val backend = CpuBackend()
+val model = LinearRegression(backend)
+
+// Generate training data
+val (trainInputs, trainTargets) = generateLinearData(100)
+
+println("Training Linear Regression...")
+println("Initial: weight=${model.weight[0, 0]}, bias=${model.bias[0, 0]}")
+
+// Simple training loop
+repeat(1000) { epoch ->
+    model.trainStep(trainInputs, trainTargets, 0.001f)
+    
+    if (epoch % 200 == 0) {
+        println("Epoch $epoch: weight=${model.weight[0, 0]}, bias=${model.bias[0, 0]}")
+    }
+}
+
+println("Final: weight=${model.weight[0, 0]}, bias=${model.bias[0, 0]}")
+println("Expected: weight=2.0, bias=1.0")
+----
+
+== Practical Example: Image Classification
+
+Build a simple neural network for MNIST-like digit classification:
+
+[source,kotlin]
+----
+// Simplified 28x28 image classifier
+class SimpleImageClassifier(val backend: CpuBackend) {
+    // Flatten 28x28 image to 784 features
+    private val layer1 = LinearLayer(784, 128, backend)
+    private val layer2 = LinearLayer(128, 64, backend)
+    private val layer3 = LinearLayer(64, 10, backend)  // 10 digit classes
+    
+    fun forward(image: CpuTensorFP32): CpuTensorFP32 {
+        // Flatten image
+        val flattened = image.reshape(Shape(784))
+        
+        // First layer + ReLU
+        val hidden1 = layer1.forward(flattened)
+        val activated1 = relu(hidden1, backend)
+        
+        // Second layer + ReLU
+        val hidden2 = layer2.forward(activated1.reshape(Shape(128)))
+        val activated2 = relu(hidden2, backend)
+        
+        // Output layer (logits)
+        return layer3.forward(activated2.reshape(Shape(64)))
+    }
+    
+    // Simple softmax for probability distribution
+    fun softmax(logits: CpuTensorFP32): CpuTensorFP32 {
+        val maxLogit = (0 until 10).map { logits[it, 0] }.maxOrNull() ?: 0f
+        
+        val expLogits = FloatArray(10) { i ->
+            kotlin.math.exp(logits[i, 0] - maxLogit)
+        }
+        
+        val sumExp = expLogits.sum()
+        val probabilities = expLogits.map { it / sumExp }.toFloatArray()
+        
+        return CpuTensorFP32.fromArray(Shape(10, 1), probabilities)
+    }
+    
+    fun predict(image: CpuTensorFP32): Int {
+        val logits = forward(image)
+        val probabilities = softmax(logits)
+        
+        return (0 until 10).maxByOrNull { probabilities[it, 0] } ?: 0
+    }
+}
+
+// Create a synthetic 28x28 "image" (random pattern)
+fun createSyntheticImage(): CpuTensorFP32 {
+    val imageData = FloatArray(28 * 28) { kotlin.random.Random.nextFloat() }
+    return CpuTensorFP32.fromArray(Shape(28, 28), imageData)
+}
+
+// Example usage
+val backend = CpuBackend()
+val classifier = SimpleImageClassifier(backend)
+
+val testImage = createSyntheticImage()
+val prediction = classifier.predict(testImage)
+
+println("Image shape: ${testImage.shape}")
+println("Predicted digit: $prediction")
+
+// Show probability distribution
+val logits = classifier.forward(testImage)
+val probabilities = classifier.softmax(logits)
+
+println("Class probabilities:")
+for (digit in 0 until 10) {
+    println("Digit $digit: ${probabilities[digit, 0]}")
+}
+----
+
+== Performance and Memory Tips
+
+=== Batch Processing
+
+Process multiple samples together for better efficiency:
+
+[source,kotlin]
+----
+// Instead of processing one sample at a time
+fun processIndividually(samples: List<CpuTensorFP32>, network: SimpleNeuralNetwork): List<CpuTensorFP32> {
+    return samples.map { network.forward(it) }
+}
+
+// Process in batches
+fun processBatch(samples: List<CpuTensorFP32>, network: SimpleNeuralNetwork, backend: CpuBackend): CpuTensorFP32 {
+    // Stack samples into a batch tensor
+    val batchSize = samples.size
+    val inputSize = samples[0].shape.dimensions[0]
+    
+    val batchData = FloatArray(batchSize * inputSize) { i ->
+        val sampleIndex = i / inputSize
+        val featureIndex = i % inputSize
+        samples[sampleIndex][featureIndex]
+    }
+    
+    val batchTensor = CpuTensorFP32.fromArray(Shape(batchSize, inputSize), batchData)
+    
+    // Process entire batch at once (requires batch-aware network implementation)
+    // This is more efficient than individual processing
+    return batchTensor
+}
+----
+
+=== Memory Management
+
+[source,kotlin]
+----
+// Reuse tensors when possible
+class EfficientLinearLayer(inputSize: Int, outputSize: Int, val backend: CpuBackend) {
+    val weights = CpuTensorFP32.fromArray(
+        Shape(outputSize, inputSize), 
+        FloatArray(outputSize * inputSize) { kotlin.random.Random.nextGaussian().toFloat() * 0.1f }
+    )
+    
+    // Pre-allocate output tensor to avoid repeated allocations
+    private val outputBuffer = CpuTensorFP32.fromArray(
+        Shape(outputSize, 1), 
+        FloatArray(outputSize) { 0f }
+    )
+    
+    fun forward(input: CpuTensorFP32): CpuTensorFP32 {
+        // Reuse buffer instead of creating new tensors
+        return backend.matmul(weights, input.reshape(Shape(input.shape.dimensions[0], 1)))
+    }
+}
+----
+
+== Next Steps
+
+Now that you understand neural network basics, explore more advanced topics in xref:data-processing.adoc[Data Processing Use Cases] to see how these networks handle real-world data.
+
+[TIP]
+====
+Neural networks are compositions of simple mathematical operations. Understanding how gradients flow backward through these operations is crucial for training - this foundation will help you understand more advanced architectures and training techniques.
+====

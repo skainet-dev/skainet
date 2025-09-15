@@ -1,0 +1,10 @@
+= Getting Started with SKaiNET
+
+* xref:index.adoc[Introduction]
+* xref:installation.adoc[Installation & Setup]
+* xref:basic-tensors.adoc[Basic Tensor Operations]
+* xref:matrix-operations.adoc[Matrix Operations]
+* xref:linear-algebra.adoc[Linear Algebra Examples]
+* xref:neural-network-basics.adoc[Neural Network Basics]
+* xref:data-processing.adoc[Data Processing Use Cases]
+* xref:performance-tips.adoc[Performance Tips]
