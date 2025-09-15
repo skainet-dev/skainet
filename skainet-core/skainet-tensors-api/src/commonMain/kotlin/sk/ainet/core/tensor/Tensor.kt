@@ -8,3 +8,4 @@ package sk.ai.net.core.tensor
  * allows accessing individual elements by their indices.
  */
 public interface Tensor<T : DType, V> : TensorData<T, V>, TensorOps<Tensor<T, V>>
+

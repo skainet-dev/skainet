@@ -15,8 +15,8 @@ class MatrixMultiplicationTest {
         val data1 = floatArrayOf(1f, 2f, 3f, 4f, 5f, 6f) // 2x3 matrix
         val data2 = floatArrayOf(7f, 8f, 9f, 10f, 11f, 12f) // 3x2 matrix
         
-        val tensor1 = CpuTensorFP32.fromArray(shape1, data1)
-        val tensor2 = CpuTensorFP32.fromArray(shape2, data2)
+        val tensor1: TensorFP32 = CpuTensorFP32.fromArray(shape1, data1)
+        val tensor2: TensorFP32 = CpuTensorFP32.fromArray(shape2, data2)
         
         val result = backend.matmul(tensor1, tensor2)
         
@@ -35,8 +35,8 @@ class MatrixMultiplicationTest {
         val data1 = floatArrayOf(1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f, 9f)
         val data2 = floatArrayOf(9f, 8f, 7f, 6f, 5f, 4f, 3f, 2f, 1f)
         
-        val tensor1 = CpuTensorFP32.fromArray(shape, data1)
-        val tensor2 = CpuTensorFP32.fromArray(shape, data2)
+        val tensor1: TensorFP32 = CpuTensorFP32.fromArray(shape, data1)
+        val tensor2: TensorFP32 = CpuTensorFP32.fromArray(shape, data2)
         
         val result = backend.matmul(tensor1, tensor2)
         
