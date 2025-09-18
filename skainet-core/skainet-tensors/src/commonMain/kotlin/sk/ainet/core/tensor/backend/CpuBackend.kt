@@ -11,18 +11,28 @@ import kotlin.math.*
 public typealias TensorFP32 = Tensor<FP32, Float>
 
 /**
- * Extension function to print scalar tensors (represented as 1D tensor with single element).
- * Returns a string representation of the scalar value.
+ * @deprecated Use the generic tensor printing extensions from sk.ainet.core.tensor.printScalar() instead.
+ * This CPU-specific function will be removed in a future version.
  */
+@Deprecated(
+    message = "Use the generic tensor printing extensions instead",
+    replaceWith = ReplaceWith("this.printScalar()", "sk.ainet.core.tensor.printScalar"),
+    level = DeprecationLevel.WARNING
+)
 public fun TensorFP32.printScalar(): String {
     require(shape.rank == 1 && shape[0] == 1) { "Tensor must be a scalar (1D with single element), got rank ${shape.rank} with shape ${shape.dimensions.contentToString()}" }
     return this[0].toString()
 }
 
 /**
- * Extension function to print vector tensors (1D).
- * Returns a string representation in the format [a, b, c, ...].
+ * @deprecated Use the generic tensor printing extensions from sk.ainet.core.tensor.printVector() instead.
+ * This CPU-specific function will be removed in a future version.
  */
+@Deprecated(
+    message = "Use the generic tensor printing extensions instead",
+    replaceWith = ReplaceWith("this.printVector()", "sk.ainet.core.tensor.printVector"),
+    level = DeprecationLevel.WARNING
+)
 public fun TensorFP32.printVector(): String {
     require(shape.rank == 1) { "Tensor must be a vector (1D), got rank ${shape.rank}" }
     val elements = (0 until shape[0]).map { this[it] }
@@ -30,9 +40,14 @@ public fun TensorFP32.printVector(): String {
 }
 
 /**
- * Extension function to print matrix tensors (2D).
- * Returns a string representation with each row on a separate line.
+ * @deprecated Use the generic tensor printing extensions from sk.ainet.core.tensor.printMatrix() instead.
+ * This CPU-specific function will be removed in a future version.
  */
+@Deprecated(
+    message = "Use the generic tensor printing extensions instead",
+    replaceWith = ReplaceWith("this.printMatrix()", "sk.ainet.core.tensor.printMatrix"),
+    level = DeprecationLevel.WARNING
+)
 public fun TensorFP32.printMatrix(): String {
     require(shape.rank == 2) { "Tensor must be a matrix (2D), got rank ${shape.rank}" }
     val rows = shape[0]
@@ -56,14 +71,19 @@ public fun TensorFP32.printMatrix(): String {
 }
 
 /**
- * General extension function to print tensors of any dimension.
- * Automatically selects the appropriate printing method based on tensor rank and shape.
+ * @deprecated Use the generic tensor printing extensions from sk.ainet.core.tensor.print() instead.
+ * This CPU-specific function will be removed in a future version.
  */
+@Deprecated(
+    message = "Use the generic tensor printing extensions instead",
+    replaceWith = ReplaceWith("this.print()", "sk.ainet.core.tensor.print"),
+    level = DeprecationLevel.WARNING
+)
 public fun TensorFP32.print(): String {
-    return when {
-        shape.rank == 1 && shape[0] == 1 -> printScalar()
-        shape.rank == 1 -> printVector()
-        shape.rank == 2 -> printMatrix()
+    return when (shape.rank) {
+        1 if shape[0] == 1 -> printScalar()
+        1 -> printVector()
+        2 -> printMatrix()
         else -> "Tensor(shape=${shape}, rank=${shape.rank}) - printing not supported for tensors with rank > 2"
     }
 }
