@@ -7,5 +7,5 @@ package sk.ainet.core.tensor
  * The [shape] property defines the dimensions of the tensor, and the [get] operator
  * allows accessing individual elements by their indices.
  */
-public interface Tensor<T : DType, V> : TensorData<T, V>, TensorOps<Tensor<T, V>>
+public interface Tensor<T : DType, V> : TensorData<T, V>, TensorOps<T, V, Tensor<T, V>>
 

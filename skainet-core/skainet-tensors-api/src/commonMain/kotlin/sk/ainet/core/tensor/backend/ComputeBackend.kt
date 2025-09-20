@@ -12,7 +12,7 @@ import sk.ainet.core.tensor.TensorOps
  * hardware platform (CPU, GPU, etc.). Different backends can provide different
  * implementations of the same operations, optimized for their target platform.
  */
-public interface ComputeBackend<D : DType, V> : TensorOps<Tensor<D, V>> {
+public interface ComputeBackend<D : DType, V> : TensorOps<D, V, Tensor<D, V>> {
     /**
      * The name of the backend.
      */

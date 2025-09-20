@@ -9,6 +9,6 @@ public class ReLU<T : DType, V>(override val name: String = "ReLU") : Module<T, 
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun TensorOps<Tensor<T, V>>.forward(input: Tensor<T, V>): Tensor<T, V> = input.relu()
+    override fun Tensor<T, V>.forward(input: Tensor<T, V>): Tensor<T, V> = input.relu()
 }
 

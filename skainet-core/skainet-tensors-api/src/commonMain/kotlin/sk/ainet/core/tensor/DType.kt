@@ -22,6 +22,11 @@ public object Int8 : DType {
     override val name: String = "Int8"
 }
 
+public object Int32 : DType {
+    override val sizeInBits: Int = 32
+    override val name: String = "Int32"
+}
+
 public object FP16 : DType {
     override val sizeInBits: Int = 16
     override val name: String = "Float16"
