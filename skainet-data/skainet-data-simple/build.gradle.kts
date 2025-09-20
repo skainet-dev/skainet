@@ -20,9 +20,13 @@ kotlin {
 
     iosArm64()
     iosSimulatorArm64()
-    macosArm64 ()
-    linuxX64 ()
-    linuxArm64 ()
+    /*
+    macosArm64()
+
+    linuxX64()
+    linuxArm64()
+
+     */
 
     jvm()
 
@@ -33,16 +37,43 @@ kotlin {
     }
 
     sourceSets {
+        androidMain.dependencies {
+            implementation(libs.ktor.client.android)
+        }
         val commonMain by getting {
             dependencies {
                 implementation(project(":skainet-core:skainet-tensors-api"))
                 implementation(project(":skainet-core:skainet-tensors-api"))
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.ktor.client.core)
+                implementation(libs.kotlinx.coroutines)
+
             }
+        }
+
+        jvmMain.dependencies {
+            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.plugins)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.kotlinx.coroutines.core.jvm)
+            implementation(libs.logback.classic) // For logging
         }
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(project(":skainet-core:skainet-performance"))
+        }
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(libs.ktor.client.js)
+            }
+        }
+
+        val iosMain by creating {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
         }
     }
 }
