@@ -1,4 +1,4 @@
-package sk.ai.net.core.tensor
+package sk.ainet.core.tensor
 
 /**
  * Interface representing a multi-dimensional array of numeric values.

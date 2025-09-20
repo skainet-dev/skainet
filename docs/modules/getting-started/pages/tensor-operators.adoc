@@ -1,0 +1,381 @@
+= Tensor Operators
+:toc: left
+:toclevels: 3
+:sectanchors:
+:sectlinks:
+
+Master the complete set of tensor operations available in SKaiNET's TensorOps API for mathematical computations and neural network operations.
+
+== Element-wise Operations
+
+SKaiNET provides comprehensive element-wise operations between tensors and scalars.
+
+=== Tensor-Tensor Operations
+
+Perform element-wise operations between tensors of compatible shapes:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+
+// Create sample tensors
+val tensorA = CpuTensorFP32.fromArray(
+    Shape(2, 3),
+    floatArrayOf(1f, 2f, 3f, 4f, 5f, 6f)
+)
+
+val tensorB = CpuTensorFP32.fromArray(
+    Shape(2, 3),
+    floatArrayOf(2f, 3f, 4f, 5f, 6f, 7f)
+)
+
+with(backend) {
+    // Element-wise addition
+    val sum = tensorA + tensorB
+    println("A + B = ${sum.print()}")
+    // Output: [[3, 5, 7], [9, 11, 13]]
+    
+    // Element-wise subtraction
+    val diff = tensorA - tensorB
+    println("A - B = ${diff.print()}")
+    // Output: [[-1, -1, -1], [-1, -1, -1]]
+    
+    // Element-wise multiplication
+    val product = tensorA * tensorB
+    println("A * B = ${product.print()}")
+    // Output: [[2, 6, 12], [20, 30, 42]]
+    
+    // Element-wise division
+    val quotient = tensorA / tensorB
+    println("A / B = ${quotient.print()}")
+    // Output: [[0.5, 0.67, 0.75], [0.8, 0.83, 0.86]]
+}
+----
+
+=== Tensor-Scalar Operations
+
+Apply scalar operations to entire tensors:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+val tensor = CpuTensorFP32.fromArray(
+    Shape(2, 2),
+    floatArrayOf(1f, 2f, 3f, 4f)
+)
+
+with(backend) {
+    // Scalar addition
+    val added = tensor + 10f
+    println("Tensor + 10 = ${added.print()}")
+    // Output: [[11, 12], [13, 14]]
+    
+    // Scalar multiplication
+    val scaled = tensor * 2.5f
+    println("Tensor * 2.5 = ${scaled.print()}")
+    // Output: [[2.5, 5.0], [7.5, 10.0]]
+    
+    // Works with Int, Float, and Double
+    val intAdded = tensor + 5
+    val doubleScaled = tensor * 3.14
+    
+    // Scalar-tensor operations (commutative)
+    val scaledCommutative = 2f * tensor
+    println("2 * Tensor = ${scaledCommutative.print()}")
+}
+----
+
+== Matrix Operations
+
+=== Matrix Multiplication
+
+The fundamental linear algebra operation for neural networks:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+
+val A = CpuTensorFP32.fromArray(
+    Shape(2, 3),
+    floatArrayOf(1f, 2f, 3f, 4f, 5f, 6f)
+)
+
+val B = CpuTensorFP32.fromArray(
+    Shape(3, 2),
+    floatArrayOf(7f, 8f, 9f, 10f, 11f, 12f)
+)
+
+// Matrix multiplication
+val C = backend.matmul(A, B)
+println("A @ B = ${C.print()}")
+// Output: [[58, 64], [139, 154]]
+----
+
+=== Transpose Operation
+
+Transpose tensors along their last two dimensions:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+val matrix = CpuTensorFP32.fromArray(
+    Shape(2, 3),
+    floatArrayOf(1f, 2f, 3f, 4f, 5f, 6f)
+)
+
+with(backend) {
+    val transposed = matrix.t()
+    println("Original: ${matrix.print()}")
+    // Output: [[1, 2, 3], [4, 5, 6]]
+    
+    println("Transposed: ${transposed.print()}")
+    // Output: [[1, 4], [2, 5], [3, 6]]
+}
+----
+
+=== Dot Product and Scaling
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+val vectorA = CpuTensorFP32.fromArray(Shape(3), floatArrayOf(1f, 2f, 3f))
+val vectorB = CpuTensorFP32.fromArray(Shape(3), floatArrayOf(4f, 5f, 6f))
+
+// Dot product
+val dotResult = backend.dot(vectorA, vectorB)
+println("Dot product: $dotResult")  // 32.0 (1*4 + 2*5 + 3*6)
+
+// Scale tensor by scalar
+val scaled = backend.scale(vectorA, 2.5)
+println("Scaled: ${scaled.print()}")  // [2.5, 5.0, 7.5]
+----
+
+== Activation Functions
+
+Essential non-linear functions for neural networks.
+
+=== ReLU Activation
+
+Rectified Linear Unit - the most common activation function:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+val input = CpuTensorFP32.fromArray(
+    Shape(4),
+    floatArrayOf(-2f, -1f, 0f, 1f, 2f)
+)
+
+with(backend) {
+    val activated = input.relu()
+    println("Input: ${input.print()}")
+    println("ReLU: ${activated.print()}")
+    // Output: [0, 0, 0, 1, 2]
+}
+----
+
+=== Sigmoid Activation
+
+Sigmoid function for probability outputs:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+val input = CpuTensorFP32.fromArray(
+    Shape(3),
+    floatArrayOf(-1f, 0f, 1f)
+)
+
+with(backend) {
+    val activated = input.sigmoid()
+    println("Input: ${input.print()}")
+    println("Sigmoid: ${activated.print()}")
+    // Output: [0.268, 0.5, 0.732]
+}
+----
+
+=== Tanh Activation
+
+Hyperbolic tangent activation:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+val input = CpuTensorFP32.fromArray(
+    Shape(3),
+    floatArrayOf(-1f, 0f, 1f)
+)
+
+with(backend) {
+    val activated = input.tanh()
+    println("Input: ${input.print()}")
+    println("Tanh: ${activated.print()}")
+    // Output: [-0.762, 0.0, 0.762]
+}
+----
+
+=== Softmax Activation
+
+Softmax for multi-class classification:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+val logits = CpuTensorFP32.fromArray(
+    Shape(2, 3),  // Batch size 2, 3 classes
+    floatArrayOf(1f, 2f, 3f, 0.5f, 1.5f, 2.5f)
+)
+
+with(backend) {
+    // Apply softmax along dimension 1 (classes)
+    val probabilities = logits.softmax(dimension = 1)
+    println("Logits: ${logits.print()}")
+    println("Softmax: ${probabilities.print()}")
+    // Each row sums to 1.0
+}
+----
+
+== Tensor Reshaping
+
+=== Flatten Operation
+
+Convert multi-dimensional tensors to 1D or flatten specific dimensions:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+val tensor3D = CpuTensorFP32.fromArray(
+    Shape(2, 3, 4),
+    FloatArray(24) { it.toFloat() }
+)
+
+with(backend) {
+    // Flatten all dimensions
+    val flattened = tensor3D.flatten()
+    println("Original shape: ${tensor3D.shape}")  // Shape(2, 3, 4)
+    println("Flattened shape: ${flattened.shape}")  // Shape(24)
+    
+    // Flatten from dimension 1 onwards (keep batch dimension)
+    val batchFlattened = tensor3D.flatten(startDim = 1)
+    println("Batch flattened shape: ${batchFlattened.shape}")  // Shape(2, 12)
+    
+    // Flatten specific range of dimensions
+    val partialFlattened = tensor3D.flatten(startDim = 1, endDim = 2)
+    println("Partial flattened shape: ${partialFlattened.shape}")  // Shape(2, 12)
+}
+----
+
+== Practical Examples
+
+=== Neural Network Forward Pass
+
+Combine multiple operators for a complete neural network layer:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+
+// Input batch: 32 samples, 784 features (28x28 images)
+val input = CpuTensorFP32.fromArray(
+    Shape(32, 784),
+    FloatArray(32 * 784) { kotlin.random.Random.nextFloat() }
+)
+
+// Layer weights and bias
+val weights = CpuTensorFP32.fromArray(
+    Shape(128, 784),
+    FloatArray(128 * 784) { kotlin.random.Random.nextGaussian().toFloat() * 0.1f }
+)
+val bias = CpuTensorFP32.fromArray(
+    Shape(128),
+    FloatArray(128) { 0f }
+)
+
+with(backend) {
+    // Linear transformation: W @ x^T + b
+    val linearOutput = matmul(input, weights.t()) + bias
+    
+    // Apply ReLU activation
+    val activated = linearOutput.relu()
+    
+    // Apply dropout simulation (multiply by 0.8)
+    val dropped = activated * 0.8f
+    
+    println("Input shape: ${input.shape}")
+    println("Output shape: ${dropped.shape}")
+}
+----
+
+=== Image Processing Pipeline
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+
+// RGB image: 224x224x3
+val image = CpuTensorFP32.fromArray(
+    Shape(224, 224, 3),
+    FloatArray(224 * 224 * 3) { kotlin.random.Random.nextFloat() * 255f }
+)
+
+with(backend) {
+    // Normalize to [0, 1]
+    val normalized = image / 255f
+    
+    // Apply mean subtraction (ImageNet means)
+    val meanSubtracted = normalized - CpuTensorFP32.fromArray(
+        Shape(3),
+        floatArrayOf(0.485f, 0.456f, 0.406f)
+    )
+    
+    // Flatten for fully connected layer
+    val flattened = meanSubtracted.flatten()
+    
+    println("Original shape: ${image.shape}")
+    println("Processed shape: ${flattened.shape}")
+}
+----
+
+== Performance Tips
+
+=== Operator Chaining
+
+Chain operations efficiently within the backend context:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+val input = CpuTensorFP32.fromArray(Shape(100, 50), FloatArray(5000) { it.toFloat() })
+
+with(backend) {
+    // Efficient chaining
+    val result = input
+        .relu()                    // Apply activation
+        .t()                      // Transpose
+        .softmax(dimension = 0)   // Normalize along first dimension
+    
+    // This is more efficient than separate operations
+}
+----
+
+=== Memory Considerations
+
+Be mindful of tensor shapes and memory usage:
+
+[source,kotlin]
+----
+// Large tensors - be careful with memory
+val largeTensor = CpuTensorFP32.fromArray(
+    Shape(1000, 1000),
+    FloatArray(1_000_000) { it.toFloat() }
+)
+
+// Operations create new tensors - manage memory accordingly
+with(backend) {
+    val processed = largeTensor
+        .relu()          // Creates new tensor
+        .softmax(1)      // Creates another new tensor
+    
+    // Original largeTensor still exists in memory
+}
+----

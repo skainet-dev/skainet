@@ -1,4 +1,4 @@
-package sk.ai.net.core.tensor
+package sk.ainet.core.tensor
 
 // Base marker interface for all dtypes
 public sealed interface DType {
