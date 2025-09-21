@@ -22,13 +22,15 @@ class MNISTLoaderTest {
     /**
      * Tests loading the MNIST training dataset.
      */
+    @OptIn(ExperimentalPathApi::class)
     @Test
     fun testLoadTrainingData() = runBlocking {
         // Create a temporary directory for caching
-        val tempDir = createTempDir("mnist-test")
+        val tempDirPath = createTempDirectory("mnist-test")
+        val tempDir = tempDirPath.absolute().toString()
         try {
             // Create a loader with the temporary directory
-            val loader = MNISTLoaderFactory.create(tempDir.absolutePath)
+            val loader = MNISTLoaderFactory.create(tempDir)
 
             // Load the training data
             val dataset = loader.loadTrainingData()
@@ -42,7 +44,7 @@ class MNISTLoaderTest {
             val firstImage = dataset.images[0]
             assertNotNull(firstImage)
             assertEquals(MNISTConstants.IMAGE_PIXELS, firstImage.image.size)
-            assertTrue(firstImage.label >= 0 && firstImage.label <= 9)
+            assertTrue(firstImage.label in 0..9)
 
             // Verify that the cache files were created
             val trainImagesFile = File(tempDir, MNISTConstants.TRAIN_IMAGES_FILENAME.removeSuffix(".gz"))
@@ -55,7 +57,7 @@ class MNISTLoaderTest {
             assertEquals(dataset.size, cachedDataset.size)
         } finally {
             // Clean up
-            tempDir.deleteRecursively()
+            tempDirPath.deleteRecursively()
         }
     }
 
@@ -84,7 +86,7 @@ class MNISTLoaderTest {
             val firstImage = dataset.images[0]
             assertNotNull(firstImage)
             assertEquals(MNISTConstants.IMAGE_PIXELS, firstImage.image.size)
-            assertTrue(firstImage.label >= 0 && firstImage.label <= 9)
+            assertTrue(firstImage.label in 0..9)
 
             // Verify that the cache files were created
             val testImagesFile = File(tempDir, MNISTConstants.TEST_IMAGES_FILENAME.removeSuffix(".gz"))
