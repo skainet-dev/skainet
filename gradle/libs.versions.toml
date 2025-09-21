@@ -1,13 +1,34 @@
 [versions]
 agp = "8.11.2"
 kotlin = "2.2.20"
-kotlinx-coroutines = "1.10.2"
+kotlinxCoroutines = "1.10.2"
 android-minSdk = "24"
 android-compileSdk = "36"
+kotlinxSerializationJson = "1.9.0"
+ktorClientCore = "3.3.0"
+ktorClientPlugins = "3.1.1"
+logbackClassic = "1.5.18"
+
 
 [libraries]
-kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-core-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinxCoroutines" }
+
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientCore" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClientCore" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientCore" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktorClientCore" }
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktorClientCore" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorClientCore" }
+ktor-client-plugins = { module = "io.ktor:ktor-client-plugins", version.ref = "ktorClientPlugins" }
+
+
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
+
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
