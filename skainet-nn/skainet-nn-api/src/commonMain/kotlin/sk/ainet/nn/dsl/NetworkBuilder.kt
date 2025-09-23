@@ -16,37 +16,137 @@ import sk.ainet.nn.topology.MLP
 @DslMarker
 public annotation class NetworkDsl
 
-// Generic network builder function
+/**
+ * Generic network builder function that creates a neural network with specified data type and value type.
+ * 
+ * @param T The data type (DType) - must extend DType (e.g., FP32, FP16, Int8, Int32, Ternary, Int4)
+ * @param V The value type - must match the DType's native type:
+ *   - FP32 → Float
+ *   - FP16 → Float (promoted)
+ *   - Int32 → Int
+ *   - Int8 → Byte
+ *   - Int4 → Byte (promoted)
+ *   - Ternary → Byte (special case)
+ * @param content The DSL content block that defines the network structure
+ * @return A Module<T, V> representing the complete neural network
+ * 
+ * Example usage:
+ * ```kotlin
+ * val fpNetwork = network<FP32, Float> {
+ *     input(784)
+ *     dense(128) { weights { shape -> CpuTensorFP32.random(shape) } }
+ *     dense(10) { weights { shape -> CpuTensorFP32.random(shape) } }
+ * }
+ * 
+ * val intNetwork = network<Int8, Byte> {
+ *     input(28)
+ *     dense(16) { weights { shape -> CpuTensorInt8.ones(shape) } }
+ * }
+ * ```
+ */
 @NetworkDsl
 public fun <T : DType, V> network(content: NeuralNetworkDsl<T, V>.() -> Unit): Module<T, V> = NeuralNetworkDslImpl<T, V>()
     .apply(content)
     .create()
 
-// Backward compatibility - keep existing non-generic function for FP32/Float
+/**
+ * Backward compatibility function - creates a network using FP32/Float precision.
+ * This function maintains compatibility with existing code that doesn't specify generic types.
+ * 
+ * @param content The DSL content block that defines the network structure
+ * @return A Module<FP32, Float> representing the complete neural network
+ */
 @NetworkDsl
 public fun network(content: NeuralNetworkDsl<FP32, Float>.() -> Unit): Module<FP32, Float> = network<FP32, Float>(content)
 
-// Helper functions for common types
+/**
+ * Convenience function for creating FP32/Float precision networks.
+ * Provides explicit type specification for better code readability.
+ * 
+ * @param content The DSL content block that defines the network structure  
+ * @return A Module<FP32, Float> representing the complete neural network
+ */
 @NetworkDsl
 public fun networkFP32(content: NeuralNetworkDsl<FP32, Float>.() -> Unit): Module<FP32, Float> = network<FP32, Float>(content)
 
 @NetworkDsl
 public interface NetworkDslItem
 
+/**
+ * Core DSL interface for building neural networks with generic tensor types.
+ * This interface provides a fluent API for constructing neural network architectures
+ * with support for different data types and precision levels.
+ * 
+ * @param T The data type (DType) that determines the precision and storage format
+ * @param V The value type that corresponds to the native Kotlin type for the DType
+ * 
+ * Type constraints ensure compatibility between DType and value type:
+ * - T must extend DType to ensure valid tensor operations
+ * - V should match the native type expected by the DType implementation
+ * 
+ * Performance considerations:
+ * - FP32/Float: Best accuracy, higher memory usage
+ * - FP16/Float: Reduced memory, slightly lower accuracy  
+ * - Int8/Byte: Minimal memory, quantized operations
+ * - Int32/Int: Integer operations, specific use cases
+ */
 @NetworkDsl
 public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
+    /**
+     * Creates an input layer that defines the entry point for data into the network.
+     * 
+     * @param inputSize The number of input features/dimensions
+     * @param id Optional identifier for the layer (auto-generated if empty)
+     */
     public fun input(inputSize: Int, id: String = "")
 
+    /**
+     * Creates a flatten layer that reshapes multi-dimensional tensors into 1D.
+     * Useful for transitioning from convolutional to dense layers.
+     * 
+     * @param id Optional identifier for the layer
+     * @param content Configuration block for flatten-specific parameters
+     */
     public fun flatten(id: String = "", content: FLATTEN<T, V>.() -> Unit = {})
 
+    /**
+     * Creates a dense (fully connected) layer with specified output dimension.
+     * 
+     * @param outputDimension The number of neurons/output features
+     * @param id Optional identifier for the layer
+     * @param content Configuration block for weights, bias, and activation
+     */
     public fun dense(outputDimension: Int, id: String = "", content: DENSE<T, V>.() -> Unit = {})
 
+    /**
+     * Creates a dense layer without specifying output dimension (must be set in content block).
+     * 
+     * @param id Optional identifier for the layer
+     * @param content Configuration block where output dimension, weights, and bias are set
+     */
     public fun dense(id: String = "", content: DENSE<T, V>.() -> Unit = {})
 
+    /**
+     * Applies an activation function as a separate layer.
+     * 
+     * @param id Optional identifier for the activation layer
+     * @param activation Function that transforms tensor values (e.g., ReLU, Sigmoid)
+     */
     public fun activation(id: String = "", activation: (Tensor<T, V>) -> Tensor<T, V>)
 
+    /**
+     * Groups layers into a sequential block for better organization.
+     * 
+     * @param content DSL block containing the sequence of layers
+     */
     public fun sequential(content: NeuralNetworkDsl<T, V>.() -> Unit)
 
+    /**
+     * Creates a named stage/block within the network for modular design.
+     * 
+     * @param id Identifier for the stage
+     * @param content DSL block containing the layers within this stage
+     */
     public fun stage(id: String, content: NeuralNetworkDsl<T, V>.() -> Unit)
 }
 

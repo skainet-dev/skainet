@@ -3,7 +3,6 @@ package sk.ainet.core.tensor.dsl
 import sk.ainet.core.tensor.DType
 import sk.ainet.core.tensor.Slice
 import sk.ainet.core.tensor.Tensor
-import kotlin.math.abs
 
 /**
  * DSL for tensor slicing mimicking numpy slicing.
