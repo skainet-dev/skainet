@@ -6,6 +6,6 @@ plugins {
 }
 
 allprojects {
-    group = "sk.ai.net"
-    version = "0.0.7"
+    group = "sk.ainet"
+    version = "0.0.1"
 }
