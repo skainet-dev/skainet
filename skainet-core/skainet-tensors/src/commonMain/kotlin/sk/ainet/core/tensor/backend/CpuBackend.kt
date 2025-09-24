@@ -1336,6 +1336,67 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
     override fun ones(shape: Shape): Tensor<FP32, Float> {
         return CpuTensorFP32.ones(shape)
     }
+
+    override fun random(shape: Shape): Tensor<FP32, Float> {
+        return CpuTensorFP32.fromArray(shape, FloatArray(shape.volume) { kotlin.random.Random.nextFloat() })
+    }
+
+    override fun random(shape: Shape, seed: Long): Tensor<FP32, Float> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorFP32.fromArray(shape, FloatArray(shape.volume) { random.nextFloat() })
+    }
+
+    override fun random(shape: Shape, random: kotlin.random.Random): Tensor<FP32, Float> {
+        return CpuTensorFP32.fromArray(shape, FloatArray(shape.volume) { random.nextFloat() })
+    }
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double): Tensor<FP32, Float> {
+        val random = kotlin.random.Random
+        return CpuTensorFP32.fromArray(shape, FloatArray(shape.volume) { 
+            (generateNormalDistribution(random, mean, std)).toFloat()
+        })
+    }
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double, seed: Long): Tensor<FP32, Float> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorFP32.fromArray(shape, FloatArray(shape.volume) { 
+            (generateNormalDistribution(random, mean, std)).toFloat()
+        })
+    }
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double, random: kotlin.random.Random): Tensor<FP32, Float> {
+        return CpuTensorFP32.fromArray(shape, FloatArray(shape.volume) { 
+            (generateNormalDistribution(random, mean, std)).toFloat()
+        })
+    }
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double): Tensor<FP32, Float> {
+        val random = kotlin.random.Random
+        return CpuTensorFP32.fromArray(shape, FloatArray(shape.volume) { 
+            (random.nextDouble(min, max)).toFloat()
+        })
+    }
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double, seed: Long): Tensor<FP32, Float> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorFP32.fromArray(shape, FloatArray(shape.volume) { 
+            (random.nextDouble(min, max)).toFloat()
+        })
+    }
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double, random: kotlin.random.Random): Tensor<FP32, Float> {
+        return CpuTensorFP32.fromArray(shape, FloatArray(shape.volume) { 
+            (random.nextDouble(min, max)).toFloat()
+        })
+    }
+
+    private fun generateNormalDistribution(random: kotlin.random.Random, mean: Double, std: Double): Double {
+        // Box-Muller transform for generating normal distribution
+        val u1 = random.nextDouble()
+        val u2 = random.nextDouble()
+        val z0 = sqrt(-2.0 * ln(u1)) * cos(2.0 * PI * u2)
+        return z0 * std + mean
+    }
 }
 
 /**
@@ -1446,6 +1507,64 @@ public class CpuBackendInt8 : ComputeBackend<Int8, Byte> {
 
     override fun ones(shape: Shape): Tensor<Int8, Byte> =
         CpuTensorInt8.ones(shape)
+
+    override fun random(shape: Shape): Tensor<Int8, Byte> =
+        CpuTensorInt8.fromArray(shape, ByteArray(shape.volume) { kotlin.random.Random.nextInt(-128, 128).toByte() })
+
+    override fun random(shape: Shape, seed: Long): Tensor<Int8, Byte> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorInt8.fromArray(shape, ByteArray(shape.volume) { random.nextInt(-128, 128).toByte() })
+    }
+
+    override fun random(shape: Shape, random: kotlin.random.Random): Tensor<Int8, Byte> =
+        CpuTensorInt8.fromArray(shape, ByteArray(shape.volume) { random.nextInt(-128, 128).toByte() })
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double): Tensor<Int8, Byte> {
+        val random = kotlin.random.Random
+        return CpuTensorInt8.fromArray(shape, ByteArray(shape.volume) { 
+            generateNormalDistributionInt8(random, mean, std)
+        })
+    }
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double, seed: Long): Tensor<Int8, Byte> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorInt8.fromArray(shape, ByteArray(shape.volume) { 
+            generateNormalDistributionInt8(random, mean, std)
+        })
+    }
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double, random: kotlin.random.Random): Tensor<Int8, Byte> =
+        CpuTensorInt8.fromArray(shape, ByteArray(shape.volume) { 
+            generateNormalDistributionInt8(random, mean, std)
+        })
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double): Tensor<Int8, Byte> {
+        val random = kotlin.random.Random
+        return CpuTensorInt8.fromArray(shape, ByteArray(shape.volume) { 
+            random.nextInt(min.toInt().coerceAtLeast(-128), max.toInt().coerceAtMost(127) + 1).toByte()
+        })
+    }
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double, seed: Long): Tensor<Int8, Byte> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorInt8.fromArray(shape, ByteArray(shape.volume) { 
+            random.nextInt(min.toInt().coerceAtLeast(-128), max.toInt().coerceAtMost(127) + 1).toByte()
+        })
+    }
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double, random: kotlin.random.Random): Tensor<Int8, Byte> =
+        CpuTensorInt8.fromArray(shape, ByteArray(shape.volume) { 
+            random.nextInt(min.toInt().coerceAtLeast(-128), max.toInt().coerceAtMost(127) + 1).toByte()
+        })
+
+    private fun generateNormalDistributionInt8(random: kotlin.random.Random, mean: Double, std: Double): Byte {
+        // Box-Muller transform for generating normal distribution
+        val u1 = random.nextDouble()
+        val u2 = random.nextDouble()
+        val z0 = sqrt(-2.0 * ln(u1)) * cos(2.0 * PI * u2)
+        val value = (z0 * std + mean).toInt().coerceIn(-128, 127)
+        return value.toByte()
+    }
 }
 
 /**
@@ -1554,4 +1673,61 @@ public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
 
     override fun ones(shape: Shape): Tensor<Int32, Int> =
         CpuTensorInt32.ones(shape)
+
+    override fun random(shape: Shape): Tensor<Int32, Int> =
+        CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { kotlin.random.Random.nextInt() })
+
+    override fun random(shape: Shape, seed: Long): Tensor<Int32, Int> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { random.nextInt() })
+    }
+
+    override fun random(shape: Shape, random: kotlin.random.Random): Tensor<Int32, Int> =
+        CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { random.nextInt() })
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double): Tensor<Int32, Int> {
+        val random = kotlin.random.Random
+        return CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { 
+            generateNormalDistributionInt32(random, mean, std)
+        })
+    }
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double, seed: Long): Tensor<Int32, Int> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { 
+            generateNormalDistributionInt32(random, mean, std)
+        })
+    }
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double, random: kotlin.random.Random): Tensor<Int32, Int> =
+        CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { 
+            generateNormalDistributionInt32(random, mean, std)
+        })
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double): Tensor<Int32, Int> {
+        val random = kotlin.random.Random
+        return CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { 
+            random.nextInt(min.toInt(), max.toInt() + 1)
+        })
+    }
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double, seed: Long): Tensor<Int32, Int> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { 
+            random.nextInt(min.toInt(), max.toInt() + 1)
+        })
+    }
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double, random: kotlin.random.Random): Tensor<Int32, Int> =
+        CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { 
+            random.nextInt(min.toInt(), max.toInt() + 1)
+        })
+
+    private fun generateNormalDistributionInt32(random: kotlin.random.Random, mean: Double, std: Double): Int {
+        // Box-Muller transform for generating normal distribution
+        val u1 = random.nextDouble()
+        val u2 = random.nextDouble()
+        val z0 = sqrt(-2.0 * ln(u1)) * cos(2.0 * PI * u2)
+        return (z0 * std + mean).toInt()
+    }
 }
