@@ -7,6 +7,8 @@ import sk.ainet.core.tensor.backend.CpuTensorInt32
 import sk.ainet.core.tensor.FP32
 import sk.ainet.core.tensor.Int8
 import sk.ainet.core.tensor.Int32
+import sk.ainet.core.tensor.backend.CpuBackend
+import sk.ainet.core.tensor.backend.CpuBackendInt8
 import kotlin.test.*
 
 /**
@@ -73,7 +75,10 @@ class NetworkBuilderGenericTest {
                 weights { shape -> CpuTensorFP32.ones(shape) }
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
-            dense(1)
+            dense(1) {
+                weights { shape -> CpuTensorFP32.ones(shape) }
+                bias { shape -> CpuTensorFP32.zeros(shape) }
+            }
         }
         
         assertNotNull(network)
@@ -137,7 +142,10 @@ class NetworkBuilderGenericTest {
                     bias { shape -> CpuTensorFP32.zeros(shape) }
                 }
             }
-            dense(1)
+            dense(1) {
+                weights { shape -> CpuTensorFP32.ones(shape) }
+                bias { shape -> CpuTensorFP32.zeros(shape) }
+            }
         }
         
         assertNotNull(network)
@@ -175,12 +183,12 @@ class NetworkBuilderGenericTest {
         
         val linear1 = sk.ainet.nn.Linear(2, 4, "layer1", 
             CpuTensorFP32.ones(Shape(4, 2)), 
-            CpuTensorFP32.zeros(Shape(1, 4))
+            CpuTensorFP32.zeros(Shape(4))
         )
         
         val linear2 = sk.ainet.nn.Linear(4, 1, "layer2",
             CpuTensorFP32.ones(Shape(1, 4)),
-            CpuTensorFP32.zeros(Shape(1, 1))
+            CpuTensorFP32.zeros(Shape(1))
         )
         
         val network = builder.add(linear1, linear2).build()
@@ -194,17 +202,26 @@ class NetworkBuilderGenericTest {
         // Test that different DTypes create different network types
         val networkFP32 = network<FP32, Float> {
             input(2)
-            dense(1) { weights { CpuTensorFP32.ones(it) } }
+            dense(1) { 
+                weights { CpuTensorFP32.ones(it) }
+                bias { CpuTensorFP32.zeros(it) }
+            }
         }
 
         val networkInt8 = network<Int8, Byte> {
             input(2)
-            dense(1) { weights { CpuTensorInt8.ones(it) } }
+            dense(1) { 
+                weights { CpuTensorInt8.ones(it) }
+                bias { CpuTensorInt8.zeros(it) }
+            }
         }
 
         val networkInt32 = network<Int32, Int> {
             input(2)
-            dense(1) { weights { CpuTensorInt32.ones(it) } }
+            dense(1) { 
+                weights { CpuTensorInt32.ones(it) }
+                bias { CpuTensorInt32.zeros(it) }
+            }
         }
         
         // All should be created successfully

@@ -1,8 +1,27 @@
 package sk.ainet.core.tensor.backend
 
 import sk.ainet.core.tensor.*
-import sk.ainet.core.tensor.backend.ComputeBackend
 import kotlin.math.*
+
+/**
+ * Object to initialize default tensor factories.
+ * The init block ensures factories are set up when this class is first accessed.
+ */
+internal object TensorFactoryInitializer {
+    init {
+        DefaultTensorFactories.setFP32Factory(CpuBackend())
+        DefaultTensorFactories.setInt8Factory(CpuBackendInt8())  
+        DefaultTensorFactories.setInt32Factory(CpuBackendInt32())
+    }
+    
+    /**
+     * This function ensures the initializer is called.
+     * Called by backend classes to guarantee initialization.
+     */
+    fun ensureInitialized() {
+        // Just accessing this object ensures the init block runs
+    }
+}
 
 /**
  * Convenient type alias for FP32 tensors with Float values.
@@ -214,46 +233,62 @@ public class CpuTensorInt8(
     // Tensor-Tensor operations
     override fun Tensor<Int8, Byte>.plus(other: Tensor<Int8, Byte>): Tensor<Int8, Byte> {
         require(this is CpuTensorInt8 && other is CpuTensorInt8) { "Both tensors must be CpuTensorInt8" }
-        require(this.shape == other.shape) { "Tensors must have same shape for addition" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for addition: ${this.shape} vs ${other.shape}" }
 
-        val result = ByteArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = clampToByte((this.data[i] + other.data[i]).toDouble())
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = ByteArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = clampToByte((this.data[thisIndex] + other.data[otherIndex]).toDouble())
         }
-        return CpuTensorInt8(this.shape, result)
+        return CpuTensorInt8(resultShape, result)
     }
 
     override fun Tensor<Int8, Byte>.minus(other: Tensor<Int8, Byte>): Tensor<Int8, Byte> {
         require(this is CpuTensorInt8 && other is CpuTensorInt8) { "Both tensors must be CpuTensorInt8" }
-        require(this.shape == other.shape) { "Tensors must have same shape for subtraction" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for subtraction: ${this.shape} vs ${other.shape}" }
 
-        val result = ByteArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = clampToByte((this.data[i] - other.data[i]).toDouble())
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = ByteArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = clampToByte((this.data[thisIndex] - other.data[otherIndex]).toDouble())
         }
-        return CpuTensorInt8(this.shape, result)
+        return CpuTensorInt8(resultShape, result)
     }
 
     override fun Tensor<Int8, Byte>.times(other: Tensor<Int8, Byte>): Tensor<Int8, Byte> {
         require(this is CpuTensorInt8 && other is CpuTensorInt8) { "Both tensors must be CpuTensorInt8" }
-        require(this.shape == other.shape) { "Tensors must have same shape for element-wise multiplication" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise multiplication: ${this.shape} vs ${other.shape}" }
 
-        val result = ByteArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = clampToByte((this.data[i] * other.data[i]).toDouble())
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = ByteArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = clampToByte((this.data[thisIndex] * other.data[otherIndex]).toDouble())
         }
-        return CpuTensorInt8(this.shape, result)
+        return CpuTensorInt8(resultShape, result)
     }
 
     override fun Tensor<Int8, Byte>.div(other: Tensor<Int8, Byte>): Tensor<Int8, Byte> {
         require(this is CpuTensorInt8 && other is CpuTensorInt8) { "Both tensors must be CpuTensorInt8" }
-        require(this.shape == other.shape) { "Tensors must have same shape for element-wise division" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise division: ${this.shape} vs ${other.shape}" }
 
-        val result = ByteArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = if (other.data[i] != 0.toByte()) clampToByte((this.data[i] / other.data[i]).toDouble()) else 0
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = ByteArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = if (other.data[otherIndex] != 0.toByte()) clampToByte((this.data[thisIndex] / other.data[otherIndex]).toDouble()) else 0
         }
-        return CpuTensorInt8(this.shape, result)
+        return CpuTensorInt8(resultShape, result)
     }
 
     // Tensor-Scalar operations
@@ -583,46 +618,62 @@ public class CpuTensorInt32(
     // Tensor-Tensor operations
     override fun Tensor<Int32, Int>.plus(other: Tensor<Int32, Int>): Tensor<Int32, Int> {
         require(this is CpuTensorInt32 && other is CpuTensorInt32) { "Both tensors must be CpuTensorInt32" }
-        require(this.shape == other.shape) { "Tensors must have same shape for addition" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for addition: ${this.shape} vs ${other.shape}" }
 
-        val result = IntArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = clampToInt(this.data[i].toLong() + other.data[i].toLong())
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = IntArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = clampToInt(this.data[thisIndex].toLong() + other.data[otherIndex].toLong())
         }
-        return CpuTensorInt32(this.shape, result)
+        return CpuTensorInt32(resultShape, result)
     }
 
     override fun Tensor<Int32, Int>.minus(other: Tensor<Int32, Int>): Tensor<Int32, Int> {
         require(this is CpuTensorInt32 && other is CpuTensorInt32) { "Both tensors must be CpuTensorInt32" }
-        require(this.shape == other.shape) { "Tensors must have same shape for subtraction" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for subtraction: ${this.shape} vs ${other.shape}" }
 
-        val result = IntArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = clampToInt(this.data[i].toLong() - other.data[i].toLong())
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = IntArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = clampToInt(this.data[thisIndex].toLong() - other.data[otherIndex].toLong())
         }
-        return CpuTensorInt32(this.shape, result)
+        return CpuTensorInt32(resultShape, result)
     }
 
     override fun Tensor<Int32, Int>.times(other: Tensor<Int32, Int>): Tensor<Int32, Int> {
         require(this is CpuTensorInt32 && other is CpuTensorInt32) { "Both tensors must be CpuTensorInt32" }
-        require(this.shape == other.shape) { "Tensors must have same shape for element-wise multiplication" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise multiplication: ${this.shape} vs ${other.shape}" }
 
-        val result = IntArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = clampToInt(this.data[i].toLong() * other.data[i].toLong())
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = IntArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = clampToInt(this.data[thisIndex].toLong() * other.data[otherIndex].toLong())
         }
-        return CpuTensorInt32(this.shape, result)
+        return CpuTensorInt32(resultShape, result)
     }
 
     override fun Tensor<Int32, Int>.div(other: Tensor<Int32, Int>): Tensor<Int32, Int> {
         require(this is CpuTensorInt32 && other is CpuTensorInt32) { "Both tensors must be CpuTensorInt32" }
-        require(this.shape == other.shape) { "Tensors must have same shape for element-wise division" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise division: ${this.shape} vs ${other.shape}" }
 
-        val result = IntArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = if (other.data[i] != 0) this.data[i] / other.data[i] else 0
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = IntArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = if (other.data[otherIndex] != 0) this.data[thisIndex] / other.data[otherIndex] else 0
         }
-        return CpuTensorInt32(this.shape, result)
+        return CpuTensorInt32(resultShape, result)
     }
 
     // Tensor-Scalar operations
@@ -880,11 +931,79 @@ public class CpuTensorInt32(
     }
 }
 
+// Broadcasting utility functions
+private fun canBroadcast(shape1: Shape, shape2: Shape): Boolean {
+    val rank1 = shape1.rank
+    val rank2 = shape2.rank
+    val maxRank = maxOf(rank1, rank2)
+    
+    for (i in 0 until maxRank) {
+        val dim1 = if (i < rank1) shape1[rank1 - 1 - i] else 1
+        val dim2 = if (i < rank2) shape2[rank2 - 1 - i] else 1
+        
+        if (dim1 != dim2 && dim1 != 1 && dim2 != 1) {
+            return false
+        }
+    }
+    return true
+}
+
+private fun getBroadcastShape(shape1: Shape, shape2: Shape): Shape {
+    val rank1 = shape1.rank
+    val rank2 = shape2.rank
+    val maxRank = maxOf(rank1, rank2)
+    val resultDims = IntArray(maxRank)
+    
+    for (i in 0 until maxRank) {
+        val dim1 = if (i < rank1) shape1[rank1 - 1 - i] else 1
+        val dim2 = if (i < rank2) shape2[rank2 - 1 - i] else 1
+        resultDims[maxRank - 1 - i] = maxOf(dim1, dim2)
+    }
+    
+    return Shape(*resultDims)
+}
+
+private fun broadcastIndex(flatIndex: Int, resultShape: Shape, originalShape: Shape): Int {
+    val resultRank = resultShape.rank
+    val originalRank = originalShape.rank
+    
+    // Convert flat index to multi-dimensional indices for result shape
+    val resultIndices = IntArray(resultRank)
+    var temp = flatIndex
+    for (i in resultRank - 1 downTo 0) {
+        resultIndices[i] = temp % resultShape[i]
+        temp /= resultShape[i]
+    }
+    
+    // Map to original shape indices (handle broadcasting)
+    val originalIndices = IntArray(originalRank)
+    for (i in 0 until originalRank) {
+        val resultI = resultRank - originalRank + i
+        if (resultI >= 0) {
+            val originalDim = originalShape[i]
+            val resultDim = resultShape[resultI]
+            originalIndices[i] = if (originalDim == 1 && resultDim > 1) 0 else resultIndices[resultI]
+        }
+    }
+    
+    // Convert back to flat index for original shape
+    var originalIndex = 0
+    for (i in 0 until originalRank) {
+        originalIndex = originalIndex * originalShape[i] + originalIndices[i]
+    }
+    
+    return originalIndex
+}
+
 /**
  * A CPU-based implementation of the ComputeBackend interface for FP32/Float tensors.
  */
 public class CpuBackend : ComputeBackend<FP32, Float> {
     override val name: String = "CPU"
+    
+    init {
+        TensorFactoryInitializer.ensureInitialized()
+    }
 
     // Basic operations - implement the actual computation logic
     override fun matmul(a: Tensor<FP32, Float>, b: Tensor<FP32, Float>): Tensor<FP32, Float> {
@@ -930,46 +1049,62 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
     // Tensor-Tensor operations - implement actual computation logic
     override fun Tensor<FP32, Float>.plus(other: Tensor<FP32, Float>): Tensor<FP32, Float> {
         require(this is CpuTensorFP32 && other is CpuTensorFP32) { "Both tensors must be CpuTensorFP32" }
-        require(this.shape == other.shape) { "Tensors must have same shape for addition" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for addition: ${this.shape} vs ${other.shape}" }
 
-        val result = FloatArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = this.data[i] + other.data[i]
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = FloatArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = this.data[thisIndex] + other.data[otherIndex]
         }
-        return CpuTensorFP32(this.shape, result)
+        return CpuTensorFP32(resultShape, result)
     }
 
     override fun Tensor<FP32, Float>.minus(other: Tensor<FP32, Float>): Tensor<FP32, Float> {
         require(this is CpuTensorFP32 && other is CpuTensorFP32) { "Both tensors must be CpuTensorFP32" }
-        require(this.shape == other.shape) { "Tensors must have same shape for subtraction" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for subtraction: ${this.shape} vs ${other.shape}" }
 
-        val result = FloatArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = this.data[i] - other.data[i]
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = FloatArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = this.data[thisIndex] - other.data[otherIndex]
         }
-        return CpuTensorFP32(this.shape, result)
+        return CpuTensorFP32(resultShape, result)
     }
 
     override fun Tensor<FP32, Float>.times(other: Tensor<FP32, Float>): Tensor<FP32, Float> {
         require(this is CpuTensorFP32 && other is CpuTensorFP32) { "Both tensors must be CpuTensorFP32" }
-        require(this.shape == other.shape) { "Tensors must have same shape for element-wise multiplication" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise multiplication: ${this.shape} vs ${other.shape}" }
 
-        val result = FloatArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = this.data[i] * other.data[i]
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = FloatArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = this.data[thisIndex] * other.data[otherIndex]
         }
-        return CpuTensorFP32(this.shape, result)
+        return CpuTensorFP32(resultShape, result)
     }
 
     override fun Tensor<FP32, Float>.div(other: Tensor<FP32, Float>): Tensor<FP32, Float> {
         require(this is CpuTensorFP32 && other is CpuTensorFP32) { "Both tensors must be CpuTensorFP32" }
-        require(this.shape == other.shape) { "Tensors must have same shape for element-wise division" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise division: ${this.shape} vs ${other.shape}" }
 
-        val result = FloatArray(this.data.size)
-        for (i in this.data.indices) {
-            result[i] = this.data[i] / other.data[i]
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = FloatArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = this.data[thisIndex] / other.data[otherIndex]
         }
-        return CpuTensorFP32(this.shape, result)
+        return CpuTensorFP32(resultShape, result)
     }
 
     // Tensor-Scalar operations
@@ -1192,4 +1327,231 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
         val newShape = Shape(*newDimensions.toIntArray())
         return CpuTensorFP32(newShape, this.data.copyOf())
     }
+
+    // TensorFactory interface implementation
+    override fun zeros(shape: Shape): Tensor<FP32, Float> {
+        return CpuTensorFP32.zeros(shape)
+    }
+
+    override fun ones(shape: Shape): Tensor<FP32, Float> {
+        return CpuTensorFP32.ones(shape)
+    }
+}
+
+/**
+ * A CPU-based implementation of the ComputeBackend interface for Int8/Byte tensors.
+ */
+public class CpuBackendInt8 : ComputeBackend<Int8, Byte> {
+    override val name: String = "CPU-Int8"
+    
+    init {
+        TensorFactoryInitializer.ensureInitialized()
+    }
+
+    override fun matmul(a: Tensor<Int8, Byte>, b: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
+        (a as CpuTensorInt8).matmul(a, b)
+
+    override fun scale(a: Tensor<Int8, Byte>, scalar: Double): Tensor<Int8, Byte> =
+        (a as CpuTensorInt8).scale(a, scalar)
+
+    override fun dot(a: Tensor<Int8, Byte>, b: Tensor<Int8, Byte>): Double =
+        (a as CpuTensorInt8).dot(a, b)
+
+    override fun Tensor<Int8, Byte>.plus(other: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).plus(other)
+
+    override fun Tensor<Int8, Byte>.minus(other: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).minus(other)
+
+    override fun Tensor<Int8, Byte>.times(other: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).times(other)
+
+    override fun Tensor<Int8, Byte>.div(other: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).div(other)
+
+    override fun Tensor<Int8, Byte>.plus(scalar: Int): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).plus(scalar)
+
+    override fun Tensor<Int8, Byte>.minus(scalar: Int): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).minus(scalar)
+
+    override fun Tensor<Int8, Byte>.times(scalar: Int): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).times(scalar)
+
+    override fun Tensor<Int8, Byte>.div(scalar: Int): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).div(scalar)
+
+    override fun Tensor<Int8, Byte>.plus(scalar: Float): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).plus(scalar)
+
+    override fun Tensor<Int8, Byte>.minus(scalar: Float): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).minus(scalar)
+
+    override fun Tensor<Int8, Byte>.times(scalar: Float): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).times(scalar)
+
+    override fun Tensor<Int8, Byte>.div(scalar: Float): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).div(scalar)
+
+    override fun Tensor<Int8, Byte>.plus(scalar: Double): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).plus(scalar)
+
+    override fun Tensor<Int8, Byte>.minus(scalar: Double): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).minus(scalar)
+
+    override fun Tensor<Int8, Byte>.times(scalar: Double): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).times(scalar)
+
+    override fun Tensor<Int8, Byte>.div(scalar: Double): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).div(scalar)
+
+    override fun Double.plus(t: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
+        (t as CpuTensorInt8).plus(this)
+
+    override fun Double.minus(t: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
+        (t as CpuTensorInt8).minus(this).let {
+            CpuTensorInt8.fromArray(t.shape, ByteArray(t.shape.volume) { i ->
+                ((this - (t as CpuTensorInt8).data[i].toInt()).toInt().toByte())
+            })
+        }
+
+    override fun Double.times(t: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
+        (t as CpuTensorInt8).times(this)
+
+    override fun Double.div(t: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
+        CpuTensorInt8.fromArray(t.shape, ByteArray(t.shape.volume) { i ->
+            ((this / (t as CpuTensorInt8).data[i].toInt()).toInt().toByte())
+        })
+
+    override fun Tensor<Int8, Byte>.t(): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).t()
+
+    override fun Tensor<Int8, Byte>.relu(): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).relu()
+
+    override fun Tensor<Int8, Byte>.sigmoid(): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).sigmoid()
+
+    override fun Tensor<Int8, Byte>.tanh(): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).tanh()
+
+    override fun Tensor<Int8, Byte>.softmax(dimension: Int): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).softmax(dimension)
+
+    override fun Tensor<Int8, Byte>.flatten(startDim: Int, endDim: Int): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).flatten(startDim, endDim)
+
+    override fun zeros(shape: Shape): Tensor<Int8, Byte> =
+        CpuTensorInt8.zeros(shape)
+
+    override fun ones(shape: Shape): Tensor<Int8, Byte> =
+        CpuTensorInt8.ones(shape)
+}
+
+/**
+ * A CPU-based implementation of the ComputeBackend interface for Int32/Int tensors.
+ */
+public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
+    override val name: String = "CPU-Int32"
+    
+    init {
+        TensorFactoryInitializer.ensureInitialized()
+    }
+
+    override fun matmul(a: Tensor<Int32, Int>, b: Tensor<Int32, Int>): Tensor<Int32, Int> =
+        (a as CpuTensorInt32).matmul(a, b)
+
+    override fun scale(a: Tensor<Int32, Int>, scalar: Double): Tensor<Int32, Int> =
+        (a as CpuTensorInt32).scale(a, scalar)
+
+    override fun dot(a: Tensor<Int32, Int>, b: Tensor<Int32, Int>): Double =
+        (a as CpuTensorInt32).dot(a, b)
+
+    override fun Tensor<Int32, Int>.plus(other: Tensor<Int32, Int>): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).plus(other)
+
+    override fun Tensor<Int32, Int>.minus(other: Tensor<Int32, Int>): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).minus(other)
+
+    override fun Tensor<Int32, Int>.times(other: Tensor<Int32, Int>): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).times(other)
+
+    override fun Tensor<Int32, Int>.div(other: Tensor<Int32, Int>): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).div(other)
+
+    override fun Tensor<Int32, Int>.plus(scalar: Int): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).plus(scalar)
+
+    override fun Tensor<Int32, Int>.minus(scalar: Int): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).minus(scalar)
+
+    override fun Tensor<Int32, Int>.times(scalar: Int): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).times(scalar)
+
+    override fun Tensor<Int32, Int>.div(scalar: Int): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).div(scalar)
+
+    override fun Tensor<Int32, Int>.plus(scalar: Float): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).plus(scalar)
+
+    override fun Tensor<Int32, Int>.minus(scalar: Float): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).minus(scalar)
+
+    override fun Tensor<Int32, Int>.times(scalar: Float): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).times(scalar)
+
+    override fun Tensor<Int32, Int>.div(scalar: Float): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).div(scalar)
+
+    override fun Tensor<Int32, Int>.plus(scalar: Double): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).plus(scalar)
+
+    override fun Tensor<Int32, Int>.minus(scalar: Double): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).minus(scalar)
+
+    override fun Tensor<Int32, Int>.times(scalar: Double): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).times(scalar)
+
+    override fun Tensor<Int32, Int>.div(scalar: Double): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).div(scalar)
+
+    override fun Double.plus(t: Tensor<Int32, Int>): Tensor<Int32, Int> =
+        (t as CpuTensorInt32).plus(this)
+
+    override fun Double.minus(t: Tensor<Int32, Int>): Tensor<Int32, Int> =
+        CpuTensorInt32.fromArray(t.shape, IntArray(t.shape.volume) { i ->
+            (this - (t as CpuTensorInt32).data[i]).toInt()
+        })
+
+    override fun Double.times(t: Tensor<Int32, Int>): Tensor<Int32, Int> =
+        (t as CpuTensorInt32).times(this)
+
+    override fun Double.div(t: Tensor<Int32, Int>): Tensor<Int32, Int> =
+        CpuTensorInt32.fromArray(t.shape, IntArray(t.shape.volume) { i ->
+            (this / (t as CpuTensorInt32).data[i]).toInt()
+        })
+
+    override fun Tensor<Int32, Int>.t(): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).t()
+
+    override fun Tensor<Int32, Int>.relu(): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).relu()
+
+    override fun Tensor<Int32, Int>.sigmoid(): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).sigmoid()
+
+    override fun Tensor<Int32, Int>.tanh(): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).tanh()
+
+    override fun Tensor<Int32, Int>.softmax(dimension: Int): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).softmax(dimension)
+
+    override fun Tensor<Int32, Int>.flatten(startDim: Int, endDim: Int): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).flatten(startDim, endDim)
+
+    override fun zeros(shape: Shape): Tensor<Int32, Int> =
+        CpuTensorInt32.zeros(shape)
+
+    override fun ones(shape: Shape): Tensor<Int32, Int> =
+        CpuTensorInt32.ones(shape)
 }

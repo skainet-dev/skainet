@@ -7,6 +7,8 @@ import sk.ainet.core.tensor.backend.CpuTensorInt32
 import sk.ainet.core.tensor.FP32
 import sk.ainet.core.tensor.Int8
 import sk.ainet.core.tensor.Int32
+import sk.ainet.core.tensor.Tensor
+import sk.ainet.core.tensor.TensorFactory
 import kotlin.test.*
 
 /**
@@ -18,7 +20,7 @@ class NetworkBuilderTest {
     @Test
     fun testNetworkBuilderFP32() {
         // Test FP32/Float combination - backward compatibility
-        val network = network<FP32, Float> {
+        val network = network {
             input(2)
             dense(4) {
                 weights { shape -> CpuTensorFP32.ones(shape) }
@@ -42,7 +44,16 @@ class NetworkBuilderTest {
     @Test
     fun testNetworkBuilderInt8() {
         // Test Int8/Byte combination
-        val network = network<Int8, Byte> {
+        val network = network<Int8, Byte>(object:TensorFactory<Int8, Byte>{
+            override fun zeros(shape: Shape): Tensor<Int8, Byte> {
+                TODO("Not yet implemented")
+            }
+
+            override fun ones(shape: Shape): Tensor<Int8, Byte> {
+                TODO("Not yet implemented")
+            }
+
+        }) {
             input(2)
             dense(3) {
                 weights { shape -> CpuTensorInt8.ones(shape) }
@@ -56,7 +67,7 @@ class NetworkBuilderTest {
         }
         
         assertNotNull(network)
-        assertEquals("MLP", network.id)
+        assertEquals("MLP", network.name)
         
         // Test forward pass
         val input = CpuTensorInt8.fromArray(Shape(1, 2), byteArrayOf(1, 2))
@@ -89,7 +100,9 @@ class NetworkBuilderTest {
         val network = network {
             input(2)
             dense(4) {
-                activation = ReLU<FP32, Float>()
+                activation = { tensor -> 
+                    with(tensor) { relu() }
+                }
                 weights { shape -> CpuTensorFP32.ones(shape) }
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
@@ -107,7 +120,7 @@ class NetworkBuilderTest {
     @Test
     fun testNetworkFP32HelperFunction() {
         // Test networkFP32 convenience function
-        val network = networkFP32 {
+        val network = network {
             input(2)
             dense(1) {
                 weights { shape -> CpuTensorFP32.ones(shape) }
@@ -149,11 +162,13 @@ class NetworkBuilderTest {
     @Test
     fun testSequentialWithGenericTypes() {
         // Test sequential blocks with generic types
-        val network = network<FP32, Float> {
+        val network = network {
             input(2)
             sequential {
                 dense(4) {
-                    activation = ReLU<FP32, Float>()
+                    activation = { tensor -> 
+                        with(tensor) { relu() }
+                    }
                     weights { shape -> CpuTensorFP32.ones(shape) }
                     bias { shape -> CpuTensorFP32.zeros(shape) }
                 }
@@ -174,11 +189,13 @@ class NetworkBuilderTest {
     @Test
     fun testStageWithGenericTypes() {
         // Test stage blocks with generic types
-        val network = network<FP32, Float> {
+        val network = network {
             input(3)
             stage("feature_extraction") {
                 dense(8) {
-                    activation = ReLU<FP32, Float>()
+                    activation = { tensor -> 
+                        with(tensor) { relu() }
+                    }
                     weights { shape -> CpuTensorFP32.ones(shape) }
                     bias { shape -> CpuTensorFP32.zeros(shape) }
                 }
@@ -201,17 +218,15 @@ class NetworkBuilderTest {
     @Test
     fun testActivationFunctionGenericTypes() {
         // Test activation functions with generic tensor types
-        val network = network<FP32, Float> {
+        val network = network {
             input(2)
             dense(4) {
                 weights { shape -> CpuTensorFP32.ones(shape) }
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
             activation { tensor -> 
-                // Custom activation function for generic tensor
-                with(tensor.backend) {
-                    tensor.map { if (it > 0.0f) it else 0.0f }
-                }
+                // Simple ReLU activation function
+                with(tensor) { relu() }
             }
             dense(1)
         }
@@ -240,7 +255,7 @@ class NetworkBuilderTest {
         val network = builder.add(linear1, linear2).build()
         
         assertNotNull(network)
-        assertEquals("MLP", network.id)
+        assertEquals("MLP", network.name)
         
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
         val output = with(network) { input.forward(input) }
