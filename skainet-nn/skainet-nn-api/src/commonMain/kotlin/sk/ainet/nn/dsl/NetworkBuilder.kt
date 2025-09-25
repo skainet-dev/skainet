@@ -55,7 +55,7 @@ public fun <T : DType, V> network(
     factory: TensorFactory<T, V>,
     content: NeuralNetworkDsl<T, V>.() -> Unit
 ): Module<T, V> =
-    NeuralNetworkDslImpl<T, V>(factory)
+    NeuralNetworkDslImpl(factory)
         .apply(content)
         .create()
 
@@ -70,7 +70,7 @@ public fun <T : DType, V> network(
 @NetworkDsl
 @JvmName("networkFP32Default")
 public fun network(content: NeuralNetworkDsl<FP32, Float>.() -> Unit): Module<FP32, Float> =
-    network(sk.ainet.core.tensor.backend.CpuBackend(), content)
+    network(CpuBackend(), content)
 
 /**
  * Convenience function for creating FP32/Float precision networks.
@@ -82,7 +82,7 @@ public fun network(content: NeuralNetworkDsl<FP32, Float>.() -> Unit): Module<FP
  */
 @NetworkDsl
 public fun networkFP32(content: NeuralNetworkDsl<FP32, Float>.() -> Unit): Module<FP32, Float> =
-    network(sk.ainet.core.tensor.backend.CpuBackend(), content)
+    network(CpuBackend(), content)
 
 /**
  * Generic network builder function with automatic factory resolution.
@@ -230,73 +230,83 @@ public interface DENSE<T : DType, V> : NetworkDslItem {
     public var units: Int
     public fun weights(initBlock: (Shape) -> Tensor<T, V>)
     public fun bias(initBlock: (Shape) -> Tensor<T, V>)
-    
+
     // Factory-based convenience methods
     public val factory: TensorFactory<T, V>
-    
+
     // Internal context for shape information
     public val weightsShape: Shape
     public val biasShape: Shape
-    
+
     /**
      * Creates a tensor filled with zeros using the factory.
      */
     public fun zeros(shape: Shape): Tensor<T, V> = factory.zeros(shape)
-    
+
     /**
      * Creates a tensor filled with ones using the factory.
      */
     public fun ones(shape: Shape): Tensor<T, V> = factory.ones(shape)
-    
+
     /**
      * Creates a tensor filled with random values using the factory.
      */
     public fun random(shape: Shape): Tensor<T, V> = factory.random(shape)
-    
+
     /**
      * Creates a tensor filled with random values using a specific seed.
      */
     public fun random(shape: Shape, seed: Long): Tensor<T, V> = factory.random(shape, seed)
-    
+
     /**
      * Creates a tensor filled with random values using a specific Random instance.
      */
     public fun random(shape: Shape, random: kotlin.random.Random): Tensor<T, V> = factory.random(shape, random)
-    
+
     /**
      * Creates a tensor filled with normally distributed random values.
      */
-    public fun randomNormal(shape: Shape, mean: Double = 0.0, std: Double = 1.0): Tensor<T, V> = 
+    public fun randomNormal(shape: Shape, mean: Double = 0.0, std: Double = 1.0): Tensor<T, V> =
         factory.randomNormal(shape, mean, std)
-    
+
     /**
      * Creates a tensor filled with normally distributed random values using a specific seed.
      */
-    public fun randomNormal(shape: Shape, mean: Double = 0.0, std: Double = 1.0, seed: Long): Tensor<T, V> = 
+    public fun randomNormal(shape: Shape, mean: Double = 0.0, std: Double = 1.0, seed: Long): Tensor<T, V> =
         factory.randomNormal(shape, mean, std, seed)
-    
+
     /**
      * Creates a tensor filled normally distributed random values using a specific Random instance.
      */
-    public fun randomNormal(shape: Shape, mean: Double = 0.0, std: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> = 
+    public fun randomNormal(
+        shape: Shape,
+        mean: Double = 0.0,
+        std: Double = 1.0,
+        random: kotlin.random.Random
+    ): Tensor<T, V> =
         factory.randomNormal(shape, mean, std, random)
-    
+
     /**
      * Creates a tensor filled with uniformly distributed random values.
      */
-    public fun randomUniform(shape: Shape, min: Double = 0.0, max: Double = 1.0): Tensor<T, V> = 
+    public fun randomUniform(shape: Shape, min: Double = 0.0, max: Double = 1.0): Tensor<T, V> =
         factory.randomUniform(shape, min, max)
-    
+
     /**
      * Creates a tensor filled with uniformly distributed random values using a specific seed.
      */
-    public fun randomUniform(shape: Shape, min: Double = 0.0, max: Double = 1.0, seed: Long): Tensor<T, V> = 
+    public fun randomUniform(shape: Shape, min: Double = 0.0, max: Double = 1.0, seed: Long): Tensor<T, V> =
         factory.randomUniform(shape, min, max, seed)
-    
+
     /**
      * Creates a tensor filled with uniformly distributed random values using a specific Random instance.
      */
-    public fun randomUniform(shape: Shape, min: Double = 0.0, max: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> = 
+    public fun randomUniform(
+        shape: Shape,
+        min: Double = 0.0,
+        max: Double = 1.0,
+        random: kotlin.random.Random
+    ): Tensor<T, V> =
         factory.randomUniform(shape, min, max, random)
 }
 
@@ -304,7 +314,7 @@ public interface DENSE<T : DType, V> : NetworkDslItem {
 /**
  * Extension function for weights initialization with implicit shape context.
  */
-public inline fun <T : DType, V> DENSE<T, V>.weights(noinline initBlock: WeightsScope<T, V>.() -> Tensor<T, V>) {
+public fun <T : DType, V> DENSE<T, V>.weights(initBlock: WeightsScope<T, V>.() -> Tensor<T, V>) {
     val scope = WeightsScopeImpl(factory, weightsShape)
     weights { scope.initBlock() }
 }
@@ -312,7 +322,7 @@ public inline fun <T : DType, V> DENSE<T, V>.weights(noinline initBlock: Weights
 /**
  * Extension function for bias initialization with implicit shape context.
  */
-public inline fun <T : DType, V> DENSE<T, V>.bias(noinline initBlock: BiasScope<T, V>.() -> Tensor<T, V>) {
+public fun <T : DType, V> DENSE<T, V>.bias(initBlock: BiasScope<T, V>.() -> Tensor<T, V>) {
     val scope = BiasScopeImpl(factory, biasShape)
     bias { scope.initBlock() }
 }
@@ -324,25 +334,30 @@ public inline fun <T : DType, V> DENSE<T, V>.bias(noinline initBlock: BiasScope<
 public interface WeightsScope<T : DType, V> {
     public val factory: TensorFactory<T, V>
     public val shape: Shape
-    
+
     public fun zeros(): Tensor<T, V> = factory.zeros(shape)
     public fun ones(): Tensor<T, V> = factory.ones(shape)
     public fun random(): Tensor<T, V> = factory.random(shape)
     public fun random(seed: Long): Tensor<T, V> = factory.random(shape, seed)
     public fun random(random: kotlin.random.Random): Tensor<T, V> = factory.random(shape, random)
-    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0): Tensor<T, V> = 
+    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0): Tensor<T, V> =
         factory.randomNormal(shape, mean, std)
-    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0, seed: Long): Tensor<T, V> = 
+
+    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0, seed: Long): Tensor<T, V> =
         factory.randomNormal(shape, mean, std, seed)
-    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> = 
+
+    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> =
         factory.randomNormal(shape, mean, std, random)
-    public fun randomUniform(min: Double = 0.0, max: Double = 1.0): Tensor<T, V> = 
+
+    public fun randomUniform(min: Double = 0.0, max: Double = 1.0): Tensor<T, V> =
         factory.randomUniform(shape, min, max)
-    public fun randomUniform(min: Double = 0.0, max: Double = 1.0, seed: Long): Tensor<T, V> = 
+
+    public fun randomUniform(min: Double = 0.0, max: Double = 1.0, seed: Long): Tensor<T, V> =
         factory.randomUniform(shape, min, max, seed)
-    public fun randomUniform(min: Double = 0.0, max: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> = 
+
+    public fun randomUniform(min: Double = 0.0, max: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> =
         factory.randomUniform(shape, min, max, random)
-    
+
     /**
      * Advanced initialization with custom random distribution.
      */
@@ -356,25 +371,30 @@ public interface WeightsScope<T : DType, V> {
 public interface BiasScope<T : DType, V> {
     public val factory: TensorFactory<T, V>
     public val shape: Shape
-    
+
     public fun zeros(): Tensor<T, V> = factory.zeros(shape)
     public fun ones(): Tensor<T, V> = factory.ones(shape)
     public fun random(): Tensor<T, V> = factory.random(shape)
     public fun random(seed: Long): Tensor<T, V> = factory.random(shape, seed)
     public fun random(random: kotlin.random.Random): Tensor<T, V> = factory.random(shape, random)
-    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0): Tensor<T, V> = 
+    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0): Tensor<T, V> =
         factory.randomNormal(shape, mean, std)
-    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0, seed: Long): Tensor<T, V> = 
+
+    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0, seed: Long): Tensor<T, V> =
         factory.randomNormal(shape, mean, std, seed)
-    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> = 
+
+    public fun randomNormal(mean: Double = 0.0, std: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> =
         factory.randomNormal(shape, mean, std, random)
-    public fun randomUniform(min: Double = 0.0, max: Double = 1.0): Tensor<T, V> = 
+
+    public fun randomUniform(min: Double = 0.0, max: Double = 1.0): Tensor<T, V> =
         factory.randomUniform(shape, min, max)
-    public fun randomUniform(min: Double = 0.0, max: Double = 1.0, seed: Long): Tensor<T, V> = 
+
+    public fun randomUniform(min: Double = 0.0, max: Double = 1.0, seed: Long): Tensor<T, V> =
         factory.randomUniform(shape, min, max, seed)
-    public fun randomUniform(min: Double = 0.0, max: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> = 
+
+    public fun randomUniform(min: Double = 0.0, max: Double = 1.0, random: kotlin.random.Random): Tensor<T, V> =
         factory.randomUniform(shape, min, max, random)
-    
+
     /**
      * Advanced initialization with custom random distribution.
      */
@@ -495,7 +515,7 @@ public class DenseImpl<T : DType, V>(
     // Shape context for the DSL
     override val weightsShape: Shape
         get() = Shape(_outputDimension, inputDimension)
-    
+
     override val biasShape: Shape
         get() = Shape(_outputDimension)
 
@@ -568,7 +588,7 @@ public class StageImpl<T : DType, V>(
     override fun dense(outputDimension: Int, id: String, content: DENSE<T, V>.() -> Unit) {
         val inputDimension = lastDimension
         lastDimension = outputDimension
-        val impl = DenseImpl<T, V>(
+        val impl = DenseImpl(
             inputDimension = inputDimension,
             _outputDimension = outputDimension,
             id = getDefaultName(id, "linear", modules.size),
@@ -581,7 +601,7 @@ public class StageImpl<T : DType, V>(
 
     override fun dense(id: String, content: DENSE<T, V>.() -> Unit) {
         // This version of dense requires units to be specified in the content block
-        val impl = DenseImpl<T, V>(
+        val impl = DenseImpl(
             inputDimension = lastDimension,
             _outputDimension = 0, // Will be set in content block via units property
             id = getDefaultName(id, "linear", modules.size),
@@ -599,7 +619,7 @@ public class StageImpl<T : DType, V>(
     }
 
     override fun sequential(content: NeuralNetworkDsl<T, V>.() -> Unit) {
-        val sequentialImpl = NeuralNetworkDslImpl<T, V>(factory)
+        val sequentialImpl = NeuralNetworkDslImpl(factory)
         sequentialImpl.lastDimension = lastDimension
         sequentialImpl.content()
         lastDimension = sequentialImpl.lastDimension
@@ -607,7 +627,7 @@ public class StageImpl<T : DType, V>(
     }
 
     override fun stage(id: String, content: NeuralNetworkDsl<T, V>.() -> Unit) {
-        val stageImpl = StageImpl<T, V>(id, factory)
+        val stageImpl = StageImpl(id, factory)
         stageImpl.lastDimension = lastDimension
         stageImpl.content()
         lastDimension = stageImpl.lastDimension
@@ -619,10 +639,10 @@ private class NeuralNetworkDslImpl<T : DType, V>(
     private val factory: TensorFactory<T, V>
 ) : NeuralNetworkDsl<T, V> {
 
-    public val modules = mutableListOf<Module<T, V>>()
-    public var lastDimension = 0
+    val modules = mutableListOf<Module<T, V>>()
+    var lastDimension = 0
 
-    public fun create(): Module<T, V> = NetworkBuilder<T, V>().add(*modules.toTypedArray()).build()
+    fun create(): Module<T, V> = NetworkBuilder<T, V>().add(*modules.toTypedArray()).build()
 
     override fun input(inputSize: Int, id: String) {
         lastDimension = inputSize
@@ -671,7 +691,7 @@ private class NeuralNetworkDslImpl<T : DType, V>(
     }
 
     override fun sequential(content: NeuralNetworkDsl<T, V>.() -> Unit) {
-        val sequentialImpl = NeuralNetworkDslImpl<T, V>(factory)
+        val sequentialImpl = NeuralNetworkDslImpl(factory)
         sequentialImpl.lastDimension = lastDimension
         sequentialImpl.content()
         lastDimension = sequentialImpl.lastDimension
@@ -679,7 +699,7 @@ private class NeuralNetworkDslImpl<T : DType, V>(
     }
 
     override fun stage(id: String, content: NeuralNetworkDsl<T, V>.() -> Unit) {
-        val stageImpl = StageImpl<T, V>(id, factory)
+        val stageImpl = StageImpl(id, factory)
         stageImpl.lastDimension = lastDimension
         stageImpl.content()
         lastDimension = stageImpl.lastDimension

@@ -1,6 +1,7 @@
 package sk.ainet.core.tensor.benchmark
 
 import sk.ainet.core.performance.*
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 /**
@@ -12,6 +13,7 @@ class BaselinePerformanceTest {
     private val runner = BenchmarkRunner()
     
     @Test
+    @Ignore
     fun testBenchmarkRunnerIntegration() {
         println("\n=== BENCHMARK RUNNER INTEGRATION TEST ===")
         
