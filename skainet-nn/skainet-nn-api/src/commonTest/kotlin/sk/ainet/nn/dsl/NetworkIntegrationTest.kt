@@ -59,7 +59,7 @@ class NetworkIntegrationTest {
             )
         )
         
-        val output = with(network) { batchInput.forward(batchInput) }
+        val output = network.forward(batchInput)
         assertEquals(Shape(3, 2), output.shape)
     }
 
@@ -95,7 +95,7 @@ class NetworkIntegrationTest {
             byteArrayOf(1, 2, 3, -1, 0, 1)
         )
         
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(2, 2), output.shape)
 
          */
@@ -141,7 +141,7 @@ class NetworkIntegrationTest {
             intArrayOf(10, 20)
         )
         
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
 
          */
@@ -238,7 +238,7 @@ class NetworkIntegrationTest {
             )
         )
         
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(2, 1), output.shape)
 
          */

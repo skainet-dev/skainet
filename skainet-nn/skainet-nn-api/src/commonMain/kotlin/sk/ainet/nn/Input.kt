@@ -12,7 +12,7 @@ public class Input<T : DType, V>(private val inputShape: Shape, override val nam
         get() = emptyList()
 
 
-    override fun Tensor<T, V>.forward(input: Tensor<T, V>): Tensor<T, V> {
+    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
         return input
     }
 }

@@ -12,10 +12,10 @@ public class MLP<T : DType, V>(vararg modules: Module<T, V>, override val name: 
     override val modules: List<Module<T, V>>
         get() = modulesList
 
-    override fun Tensor<T, V>.forward(input: Tensor<T, V>): Tensor<T, V> {
+    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
         var tmp = input
         modulesList.forEach { module ->
-            tmp = with(module) { this@forward.forward(tmp) }
+            tmp = module.forward(tmp)
         }
         return tmp
     }

@@ -14,7 +14,7 @@ public class ActivationsWrapperModule<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun Tensor<T, V>.forward(input: Tensor<T, V>): Tensor<T, V> {
+    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
         return activationHandler(input)
     }
 }

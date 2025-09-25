@@ -16,7 +16,9 @@ public class Flatten<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun Tensor<T, V>.forward(input: Tensor<T, V>): Tensor<T, V> {
-        return input.flatten(startDim, endDim)
+    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
+        return with(input) {
+            flatten(startDim, endDim)
+        }
     }
 }

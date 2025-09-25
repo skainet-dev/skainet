@@ -9,6 +9,8 @@ import sk.ainet.core.tensor.Int8
 import sk.ainet.core.tensor.Int32
 import sk.ainet.core.tensor.backend.CpuBackend
 import sk.ainet.core.tensor.backend.CpuBackendInt8
+import sk.ainet.nn.Linear
+import sk.ainet.nn.Module
 import kotlin.test.*
 
 /**
@@ -20,7 +22,7 @@ class NetworkBuilderGenericTest {
     @Test
     fun testGenericNetworkFP32() {
         // Test FP32/Float combination - basic functionality
-        val network = network<FP32, Float> {
+        val network: Module<FP32, Float> = network<FP32, Float> {
             input(2)
             dense(3) {
                 weights { shape -> CpuTensorFP32.ones(shape) }
@@ -181,12 +183,12 @@ class NetworkBuilderGenericTest {
         // Test NetworkBuilder class directly with generic types
         val builder = NetworkBuilder<FP32, Float>()
         
-        val linear1 = sk.ainet.nn.Linear(2, 4, "layer1", 
+        val linear1 = Linear(2, 4, "layer1",
             CpuTensorFP32.ones(Shape(4, 2)), 
             CpuTensorFP32.zeros(Shape(4))
         )
         
-        val linear2 = sk.ainet.nn.Linear(4, 1, "layer2",
+        val linear2 = Linear(4, 1, "layer2",
             CpuTensorFP32.ones(Shape(1, 4)),
             CpuTensorFP32.zeros(Shape(1))
         )

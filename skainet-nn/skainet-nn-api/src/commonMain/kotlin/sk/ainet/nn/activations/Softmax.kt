@@ -9,8 +9,10 @@ public class Softmax<T : DType, V>(private val dimension: Int, override val name
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun Tensor<T, V>.forward(input: Tensor<T, V>): Tensor<T, V> {
-        return input.softmax(dimension)
+    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
+        return with(input) {
+            softmax(dimension)
+        }
     }
 }
 

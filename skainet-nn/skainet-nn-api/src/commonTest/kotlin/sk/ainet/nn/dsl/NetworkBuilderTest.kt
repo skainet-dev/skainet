@@ -38,7 +38,7 @@ class NetworkBuilderTest {
         
         // Test forward pass
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -63,7 +63,7 @@ class NetworkBuilderTest {
         
         // Test forward pass
         val input = CpuTensorInt8.fromArray(Shape(1, 2), byteArrayOf(1, 2))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -82,7 +82,7 @@ class NetworkBuilderTest {
         
         // Test forward pass
         val input = CpuTensorInt32.fromArray(Shape(1, 3), intArrayOf(1, 2, 3))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 2), output.shape)
     }
 
@@ -105,7 +105,7 @@ class NetworkBuilderTest {
         
         // Verify it's using FP32/Float types
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -122,7 +122,7 @@ class NetworkBuilderTest {
         
         assertNotNull(network)
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -174,7 +174,7 @@ class NetworkBuilderTest {
         
         assertNotNull(network)
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -203,7 +203,7 @@ class NetworkBuilderTest {
         
         assertNotNull(network)
         val input = CpuTensorFP32.fromArray(Shape(1, 3), floatArrayOf(1.0f, 2.0f, 3.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 2), output.shape)
     }
 
@@ -225,7 +225,7 @@ class NetworkBuilderTest {
         
         assertNotNull(network)
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, -1.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -250,7 +250,7 @@ class NetworkBuilderTest {
         assertEquals("MLP", network.name)
         
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -274,7 +274,7 @@ class NetworkBuilderTest {
         
         // Test forward pass
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -297,7 +297,7 @@ class NetworkBuilderTest {
         
         // Test forward pass
         val input = CpuTensorInt32.fromArray(Shape(1, 3), intArrayOf(1, 2, 3))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -321,7 +321,7 @@ class NetworkBuilderTest {
         assertNotNull(network)
         
         val input = CpuTensorFP32.fromArray(Shape(1, 4), floatArrayOf(1.0f, 2.0f, 3.0f, 4.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -358,8 +358,8 @@ class NetworkBuilderTest {
         
         // Test that both networks produce the same output for the same input (deterministic)
         val input = CpuTensorFP32.fromArray(Shape(1, 3), floatArrayOf(1.0f, 2.0f, 3.0f))
-        val output1 = with(network1) { input.forward(input) }
-        val output2 = with(network2) { input.forward(input) }
+        val output1 = network1.forward(input)
+        val output2 = network2.forward(input)
         
         assertEquals(output1.shape, output2.shape)
         // Note: We can't easily test exact equality due to potential floating point differences
@@ -392,7 +392,7 @@ class NetworkBuilderTest {
         
         // Test forward pass
         val input = CpuTensorFP32.fromArray(Shape(1, 5), floatArrayOf(1.0f, 2.0f, 3.0f, 4.0f, 5.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 
@@ -416,7 +416,7 @@ class NetworkBuilderTest {
         
         // Test forward pass
         val input = CpuTensorFP32.fromArray(Shape(1, 3), floatArrayOf(1.0f, 2.0f, 3.0f))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 2), output.shape)
     }
 
@@ -439,7 +439,7 @@ class NetworkBuilderTest {
         
         // Test forward pass
         val input = CpuTensorInt32.fromArray(Shape(1, 2), intArrayOf(10, 20))
-        val output = with(network) { input.forward(input) }
+        val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
     }
 }
