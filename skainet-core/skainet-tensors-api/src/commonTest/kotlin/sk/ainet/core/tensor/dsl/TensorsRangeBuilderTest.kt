@@ -4,6 +4,7 @@ import sk.ainet.core.tensor.DType
 import sk.ainet.core.tensor.Int32
 import sk.ainet.core.tensor.Shape
 import sk.ainet.core.tensor.Tensor
+import sk.ainet.core.tensor.TensorData
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -12,13 +13,106 @@ class MockTensor<T : DType, V>(
     override val shape: Shape,
     private val data: Array<V>
 ) : Tensor<T, V> {
+    
+    // TensorData implementation
+    override val strides: IntArray = shape.computeStrides()
+    override val offset: Int = 0
+    override val isContiguous: Boolean = true
+    
     override fun get(vararg indices: Int): V {
         val index = shape.index(indices)
         return data[index]
     }
+    
+    override fun copyTo(dest: Array<V>, destOffset: Int) {
+        for (i in data.indices) {
+            dest[destOffset + i] = data[i]
+        }
+    }
+    
+    override fun slice(ranges: IntArray): TensorData<T, V> {
+        require(ranges.size == shape.rank * 2) {
+            "Ranges array must have size ${shape.rank * 2} (start,end pairs), got ${ranges.size}"
+        }
+        
+        // Parse ranges and validate
+        val sliceRanges = mutableListOf<Pair<Int, Int>>()
+        for (i in 0 until shape.rank) {
+            val start = ranges[i * 2]
+            val end = ranges[i * 2 + 1]
+            val dimSize = shape.dimensions[i]
+            
+            require(start >= 0 && start < dimSize) {
+                "Start index $start out of bounds for dimension $i (size $dimSize)"
+            }
+            require(end > start && end <= dimSize) {
+                "End index $end must be > start ($start) and <= dimension size ($dimSize)"
+            }
+            
+            sliceRanges.add(start to end)
+        }
+        
+        // Calculate new shape
+        val newDimensions = sliceRanges.map { (start, end) -> end - start }.toIntArray()
+        val newShape = Shape(newDimensions)
+        
+        // Create new data array for sliced tensor
+        val newData = Array<Any?>(newShape.volume) { null }
+        var destIndex = 0
+        
+        // Copy sliced data based on tensor rank
+        when (shape.rank) {
+            1 -> {
+                val (start0, end0) = sliceRanges[0]
+                for (i in start0 until end0) {
+                    newData[destIndex++] = data[i]
+                }
+            }
+            2 -> {
+                val (start0, end0) = sliceRanges[0]
+                val (start1, end1) = sliceRanges[1]
+                for (i in start0 until end0) {
+                    for (j in start1 until end1) {
+                        val srcIndex = i * shape.dimensions[1] + j
+                        newData[destIndex++] = data[srcIndex]
+                    }
+                }
+            }
+            3 -> {
+                val (start0, end0) = sliceRanges[0]
+                val (start1, end1) = sliceRanges[1]
+                val (start2, end2) = sliceRanges[2]
+                for (i in start0 until end0) {
+                    for (j in start1 until end1) {
+                        for (k in start2 until end2) {
+                            val srcIndex = i * shape.dimensions[1] * shape.dimensions[2] +
+                                         j * shape.dimensions[2] + k
+                            newData[destIndex++] = data[srcIndex]
+                        }
+                    }
+                }
+            }
+            else -> throw UnsupportedOperationException("MockTensor slicing only supports up to 3D tensors")
+        }
+        
+        return MockTensor(newShape, newData as Array<V>)
+    }
+    
+    override fun materialize(): TensorData<T, V> = this
+    
+    private fun Shape.computeStrides(): IntArray {
+        if (dimensions.isEmpty()) return intArrayOf()
+        val strides = IntArray(dimensions.size)
+        strides[dimensions.size - 1] = 1
+        for (i in dimensions.size - 2 downTo 0) {
+            strides[i] = strides[i + 1] * dimensions[i + 1]
+        }
+        return strides
+    }
 
     // TensorOps implementations - minimal for testing slice functionality
     override fun matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = this
+    override fun matmul4d(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = this
     override fun scale(a: Tensor<T, V>, scalar: Double): Tensor<T, V> = this
     override fun dot(a: Tensor<T, V>, b: Tensor<T, V>): Double = 0.0
     
