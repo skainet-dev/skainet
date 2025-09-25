@@ -265,6 +265,228 @@ with(backend) {
 }
 ----
 
+== Tensor Slicing DSL
+
+SKaiNET provides a powerful Domain Specific Language (DSL) for tensor slicing that mimics NumPy's slicing syntax, allowing intuitive and flexible tensor indexing operations.
+
+=== Basic Slicing Operations
+
+The `slice{}` DSL provides a clean way to extract portions of tensors:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+
+// Create a 3D tensor (2x3x4)
+val tensor = CpuTensorFP32.fromArray(
+    Shape(2, 3, 4),
+    FloatArray(24) { it.toFloat() }
+)
+
+// Basic slicing - select all elements in first dimension,
+// elements 1-2 in second dimension, all in third
+val slices = slice(tensor) {
+    segment { all() }              // All elements in dimension 0
+    segment { range(1, 3) }        // Elements 1-2 in dimension 1  
+    segment { all() }              // All elements in dimension 2
+}
+
+println("Original tensor shape: ${tensor.shape}")
+// Process slices...
+----
+
+=== Slicing Operations Reference
+
+==== Select All Elements
+
+Use `all()` to select all elements in a dimension (equivalent to `:` in NumPy):
+
+[source,kotlin]
+----
+val tensor2D = CpuTensorFP32.fromArray(
+    Shape(3, 4), 
+    floatArrayOf(
+        1f, 2f, 3f, 4f,
+        5f, 6f, 7f, 8f,
+        9f, 10f, 11f, 12f
+    )
+)
+
+val slices = slice(tensor2D) {
+    segment { all() }    // Select all rows
+    segment { all() }    // Select all columns
+}
+// Equivalent to tensor2D[:, :] in NumPy
+----
+
+==== Range Selection
+
+Use `range(start, end)` to select a contiguous range of elements:
+
+[source,kotlin]
+----
+val slices = slice(tensor2D) {
+    segment { range(0, 2) }    // Select rows 0-1
+    segment { range(1, 4) }    // Select columns 1-3
+}
+// Equivalent to tensor2D[0:2, 1:4] in NumPy
+----
+
+==== From/To Selection
+
+Use `from(start)` and `to(end)` for open-ended ranges:
+
+[source,kotlin]
+----
+// Select from index onwards
+val fromSlices = slice(tensor2D) {
+    segment { from(1) }       // Rows from index 1 to end
+    segment { all() }
+}
+// Equivalent to tensor2D[1:, :] in NumPy
+
+// Select up to index (exclusive)
+val toSlices = slice(tensor2D) {
+    segment { to(2) }         // Rows 0-1 (up to but not including 2)
+    segment { all() }
+}
+// Equivalent to tensor2D[:2, :] in NumPy
+----
+
+==== Single Element Selection
+
+Use `at(index)`, `first()`, or `last()` to select individual elements:
+
+[source,kotlin]
+----
+// Select specific index
+val atSlices = slice(tensor2D) {
+    segment { at(1) }         // Row at index 1
+    segment { all() }
+}
+// Equivalent to tensor2D[1, :] in NumPy
+
+// Select first/last elements
+val firstSlices = slice(tensor2D) {
+    segment { first() }       // First row
+    segment { last() }        // Last column  
+}
+// Equivalent to tensor2D[0, -1] in NumPy
+----
+
+=== Advanced Slicing Examples
+
+==== Multi-dimensional Array Slicing
+
+Work with higher-dimensional tensors:
+
+[source,kotlin]
+----
+val backend = CpuBackend()
+
+// Create a 4D tensor (batch, channels, height, width)
+val tensor4D = CpuTensorFP32.fromArray(
+    Shape(8, 3, 32, 32),  // 8 images, 3 channels, 32x32 pixels
+    FloatArray(8 * 3 * 32 * 32) { kotlin.random.Random.nextFloat() }
+)
+
+// Select first 4 images, all channels, center 16x16 region
+val centerCrop = slice(tensor4D) {
+    segment { range(0, 4) }        // First 4 images
+    segment { all() }              // All channels
+    segment { range(8, 24) }       // Center rows (8-23)
+    segment { range(8, 24) }       // Center columns (8-23)
+}
+// Result shape: (4, 3, 16, 16)
+----
+
+==== Negative Indexing
+
+Use negative indices to count from the end:
+
+[source,kotlin]
+----
+val tensor = CpuTensorFP32.fromArray(
+    Shape(5, 4),
+    FloatArray(20) { it.toFloat() }
+)
+
+// Select last 2 rows, first 3 columns
+val slices = slice(tensor) {
+    segment { from(-2) }          // Last 2 rows (equivalent to from(3))
+    segment { to(-1) }            // All but last column (first 3 columns)
+}
+
+// Select specific negative index
+val lastRowSlices = slice(tensor) {
+    segment { at(-1) }            // Last row
+    segment { all() }
+}
+----
+
+==== Complex Slicing Patterns
+
+Combine different slicing operations:
+
+[source,kotlin]
+----
+val batch = CpuTensorFP32.fromArray(
+    Shape(10, 5, 8),  // 10 samples, 5 features, 8 timesteps
+    FloatArray(10 * 5 * 8) { kotlin.random.Random.nextFloat() }
+)
+
+// Select every other sample, middle features, recent timesteps
+val complexSlices = slice(batch) {
+    segment { range(0, 10) }      // Custom logic for every other sample
+    segment { range(1, 4) }       // Middle 3 features (indices 1, 2, 3)
+    segment { from(5) }           // Last 3 timesteps
+}
+----
+
+=== Slicing Best Practices
+
+==== Dimension Validation
+
+Always ensure slicing operations match tensor dimensions:
+
+[source,kotlin]
+----
+fun safeSlice(tensor: CpuTensorFP32): List<Slice<FP32, Float>> {
+    require(tensor.shape.dimensions.size >= 2) { 
+        "Tensor must have at least 2 dimensions" 
+    }
+    
+    return slice(tensor) {
+        segment { all() }
+        segment { range(0, minOf(tensor.shape.dimensions[1], 10)) }
+    }
+}
+----
+
+==== Performance Considerations
+
+Slicing creates views when possible, avoiding data copying:
+
+[source,kotlin]
+----
+val largeTensor = CpuTensorFP32.fromArray(
+    Shape(1000, 1000),
+    FloatArray(1000 * 1000) { kotlin.random.Random.nextFloat() }
+)
+
+// Efficient - creates view, no copying
+val efficientSlices = slice(largeTensor) {
+    segment { range(100, 200) }     // Contiguous range
+    segment { range(50, 150) }      // Contiguous range
+}
+
+// Process only the slice data
+with(backend) {
+    // Slice operations work with the underlying tensor data efficiently
+    // No need to materialize the entire slice unless required
+}
+----
+
 == Practical Examples
 
 === Neural Network Forward Pass

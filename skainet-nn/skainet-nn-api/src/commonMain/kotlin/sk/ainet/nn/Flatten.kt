@@ -2,7 +2,6 @@ package sk.ainet.nn
 
 import sk.ainet.core.tensor.DType
 import sk.ainet.core.tensor.Tensor
-import sk.ainet.core.tensor.TensorOps
 
 /**
  * A simple layer that flattens an input tensor into a 1D tensor.
@@ -16,7 +15,9 @@ public class Flatten<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun Tensor<T, V>.forward(input: Tensor<T, V>): Tensor<T, V> {
-        return input.flatten(startDim, endDim)
+    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
+        return with(input) {
+            flatten(startDim, endDim)
+        }
     }
 }

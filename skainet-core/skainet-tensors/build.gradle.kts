@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -20,9 +21,9 @@ kotlin {
 
     iosArm64()
     iosSimulatorArm64()
-    macosArm64 ()
-    linuxX64 ()
-    linuxArm64 ()
+    macosArm64()
+    linuxX64()
+    linuxArm64()
 
     jvm()
 
@@ -33,10 +34,8 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":skainet-core:skainet-tensors-api"))
-            }
+        commonMain.dependencies {
+            implementation(project(":skainet-core:skainet-tensors-api"))
         }
 
         commonTest.dependencies {

@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -35,6 +36,7 @@ kotlin {
     sourceSets {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(project(":skainet-core:skainet-tensors"))
         }
     }
 }

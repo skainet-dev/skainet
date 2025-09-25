@@ -36,9 +36,7 @@ class MLPTest {
         val input = CpuTensorFP32.fromArray(Shape(1, 1), floatArrayOf(2.0f))
         
         // Perform inference
-        val output = with(mlp) { 
-            input.forward(input)
-        }
+        val output = mlp.forward(input)
         
         // Verify the output shape and that inference ran without errors
         assertEquals(Shape(1, 1), output.shape)
@@ -46,9 +44,7 @@ class MLPTest {
         
         // Test with different input
         val input2 = CpuTensorFP32.fromArray(Shape(1, 1), floatArrayOf(-1.0f))
-        val output2 = with(mlp) {
-            input2.forward(input2)
-        }
+        val output2 = mlp.forward(input2)
         
         assertEquals(Shape(1, 1), output2.shape)
         // With negative input and ReLU, intermediate values may be zero, but final output depends on the architecture

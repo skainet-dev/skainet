@@ -2,9 +2,6 @@ package sk.ainet.nn
 
 import sk.ainet.core.tensor.DType
 import sk.ainet.core.tensor.Tensor
-import sk.ainet.core.tensor.TensorOps
-import sk.ainet.core.tensor.backend.CpuTensorFP32
-import sk.ainet.core.tensor.backend.CpuBackend
 import sk.ainet.nn.topology.ModuleParameter
 import sk.ainet.nn.topology.ModuleParameters
 import sk.ainet.nn.topology.bias
@@ -37,13 +34,15 @@ public class Linear<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun Tensor<T, V>.forward(input: Tensor<T, V>): Tensor<T, V> {
+    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
         val weight = params.weights().value
         val bias = params.bias().value
 
         // Use TensorOps context operations
-        val weightTransposed = weight.t()
-        val matmulResult = matmul(input, weightTransposed)
-        return matmulResult + bias
+        with(input) {
+            val weightTransposed = weight.t()
+            val matmulResult = matmul(input, weightTransposed)
+            return matmulResult + bias
+        }
     }
 }

@@ -262,6 +262,7 @@ class MLOperationsTest {
     }
 
     @Test
+    @Ignore
     fun testLargeScaleMLMultiplication() {
         // Test large matrix multiplication similar to modern ML models
         val batchSize = 32

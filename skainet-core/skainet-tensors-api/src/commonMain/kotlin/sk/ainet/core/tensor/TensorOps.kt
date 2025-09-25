@@ -17,6 +17,19 @@ public interface TensorOps<D : DType, V, T : Tensor<D, V>> {
     public fun matmul(a: T, b: T): T
 
     /**
+     * Performs 4D tensor multiplication with batch processing.
+     * Supports various patterns:
+     * - Batch-wise: (B,M,K) × (B,K,N) → (B,M,N)
+     * - Spatial: (B,C,H,W) × (B,C,W,K) → (B,C,H,K)
+     * - Channel-wise: (B,C1,H,W) × (C1,C2) → (B,C2,H,W) where second tensor is reshaped internally
+     *
+     * @param a The first 4D tensor.
+     * @param b The second tensor (4D or 2D).
+     * @return The result of 4D matrix multiplication.
+     */
+    public fun matmul4d(a: T, b: T): T
+
+    /**
      * Scales a tensor by a scalar value.
      *
      * @param a The tensor to scale.
