@@ -8,6 +8,7 @@ kotlinxSerializationJson = "1.9.0"
 ktorClientCore = "3.3.0"
 ktorClientPlugins = "3.1.1"
 logbackClassic = "1.5.18"
+kover = "0.8.3"
 
 
 [libraries]
@@ -35,3 +36,4 @@ androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.34.0" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
