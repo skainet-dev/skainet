@@ -7,8 +7,6 @@ import sk.ainet.core.tensor.backend.CpuTensorInt32
 import sk.ainet.core.tensor.FP32
 import sk.ainet.core.tensor.Int8
 import sk.ainet.core.tensor.Int32
-import sk.ainet.core.tensor.Tensor
-import sk.ainet.core.tensor.TensorFactory
 import kotlin.test.*
 import kotlin.math.sqrt
 

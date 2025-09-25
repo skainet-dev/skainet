@@ -1,7 +1,6 @@
 package sk.ainet.core.tensor.dsl
 
 import sk.ainet.core.tensor.DType
-import sk.ainet.core.tensor.NCHWIndexMapper
 import sk.ainet.core.tensor.NCHWViewHelper
 import sk.ainet.core.tensor.Slice
 import sk.ainet.core.tensor.SliceDescriptor
@@ -175,6 +174,7 @@ public class NCHWViewBuilder<T : DType, V>(private val tensor: Tensor<T, V>) {
     public fun batch(start: Int, end: Int, step: Int = 1) {
         batchSlice = start..end
         // Note: step handling would need to be added to the builder logic
+        // TODO add handling would need to be added to the builder logic
     }
 
     /**

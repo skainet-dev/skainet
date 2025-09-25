@@ -2,12 +2,6 @@ package sk.ainet.nn.dsl
 
 import sk.ainet.core.tensor.Shape
 import sk.ainet.core.tensor.backend.CpuTensorFP32
-import sk.ainet.core.tensor.backend.CpuTensorInt8
-import sk.ainet.core.tensor.backend.CpuTensorInt32
-import sk.ainet.core.tensor.FP32
-import sk.ainet.core.tensor.Int8
-import sk.ainet.core.tensor.Int32
-import sk.ainet.core.tensor.backend.CpuBackend
 import kotlin.test.*
 
 /**

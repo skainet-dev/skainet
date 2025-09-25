@@ -574,7 +574,7 @@ public class StageImpl<T : DType, V>(
 
     override fun input(inputSize: Int, id: String) {
         lastDimension = inputSize
-        modules.add(Input(Shape(inputSize), name = getDefaultName(id, "Input", modules.size)))
+        modules.add(Input(name = getDefaultName(id, "Input", modules.size)))
     }
 
     override fun flatten(id: String, content: FLATTEN<T, V>.() -> Unit) {
@@ -646,7 +646,7 @@ private class NeuralNetworkDslImpl<T : DType, V>(
 
     override fun input(inputSize: Int, id: String) {
         lastDimension = inputSize
-        modules.add(Input(Shape(inputSize), name = getDefaultName(id, "Input", modules.size)))
+        modules.add(Input(name = getDefaultName(id, "Input", modules.size)))
     }
 
     override fun flatten(id: String, content: FLATTEN<T, V>.() -> Unit) {

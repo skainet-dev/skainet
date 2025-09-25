@@ -7,8 +7,6 @@ import sk.ainet.core.tensor.backend.CpuTensorInt32
 import sk.ainet.core.tensor.FP32
 import sk.ainet.core.tensor.Int8
 import sk.ainet.core.tensor.Int32
-import sk.ainet.core.tensor.backend.CpuBackend
-import sk.ainet.core.tensor.backend.CpuBackendInt8
 import sk.ainet.nn.Linear
 import sk.ainet.nn.Module
 import kotlin.test.*

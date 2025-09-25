@@ -2,7 +2,6 @@ package sk.ainet.nn
 
 import sk.ainet.core.tensor.DType
 import sk.ainet.core.tensor.Tensor
-import sk.ainet.core.tensor.TensorOps
 
 
 public abstract class Module<T : DType, V> {

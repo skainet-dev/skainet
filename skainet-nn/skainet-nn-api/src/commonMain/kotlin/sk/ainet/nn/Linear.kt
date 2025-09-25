@@ -2,9 +2,6 @@ package sk.ainet.nn
 
 import sk.ainet.core.tensor.DType
 import sk.ainet.core.tensor.Tensor
-import sk.ainet.core.tensor.TensorOps
-import sk.ainet.core.tensor.backend.CpuTensorFP32
-import sk.ainet.core.tensor.backend.CpuBackend
 import sk.ainet.nn.topology.ModuleParameter
 import sk.ainet.nn.topology.ModuleParameters
 import sk.ainet.nn.topology.bias

@@ -2,7 +2,6 @@ package sk.ainet.nn.topology
 
 import sk.ainet.core.tensor.DType
 import sk.ainet.core.tensor.Tensor
-import sk.ainet.core.tensor.TensorOps
 import sk.ainet.nn.Module
 
 
