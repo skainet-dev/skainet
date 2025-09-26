@@ -26,7 +26,7 @@ class Int8TensorFactoryTest {
         val shape = Shape(4)
         val bytes = byteArrayOf(1, 2, 3, 4)
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -45,7 +45,7 @@ class Int8TensorFactoryTest {
         val shape = Shape(3, 4)
         val bytes = ByteArray(12) { (it + 1).toByte() } // [1, 2, 3, ..., 12]
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -64,7 +64,7 @@ class Int8TensorFactoryTest {
         val shape = Shape(2, 3, 4)
         val bytes = ByteArray(24) { (it + 1).toByte() } // [1, 2, 3, ..., 24]
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -82,7 +82,7 @@ class Int8TensorFactoryTest {
         val shape = Shape(2, 2, 3, 4)
         val bytes = ByteArray(48) { (it + 1).toByte() } // [1, 2, 3, ..., 48]
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -99,7 +99,7 @@ class Int8TensorFactoryTest {
         val shape = Shape(200, 200)
         val bytes = ByteArray(40000) { (it % 256).toByte() } // Values cycling through byte range
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Large tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -117,7 +117,7 @@ class Int8TensorFactoryTest {
         val fullRange = ByteArray(256) { (it - 128).toByte() } // [-128, -127, ..., 127]
         val shape = Shape(256)
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, fullRange)
+        val tensor = Int8TensorFactory.fromByteArray(shape, fullRange)
         
         assertNotNull(tensor, "Tensor with full byte range should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -138,13 +138,13 @@ class Int8TensorFactoryTest {
         val wrongSizeBytes = ByteArray(10) // Only 10 bytes
         
         assertFailsWith<IllegalArgumentException>("Should throw for mismatched sizes") {
-            Int8TensorFactory.fromGGUFData(shape, wrongSizeBytes)
+            Int8TensorFactory.fromByteArray(shape, wrongSizeBytes)
         }
         
         // Test with too many bytes
         val tooManyBytes = ByteArray(15) // 15 bytes for 12-element tensor
         assertFailsWith<IllegalArgumentException>("Should throw for too many bytes") {
-            Int8TensorFactory.fromGGUFData(shape, tooManyBytes)
+            Int8TensorFactory.fromByteArray(shape, tooManyBytes)
         }
     }
 
@@ -156,13 +156,13 @@ class Int8TensorFactoryTest {
         // Test with zero dimension
         assertFailsWith<IllegalArgumentException>("Should throw for zero dimension") {
             val invalidShape = Shape(0, 4)
-            Int8TensorFactory.fromGGUFData(invalidShape, bytes)
+            Int8TensorFactory.fromByteArray(invalidShape, bytes)
         }
         
         // Test with negative dimension
         assertFailsWith<IllegalArgumentException>("Should throw for negative dimension") {
             val invalidShape = Shape(-1, 4)
-            Int8TensorFactory.fromGGUFData(invalidShape, bytes)
+            Int8TensorFactory.fromByteArray(invalidShape, bytes)
         }
     }
 
@@ -173,7 +173,7 @@ class Int8TensorFactoryTest {
         val emptyBytes = ByteArray(0)
         
         assertFailsWith<IllegalArgumentException>("Should throw for empty byte array") {
-            Int8TensorFactory.fromGGUFData(shape, emptyBytes)
+            Int8TensorFactory.fromByteArray(shape, emptyBytes)
         }
     }
 
@@ -183,7 +183,7 @@ class Int8TensorFactoryTest {
         val shape = Shape(1)
         val bytes = byteArrayOf(42)
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Minimal tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -200,7 +200,7 @@ class Int8TensorFactoryTest {
             val shape = Shape(size)
             val bytes = ByteArray(size) { (it % 256).toByte() }
             
-            val tensor = Int8TensorFactory.fromGGUFData(shape, bytes)
+            val tensor = Int8TensorFactory.fromByteArray(shape, bytes)
             
             assertNotNull(tensor, "Tensor of size $size should be created")
             assertEquals(shape, tensor.shape, "Shape should match for size $size")
@@ -233,7 +233,7 @@ class Int8TensorFactoryTest {
         for ((shape, expectedVolume) in shapeConfigs) {
             val bytes = ByteArray(expectedVolume) { (it + 1).toByte() }
             
-            val tensor = Int8TensorFactory.fromGGUFData(shape, bytes)
+            val tensor = Int8TensorFactory.fromByteArray(shape, bytes)
             
             assertNotNull(tensor, "Tensor with shape $shape should be created")
             assertEquals(shape, tensor.shape, "Shape should match for $shape")
@@ -247,7 +247,7 @@ class Int8TensorFactoryTest {
         val shape = Shape(4, 4)
         val negativeBytes = ByteArray(16) { (-it - 1).toByte() } // [-1, -2, -3, ..., -16]
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, negativeBytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, negativeBytes)
         
         assertNotNull(tensor, "Tensor with negative values should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -264,7 +264,7 @@ class Int8TensorFactoryTest {
         val shape = Shape(8)
         val mixedBytes = byteArrayOf(-128, -64, -32, -1, 0, 1, 32, 127)
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, mixedBytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, mixedBytes)
         
         assertNotNull(tensor, "Tensor with mixed sign values should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -286,7 +286,7 @@ class Int8TensorFactoryTest {
         val shape = Shape(10, 10)
         val zeroBytes = ByteArray(100) { 0 }
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, zeroBytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, zeroBytes)
         
         assertNotNull(tensor, "Zero tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -306,7 +306,7 @@ class Int8TensorFactoryTest {
         val pattern = byteArrayOf(1, 2, 3, 4)
         val bytes = ByteArray(16) { pattern[it % 4] } // Repeat pattern [1,2,3,4] four times
         
-        val tensor = Int8TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int8TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Pattern tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")

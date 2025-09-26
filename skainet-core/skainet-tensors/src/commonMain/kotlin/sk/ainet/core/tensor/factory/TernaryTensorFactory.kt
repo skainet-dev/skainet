@@ -42,7 +42,7 @@ public object TernaryTensorFactory : TensorFactoryRegistry.TensorFromBytesFactor
      * @return A new Ternary tensor instance
      * @throws NotImplementedError Currently not implemented
      */
-    override fun fromGGUFData(shape: Shape, data: ByteArray): Tensor<Ternary, Byte> {
+    override fun fromByteArray(shape: Shape, data: ByteArray): Tensor<Ternary, Byte> {
         // Validate data size for packed Ternary (4 values per byte, rounded up)
         val expectedBytes = (shape.volume + 3) / 4  // Ceiling division for non-multiples of 4
         require(data.size == expectedBytes) {

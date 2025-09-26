@@ -38,7 +38,7 @@ public object Int4TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<I
      * @return A new Int4 tensor instance
      * @throws NotImplementedError Currently not implemented
      */
-    override fun fromGGUFData(shape: Shape, data: ByteArray): Tensor<Int4, Byte> {
+    override fun fromByteArray(shape: Shape, data: ByteArray): Tensor<Int4, Byte> {
         // Validate data size for packed Int4 (2 values per byte, rounded up)
         val expectedBytes = (shape.volume + 1) / 2  // Ceiling division for odd volumes
         require(data.size == expectedBytes) {

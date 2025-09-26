@@ -19,7 +19,7 @@ public object FP32TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<F
      * @return A new CpuTensorFP32 instance
      * @throws IllegalArgumentException if data size doesn't match expected float count
      */
-    override fun fromGGUFData(shape: Shape, data: ByteArray): Tensor<FP32, Float> {
+    override fun fromByteArray(shape: Shape, data: ByteArray): Tensor<FP32, Float> {
         // Validate input data size matches shape requirements
         val expectedFloatCount = shape.volume
         val expectedByteSize = expectedFloatCount * 4 // 4 bytes per float

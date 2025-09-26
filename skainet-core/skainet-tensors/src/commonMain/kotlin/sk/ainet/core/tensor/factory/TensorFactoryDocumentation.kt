@@ -146,7 +146,7 @@ import sk.ainet.core.tensor.Tensor
  * 
  * // Example: Custom factory for Q4_0
  * object Q4_0TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<Q4_0, Byte> {
- *     override fun fromGGUFData(shape: Shape, data: ByteArray): Tensor<Q4_0, Byte> {
+ *     override fun fromByteArray(shape: Shape, data: ByteArray): Tensor<Q4_0, Byte> {
  *         // Validate packed 4-bit data
  *         val expectedBytes = (shape.volume + 1) / 2 // 2 values per byte
  *         require(data.size == expectedBytes) {

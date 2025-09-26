@@ -104,7 +104,7 @@ class TensorFactoryRegistryTest {
     fun testFactoryOverride() {
         // Create a custom factory for testing override behavior
         val customFactory = object : TensorFactoryRegistry.TensorFromBytesFactory<FP32, Float> {
-            override fun fromGGUFData(shape: Shape, data: ByteArray): Tensor<FP32, Float> {
+            override fun fromByteArray(shape: Shape, data: ByteArray): Tensor<FP32, Float> {
                 // Simple implementation for testing
                 val floatArray = ByteArrayConverter.convertBytesToFloatArray(data)
                 return CpuTensorFP32(shape, floatArray)

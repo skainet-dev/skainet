@@ -32,7 +32,7 @@ public object TensorFactoryRegistry {
          * @param data The byte array containing the tensor data
          * @return A new tensor instance
          */
-        public fun fromGGUFData(shape: Shape, data: ByteArray): Tensor<T, V>
+        public fun fromByteArray(shape: Shape, data: ByteArray): Tensor<T, V>
     }
     
     /**
@@ -67,7 +67,7 @@ public object TensorFactoryRegistry {
         // 4.5: Add logging/debugging support for factory operations
         try {
             @Suppress("UNCHECKED_CAST")
-            val result = (factory as TensorFromBytesFactory<DType, Any>).fromGGUFData(shape, data)
+            val result = (factory as TensorFromBytesFactory<DType, Any>).fromByteArray(shape, data)
             
             // Debug logging (can be enabled by setting debugLogging flag)
             if (debugLogging) {

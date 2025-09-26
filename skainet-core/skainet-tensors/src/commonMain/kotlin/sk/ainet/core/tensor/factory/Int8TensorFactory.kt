@@ -18,7 +18,7 @@ public object Int8TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<I
      * @return A new CpuTensorInt8 instance
      * @throws IllegalArgumentException if data size doesn't match expected byte count
      */
-    override fun fromGGUFData(shape: Shape, data: ByteArray): Tensor<Int8, Byte> {
+    override fun fromByteArray(shape: Shape, data: ByteArray): Tensor<Int8, Byte> {
         // Validate input data size matches shape requirements
         val expectedByteCount = shape.volume
         
@@ -36,13 +36,13 @@ public object Int8TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<I
     
     /**
      * Creates a tensor from byte data with validation.
-     * This method is identical to fromGGUFData since Int8 doesn't need endianness conversion.
+     * This method is identical to fromByteArray since Int8 doesn't need endianness conversion.
      * @param shape The desired shape of the tensor
      * @param data The byte array containing the tensor data
      * @return A new CpuTensorInt8 instance
      */
     public fun fromByteData(shape: Shape, data: ByteArray): Tensor<Int8, Byte> {
-        return fromGGUFData(shape, data)
+        return fromByteArray(shape, data)
     }
     
     /**

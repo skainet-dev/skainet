@@ -28,7 +28,7 @@ public object FP16TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<F
      * @return A new FP16 tensor instance
      * @throws NotImplementedError Currently not implemented
      */
-    override fun fromGGUFData(shape: Shape, data: ByteArray): Tensor<FP16, Float> {
+    override fun fromByteArray(shape: Shape, data: ByteArray): Tensor<FP16, Float> {
         // Validate data size for FP16 (2 bytes per value)
         val expectedBytes = shape.volume * 2
         require(data.size == expectedBytes) {

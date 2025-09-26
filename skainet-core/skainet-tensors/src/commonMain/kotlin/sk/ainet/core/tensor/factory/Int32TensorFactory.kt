@@ -18,7 +18,7 @@ public object Int32TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<
      * @return A new CpuTensorInt32 instance
      * @throws IllegalArgumentException if data size doesn't match expected int count
      */
-    override fun fromGGUFData(shape: Shape, data: ByteArray): Tensor<Int32, Int> {
+    override fun fromByteArray(shape: Shape, data: ByteArray): Tensor<Int32, Int> {
         // Validate input data size matches shape requirements
         val expectedIntCount = shape.volume
         val expectedByteSize = expectedIntCount * 4 // 4 bytes per int

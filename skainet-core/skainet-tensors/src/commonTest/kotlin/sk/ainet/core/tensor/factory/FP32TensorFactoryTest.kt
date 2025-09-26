@@ -40,7 +40,7 @@ class FP32TensorFactoryTest {
         val floats = floatArrayOf(1.0f, 2.0f, 3.0f, 4.0f)
         val bytes = createFloatBytes(floats)
         
-        val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -59,7 +59,7 @@ class FP32TensorFactoryTest {
         val floats = floatArrayOf(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f)
         val bytes = createFloatBytes(floats)
         
-        val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -81,7 +81,7 @@ class FP32TensorFactoryTest {
         val floats = floatArrayOf(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f)
         val bytes = createFloatBytes(floats)
         
-        val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -100,7 +100,7 @@ class FP32TensorFactoryTest {
         val floats = FloatArray(16) { (it + 1).toFloat() } // [1.0, 2.0, ..., 16.0]
         val bytes = createFloatBytes(floats)
         
-        val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -118,7 +118,7 @@ class FP32TensorFactoryTest {
         val floats = FloatArray(10000) { it.toFloat() }
         val bytes = createFloatBytes(floats)
         
-        val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Large tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -147,7 +147,7 @@ class FP32TensorFactoryTest {
         val shape = Shape(8)
         val bytes = createFloatBytes(specialFloats)
         
-        val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor with special values should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -170,7 +170,7 @@ class FP32TensorFactoryTest {
         val wrongSizeBytes = ByteArray(12) // Only 12 bytes (3 floats)
         
         assertFailsWith<IllegalArgumentException>("Should throw for wrong byte array size") {
-            FP32TensorFactory.fromGGUFData(shape, wrongSizeBytes)
+            FP32TensorFactory.fromByteArray(shape, wrongSizeBytes)
         }
     }
 
@@ -182,13 +182,13 @@ class FP32TensorFactoryTest {
         // Test with zero dimension
         assertFailsWith<IllegalArgumentException>("Should throw for zero dimension") {
             val invalidShape = Shape(0, 4)
-            FP32TensorFactory.fromGGUFData(invalidShape, bytes)
+            FP32TensorFactory.fromByteArray(invalidShape, bytes)
         }
         
         // Test with negative dimension
         assertFailsWith<IllegalArgumentException>("Should throw for negative dimension") {
             val invalidShape = Shape(-1, 4)
-            FP32TensorFactory.fromGGUFData(invalidShape, bytes)
+            FP32TensorFactory.fromByteArray(invalidShape, bytes)
         }
     }
 
@@ -199,7 +199,7 @@ class FP32TensorFactoryTest {
         val emptyBytes = ByteArray(0)
         
         assertFailsWith<IllegalArgumentException>("Should throw for empty byte array") {
-            FP32TensorFactory.fromGGUFData(shape, emptyBytes)
+            FP32TensorFactory.fromByteArray(shape, emptyBytes)
         }
     }
 
@@ -210,7 +210,7 @@ class FP32TensorFactoryTest {
         val misalignedBytes = ByteArray(7) // Not divisible by 4
         
         assertFailsWith<IllegalArgumentException>("Should throw for misaligned bytes") {
-            FP32TensorFactory.fromGGUFData(shape, misalignedBytes)
+            FP32TensorFactory.fromByteArray(shape, misalignedBytes)
         }
     }
 
@@ -221,7 +221,7 @@ class FP32TensorFactoryTest {
         val floats = floatArrayOf(42.0f)
         val bytes = createFloatBytes(floats)
         
-        val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Minimal tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -239,7 +239,7 @@ class FP32TensorFactoryTest {
             val floats = FloatArray(size) { it.toFloat() }
             val bytes = createFloatBytes(floats)
             
-            val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+            val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
             
             assertNotNull(tensor, "Tensor of size $size should be created")
             assertEquals(shape, tensor.shape, "Shape should match for size $size")
@@ -273,7 +273,7 @@ class FP32TensorFactoryTest {
             val floats = FloatArray(expectedVolume) { (it + 1).toFloat() }
             val bytes = createFloatBytes(floats)
             
-            val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+            val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
             
             assertNotNull(tensor, "Tensor with shape $shape should be created")
             assertEquals(shape, tensor.shape, "Shape should match for $shape")
@@ -296,7 +296,7 @@ class FP32TensorFactoryTest {
         val shape = Shape(6)
         val bytes = createFloatBytes(preciseFloats)
         
-        val tensor = FP32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = FP32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Precision tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")

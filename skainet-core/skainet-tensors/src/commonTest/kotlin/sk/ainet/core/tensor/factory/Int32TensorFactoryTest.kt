@@ -38,7 +38,7 @@ class Int32TensorFactoryTest {
         val ints = intArrayOf(1, 2, 3, 4)
         val bytes = createIntBytes(ints)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -58,7 +58,7 @@ class Int32TensorFactoryTest {
         val ints = intArrayOf(10, 20, 30, 40, 50, 60)
         val bytes = createIntBytes(ints)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -80,7 +80,7 @@ class Int32TensorFactoryTest {
         val ints = IntArray(12) { (it + 1) * 10 } // [10, 20, 30, ..., 120]
         val bytes = createIntBytes(ints)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -99,7 +99,7 @@ class Int32TensorFactoryTest {
         val ints = IntArray(24) { it + 100 } // [100, 101, 102, ..., 123]
         val bytes = createIntBytes(ints)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -117,7 +117,7 @@ class Int32TensorFactoryTest {
         val ints = IntArray(2500) { it * 2 } // [0, 2, 4, 6, ..., 4998]
         val bytes = createIntBytes(ints)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Large tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -146,7 +146,7 @@ class Int32TensorFactoryTest {
         val shape = Shape(8)
         val bytes = createIntBytes(extremeInts)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor with extreme values should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -169,23 +169,23 @@ class Int32TensorFactoryTest {
         val validBytes = ByteArray(12) { 0 }
         
         // This should work
-        val tensor = Int32TensorFactory.fromGGUFData(shape, validBytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, validBytes)
         assertNotNull(tensor, "Tensor with properly aligned bytes should be created")
         
         // Test misaligned byte arrays
         val misalignedBytes1 = ByteArray(11) // Not multiple of 4
         assertFailsWith<IllegalArgumentException>("Should throw for 11 bytes") {
-            Int32TensorFactory.fromGGUFData(shape, misalignedBytes1)
+            Int32TensorFactory.fromByteArray(shape, misalignedBytes1)
         }
         
         val misalignedBytes2 = ByteArray(13) // Not multiple of 4
         assertFailsWith<IllegalArgumentException>("Should throw for 13 bytes") {
-            Int32TensorFactory.fromGGUFData(shape, misalignedBytes2)
+            Int32TensorFactory.fromByteArray(shape, misalignedBytes2)
         }
         
         val misalignedBytes3 = ByteArray(10) // Not multiple of 4
         assertFailsWith<IllegalArgumentException>("Should throw for 10 bytes") {
-            Int32TensorFactory.fromGGUFData(shape, misalignedBytes3)
+            Int32TensorFactory.fromByteArray(shape, misalignedBytes3)
         }
     }
 
@@ -196,13 +196,13 @@ class Int32TensorFactoryTest {
         val wrongSizeBytes = ByteArray(12) // Only 12 bytes (3 ints)
         
         assertFailsWith<IllegalArgumentException>("Should throw for wrong byte array size") {
-            Int32TensorFactory.fromGGUFData(shape, wrongSizeBytes)
+            Int32TensorFactory.fromByteArray(shape, wrongSizeBytes)
         }
         
         // Test with too many bytes
         val tooManyBytes = ByteArray(20) // 20 bytes for 4-int tensor
         assertFailsWith<IllegalArgumentException>("Should throw for too many bytes") {
-            Int32TensorFactory.fromGGUFData(shape, tooManyBytes)
+            Int32TensorFactory.fromByteArray(shape, tooManyBytes)
         }
     }
 
@@ -214,13 +214,13 @@ class Int32TensorFactoryTest {
         // Test with zero dimension
         assertFailsWith<IllegalArgumentException>("Should throw for zero dimension") {
             val invalidShape = Shape(0, 4)
-            Int32TensorFactory.fromGGUFData(invalidShape, bytes)
+            Int32TensorFactory.fromByteArray(invalidShape, bytes)
         }
         
         // Test with negative dimension
         assertFailsWith<IllegalArgumentException>("Should throw for negative dimension") {
             val invalidShape = Shape(-1, 4)
-            Int32TensorFactory.fromGGUFData(invalidShape, bytes)
+            Int32TensorFactory.fromByteArray(invalidShape, bytes)
         }
     }
 
@@ -231,7 +231,7 @@ class Int32TensorFactoryTest {
         val emptyBytes = ByteArray(0)
         
         assertFailsWith<IllegalArgumentException>("Should throw for empty byte array") {
-            Int32TensorFactory.fromGGUFData(shape, emptyBytes)
+            Int32TensorFactory.fromByteArray(shape, emptyBytes)
         }
     }
 
@@ -242,7 +242,7 @@ class Int32TensorFactoryTest {
         val ints = intArrayOf(12345)
         val bytes = createIntBytes(ints)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Minimal tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -260,7 +260,7 @@ class Int32TensorFactoryTest {
             val ints = IntArray(size) { it * 7 } // Multiply by 7 for varied values
             val bytes = createIntBytes(ints)
             
-            val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+            val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
             
             assertNotNull(tensor, "Tensor of size $size should be created")
             assertEquals(shape, tensor.shape, "Shape should match for size $size")
@@ -294,7 +294,7 @@ class Int32TensorFactoryTest {
             val ints = IntArray(expectedVolume) { it + 1000 } // Offset by 1000
             val bytes = createIntBytes(ints)
             
-            val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+            val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
             
             assertNotNull(tensor, "Tensor with shape $shape should be created")
             assertEquals(shape, tensor.shape, "Shape should match for $shape")
@@ -309,7 +309,7 @@ class Int32TensorFactoryTest {
         val negativeInts = IntArray(9) { -(it + 1) * 100 } // [-100, -200, -300, ..., -900]
         val bytes = createIntBytes(negativeInts)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor with negative values should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -327,7 +327,7 @@ class Int32TensorFactoryTest {
         val mixedInts = intArrayOf(-1000000, -100, -10, -1, 0, 1, 10, 100, 1000000, Int.MAX_VALUE)
         val bytes = createIntBytes(mixedInts)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor with mixed sign values should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -345,7 +345,7 @@ class Int32TensorFactoryTest {
         val zeroInts = IntArray(25) { 0 }
         val bytes = createIntBytes(zeroInts)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Zero tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -373,7 +373,7 @@ class Int32TensorFactoryTest {
         val shape = Shape(6)
         val bytes = createIntBytes(largeInts)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Tensor with large values should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -391,7 +391,7 @@ class Int32TensorFactoryTest {
         val sequentialInts = IntArray(20) { it * it } // Square numbers: [0, 1, 4, 9, 16, ...]
         val bytes = createIntBytes(sequentialInts)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Sequential tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")
@@ -411,7 +411,7 @@ class Int32TensorFactoryTest {
         val ints = IntArray(12) { pattern[it % 4] } // Repeat pattern [1,-1,2,-2] three times
         val bytes = createIntBytes(ints)
         
-        val tensor = Int32TensorFactory.fromGGUFData(shape, bytes)
+        val tensor = Int32TensorFactory.fromByteArray(shape, bytes)
         
         assertNotNull(tensor, "Pattern tensor should be created")
         assertEquals(shape, tensor.shape, "Shape should match")

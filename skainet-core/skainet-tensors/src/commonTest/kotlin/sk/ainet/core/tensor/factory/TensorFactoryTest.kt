@@ -119,11 +119,11 @@ class TensorFactoryTest {
         val wrongSizeBytes = byteArrayOf(1, 2, 3, 4) // Only 4 bytes
         
         assertFailsWith<IllegalArgumentException> {
-            FP32TensorFactory.fromGGUFData(shape, wrongSizeBytes)
+            FP32TensorFactory.fromByteArray(shape, wrongSizeBytes)
         }
         
         assertFailsWith<IllegalArgumentException> {
-            Int32TensorFactory.fromGGUFData(shape, wrongSizeBytes)
+            Int32TensorFactory.fromByteArray(shape, wrongSizeBytes)
         }
     }
 }
