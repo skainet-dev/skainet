@@ -147,6 +147,29 @@ public interface TensorOps<D : DType, V, T : Tensor<D, V>> {
      * @return A new flattened tensor.
      */
     public fun T.flatten(startDim: Int = 1, endDim: Int = -1): T
+
+    /**
+     * Reshapes the tensor to a new shape while preserving the total number of elements.
+     * Similar to NumPy's reshape operation.
+     *
+     * @param newShape The new shape for the tensor. The total volume must match the original tensor's volume.
+     * @return A new tensor with the specified shape containing the same data.
+     * @throws IllegalArgumentException if the total volume of newShape doesn't match the original tensor's volume.
+     */
+    public fun T.reshape(newShape: Shape): T
+    
+    /**
+     * Reshapes the tensor to a new shape while preserving the total number of elements.
+     * Similar to NumPy's reshape operation with automatic dimension inference.
+     * 
+     * One dimension can be specified as -1, and it will be automatically calculated
+     * based on the tensor's total volume and other specified dimensions.
+     *
+     * @param dimensions Variable number of dimensions. Exactly one can be -1 for automatic inference.
+     * @return A new tensor with the inferred shape containing the same data.
+     * @throws IllegalArgumentException if more than one dimension is -1 or if dimensions are invalid.
+     */
+    public fun T.reshape(vararg dimensions: Int): T
 }
 
 

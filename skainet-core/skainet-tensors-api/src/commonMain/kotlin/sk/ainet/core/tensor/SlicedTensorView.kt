@@ -60,6 +60,8 @@ public class SlicedTensorView<T : DType, V>(
     override fun Tensor<T, V>.sigmoid(): Tensor<T, V> = with(parentTensor) { this@sigmoid.sigmoid() }
     override fun Tensor<T, V>.tanh(): Tensor<T, V> = with(parentTensor) { this@tanh.tanh() }
     override fun Tensor<T, V>.flatten(startDim: Int, endDim: Int): Tensor<T, V> = with(parentTensor) { this@flatten.flatten(startDim, endDim) }
+    override fun Tensor<T, V>.reshape(newShape: Shape): Tensor<T, V> = with(parentTensor) { this@reshape.reshape(newShape) }
+    override fun Tensor<T, V>.reshape(vararg dimensions: Int): Tensor<T, V> = with(parentTensor) { this@reshape.reshape(*dimensions) }
     
     // Lazy initialization of view shape
     override val viewShape: Shape by lazy {

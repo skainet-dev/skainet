@@ -166,6 +166,8 @@ public class CpuTensorFP32(
     override fun Tensor<FP32, Float>.tanh(): Tensor<FP32, Float> = with(backend) { this@tanh.tanh() }
     override fun Tensor<FP32, Float>.softmax(dimension: Int): Tensor<FP32, Float> = with(backend) { this@softmax.softmax(dimension) }
     override fun Tensor<FP32, Float>.flatten(startDim: Int, endDim: Int): Tensor<FP32, Float> = with(backend) { this@flatten.flatten(startDim, endDim) }
+    override fun Tensor<FP32, Float>.reshape(newShape: Shape): Tensor<FP32, Float> = with(backend) { this@reshape.reshape(newShape) }
+    override fun Tensor<FP32, Float>.reshape(vararg dimensions: Int): Tensor<FP32, Float> = with(backend) { this@reshape.reshape(*dimensions) }
 
     public companion object {
         /**
@@ -668,6 +670,46 @@ public class CpuTensorInt8(
         return CpuTensorInt8(newShape, this.data.copyOf())
     }
 
+    override fun Tensor<Int8, Byte>.reshape(newShape: Shape): Tensor<Int8, Byte> {
+        require(this is CpuTensorInt8) { "Tensor must be CpuTensorInt8" }
+        require(this.shape.volume == newShape.volume) {
+            "Cannot reshape tensor with ${this.shape.volume} elements to shape with ${newShape.volume} elements"
+        }
+        
+        // Create new tensor with same data but new shape
+        return CpuTensorInt8(newShape, this.data.copyOf())
+    }
+    
+    override fun Tensor<Int8, Byte>.reshape(vararg dimensions: Int): Tensor<Int8, Byte> {
+        require(this is CpuTensorInt8) { "Tensor must be CpuTensorInt8" }
+        
+        // Count -1 dimensions and validate
+        val minusOneCount = dimensions.count { it == -1 }
+        require(minusOneCount <= 1) { "Only one dimension can be -1, found $minusOneCount" }
+        
+        if (minusOneCount == 0) {
+            // No -1, use regular reshape
+            return this.reshape(Shape(*dimensions))
+        }
+        
+        // Calculate inferred dimension
+        val minusOneIndex = dimensions.indexOfFirst { it == -1 }
+        val knownProduct = dimensions.filter { it != -1 }.fold(1) { acc, dim ->
+            require(dim > 0) { "All dimensions except -1 must be positive, got $dim" }
+            acc * dim
+        }
+        
+        require(this.shape.volume % knownProduct == 0) {
+            "Cannot reshape tensor with ${this.shape.volume} elements: remaining elements $knownProduct do not divide evenly"
+        }
+        
+        val inferredDim = this.shape.volume / knownProduct
+        val newDimensions = dimensions.copyOf()
+        newDimensions[minusOneIndex] = inferredDim
+        
+        return this.reshape(Shape(*newDimensions))
+    }
+
     public companion object {
         /**
          * Creates a tensor from an array with the given shape.
@@ -1164,6 +1206,46 @@ public class CpuTensorInt32(
         
         val newShape = Shape(*newDimensions.toIntArray())
         return CpuTensorInt32(newShape, this.data.copyOf())
+    }
+
+    override fun Tensor<Int32, Int>.reshape(newShape: Shape): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        require(this.shape.volume == newShape.volume) {
+            "Cannot reshape tensor with ${this.shape.volume} elements to shape with ${newShape.volume} elements"
+        }
+        
+        // Create new tensor with same data but new shape
+        return CpuTensorInt32(newShape, this.data.copyOf())
+    }
+    
+    override fun Tensor<Int32, Int>.reshape(vararg dimensions: Int): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        
+        // Count -1 dimensions and validate
+        val minusOneCount = dimensions.count { it == -1 }
+        require(minusOneCount <= 1) { "Only one dimension can be -1, found $minusOneCount" }
+        
+        if (minusOneCount == 0) {
+            // No -1, use regular reshape
+            return this.reshape(Shape(*dimensions))
+        }
+        
+        // Calculate inferred dimension
+        val minusOneIndex = dimensions.indexOfFirst { it == -1 }
+        val knownProduct = dimensions.filter { it != -1 }.fold(1) { acc, dim ->
+            require(dim > 0) { "All dimensions except -1 must be positive, got $dim" }
+            acc * dim
+        }
+        
+        require(this.shape.volume % knownProduct == 0) {
+            "Cannot reshape tensor with ${this.shape.volume} elements: remaining elements $knownProduct do not divide evenly"
+        }
+        
+        val inferredDim = this.shape.volume / knownProduct
+        val newDimensions = dimensions.copyOf()
+        newDimensions[minusOneIndex] = inferredDim
+        
+        return this.reshape(Shape(*newDimensions))
     }
 
     public companion object {
@@ -2006,6 +2088,46 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
         return CpuTensorFP32(newShape, this.data.copyOf())
     }
 
+    override fun Tensor<FP32, Float>.reshape(newShape: Shape): Tensor<FP32, Float> {
+        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
+        require(this.shape.volume == newShape.volume) {
+            "Cannot reshape tensor with ${this.shape.volume} elements to shape with ${newShape.volume} elements"
+        }
+        
+        // Create new tensor with same data but new shape
+        return CpuTensorFP32(newShape, this.data.copyOf())
+    }
+    
+    override fun Tensor<FP32, Float>.reshape(vararg dimensions: Int): Tensor<FP32, Float> {
+        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
+        
+        // Count -1 dimensions and validate
+        val minusOneCount = dimensions.count { it == -1 }
+        require(minusOneCount <= 1) { "Only one dimension can be -1, found $minusOneCount" }
+        
+        if (minusOneCount == 0) {
+            // No -1, use regular reshape
+            return this.reshape(Shape(*dimensions))
+        }
+        
+        // Calculate inferred dimension
+        val minusOneIndex = dimensions.indexOfFirst { it == -1 }
+        val knownProduct = dimensions.filter { it != -1 }.fold(1) { acc, dim ->
+            require(dim > 0) { "All dimensions except -1 must be positive, got $dim" }
+            acc * dim
+        }
+        
+        require(this.shape.volume % knownProduct == 0) {
+            "Cannot reshape tensor with ${this.shape.volume} elements: remaining elements $knownProduct do not divide evenly"
+        }
+        
+        val inferredDim = this.shape.volume / knownProduct
+        val newDimensions = dimensions.copyOf()
+        newDimensions[minusOneIndex] = inferredDim
+        
+        return this.reshape(Shape(*newDimensions))
+    }
+
     // TensorFactory interface implementation
     override fun zeros(shape: Shape): Tensor<FP32, Float> {
         return CpuTensorFP32.zeros(shape)
@@ -2183,6 +2305,12 @@ public class CpuBackendInt8 : ComputeBackend<Int8, Byte> {
     override fun Tensor<Int8, Byte>.flatten(startDim: Int, endDim: Int): Tensor<Int8, Byte> =
         (this as CpuTensorInt8).flatten(startDim, endDim)
 
+    override fun Tensor<Int8, Byte>.reshape(newShape: Shape): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).reshape(newShape)
+
+    override fun Tensor<Int8, Byte>.reshape(vararg dimensions: Int): Tensor<Int8, Byte> =
+        (this as CpuTensorInt8).reshape(*dimensions)
+
     override fun zeros(shape: Shape): Tensor<Int8, Byte> =
         CpuTensorInt8.zeros(shape)
 
@@ -2351,6 +2479,12 @@ public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
 
     override fun Tensor<Int32, Int>.flatten(startDim: Int, endDim: Int): Tensor<Int32, Int> =
         (this as CpuTensorInt32).flatten(startDim, endDim)
+
+    override fun Tensor<Int32, Int>.reshape(newShape: Shape): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).reshape(newShape)
+
+    override fun Tensor<Int32, Int>.reshape(vararg dimensions: Int): Tensor<Int32, Int> =
+        (this as CpuTensorInt32).reshape(*dimensions)
 
     override fun zeros(shape: Shape): Tensor<Int32, Int> =
         CpuTensorInt32.zeros(shape)
