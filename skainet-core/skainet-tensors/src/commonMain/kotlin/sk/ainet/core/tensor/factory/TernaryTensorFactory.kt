@@ -49,10 +49,7 @@ public object TernaryTensorFactory : TensorFactoryRegistry.TensorFromBytesFactor
             "Data size mismatch: expected $expectedBytes bytes for packed Ternary data (${shape.volume} values), got ${data.size}"
         }
         
-        throw NotImplementedError(
-            "TernaryTensorFactory is not yet implemented. " +
-            "This requires CpuTensorTernary implementation and 2-bit ternary unpacking utilities. " +
-            "Storage strategy: 4 values per byte with 2-bit encoding (00=-1, 01=0, 10=+1)."
-        )
+        // Create CpuTensorTernary instance with packed data
+        return sk.ainet.core.tensor.backend.CpuTensorTernary.fromPackedByteArray(shape, data)
     }
 }

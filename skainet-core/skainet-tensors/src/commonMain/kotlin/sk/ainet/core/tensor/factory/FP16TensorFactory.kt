@@ -35,9 +35,7 @@ public object FP16TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<F
             "Data size mismatch: expected $expectedBytes bytes for FP16 data, got ${data.size}"
         }
         
-        throw NotImplementedError(
-            "FP16TensorFactory is not yet implemented. " +
-            "This requires CpuTensorFP16 implementation and FP16 conversion utilities."
-        )
+        // Create CpuTensorFP16 instance with FP16 byte data
+        return sk.ainet.core.tensor.backend.CpuTensorFP16.fromFP16ByteArray(shape, data)
     }
 }

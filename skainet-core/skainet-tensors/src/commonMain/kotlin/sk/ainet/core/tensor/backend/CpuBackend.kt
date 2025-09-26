@@ -42,6 +42,24 @@ public typealias TensorInt8 = Tensor<Int8, Byte>
 public typealias TensorInt32 = Tensor<Int32, Int>
 
 /**
+ * Convenient type alias for Int4 tensors with Byte values.
+ * Use this instead of concrete implementations where possible for better abstraction.
+ */
+public typealias TensorInt4 = Tensor<Int4, Byte>
+
+/**
+ * Convenient type alias for Ternary tensors with Byte values.
+ * Use this instead of concrete implementations where possible for better abstraction.
+ */
+public typealias TensorTernary = Tensor<Ternary, Byte>
+
+/**
+ * Convenient type alias for FP16 tensors with Float values.
+ * Use this instead of concrete implementations where possible for better abstraction.
+ */
+public typealias TensorFP16 = Tensor<FP16, Float>
+
+/**
  * A CPU-based tensor for FP32/Float values.
  *
  * This tensor stores data on the CPU using TensorData abstraction with NCHW row-major layout.
@@ -2547,5 +2565,879 @@ public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
         val u2 = random.nextDouble()
         val z0 = sqrt(-2.0 * ln(u1)) * cos(2.0 * PI * u2)
         return (z0 * std + mean).toInt()
+    }
+}
+
+/**
+ * A CPU-based tensor for Int4/Byte values with packed 4-bit storage.
+ * Each byte stores 2 Int4 values: high nibble (bits 4-7) and low nibble (bits 0-3).
+ * Values are signed 4-bit integers in range -8 to 7.
+ */
+public class CpuTensorInt4(
+    override val shape: Shape,
+    internal val data: ByteArray  // Packed data: 2 values per byte
+) : TensorInt4 {
+
+    // TensorData implementation
+    override val strides: IntArray = shape.computeStrides()
+    override val offset: Int = 0
+    override val isContiguous: Boolean = true
+    
+    init {
+        val expectedBytes = (shape.volume + 1) / 2  // Ceiling division
+        require(data.size == expectedBytes) {
+            "Data size ${data.size} doesn't match expected packed size $expectedBytes bytes for ${shape.volume} Int4 values"
+        }
+        require(shape.rank in 1..4) {
+            "Only 1-4 dimensional tensors are supported, got ${shape.rank}"
+        }
+    }
+
+    override fun get(vararg indices: Int): Byte {
+        val linearIndex = shape.index(indices)
+        val byteIndex = linearIndex / 2
+        val isHighNibble = (linearIndex % 2) == 0
+        
+        return if (isHighNibble) {
+            // Extract high nibble (bits 4-7) and sign-extend
+            val value = (data[byteIndex].toInt() shr 4) and 0x0F
+            if (value >= 8) (value - 16).toByte() else value.toByte()
+        } else {
+            // Extract low nibble (bits 0-3) and sign-extend  
+            val value = data[byteIndex].toInt() and 0x0F
+            if (value >= 8) (value - 16).toByte() else value.toByte()
+        }
+    }
+    
+    override fun copyTo(dest: Array<Byte>, destOffset: Int) {
+        for (i in 0 until shape.volume) {
+            val byteIndex = i / 2
+            val isHighNibble = (i % 2) == 0
+            
+            dest[destOffset + i] = if (isHighNibble) {
+                val value = (data[byteIndex].toInt() shr 4) and 0x0F
+                if (value >= 8) (value - 16).toByte() else value.toByte()
+            } else {
+                val value = data[byteIndex].toInt() and 0x0F
+                if (value >= 8) (value - 16).toByte() else value.toByte()
+            }
+        }
+    }
+    
+    override fun slice(ranges: IntArray): TensorData<Int4, Byte> {
+        // For simplicity, materialize the slice - could be optimized later
+        return slice_impl(ranges)
+    }
+    
+    private fun slice_impl(ranges: IntArray): CpuTensorInt4 {
+        require(ranges.size == shape.rank * 2) {
+            "Ranges array must have size ${shape.rank * 2} (start,end pairs), got ${ranges.size}"
+        }
+        
+        // Parse ranges and calculate new shape
+        val sliceRanges = mutableListOf<Pair<Int, Int>>()
+        for (i in 0 until shape.rank) {
+            val start = ranges[i * 2]
+            val end = ranges[i * 2 + 1]
+            val dimSize = shape.dimensions[i]
+            
+            require(start >= 0 && start < dimSize) {
+                "Start index $start out of bounds for dimension $i (size $dimSize)"
+            }
+            require(end > start && end <= dimSize) {
+                "End index $end must be > start ($start) and <= dimension size ($dimSize)"
+            }
+            
+            sliceRanges.add(start to end)
+        }
+        
+        val newDimensions = sliceRanges.map { (start, end) -> end - start }.toIntArray()
+        val newShape = Shape(newDimensions)
+        val newSize = newShape.volume
+        val newPackedSize = (newSize + 1) / 2
+        val newData = ByteArray(newPackedSize)
+        
+        // Extract sliced values and pack them
+        var destLinearIndex = 0
+        
+        when (shape.rank) {
+            1 -> {
+                val (start0, end0) = sliceRanges[0]
+                for (i in start0 until end0) {
+                    val value = get(i)
+                    packValue(newData, destLinearIndex, value)
+                    destLinearIndex++
+                }
+            }
+            2 -> {
+                val (start0, end0) = sliceRanges[0]
+                val (start1, end1) = sliceRanges[1]
+                for (i in start0 until end0) {
+                    for (j in start1 until end1) {
+                        val value = get(i, j)
+                        packValue(newData, destLinearIndex, value)
+                        destLinearIndex++
+                    }
+                }
+            }
+            else -> throw UnsupportedOperationException("Slicing not fully implemented for ${shape.rank}D tensors")
+        }
+        
+        return CpuTensorInt4(newShape, newData)
+    }
+    
+    private fun packValue(packedData: ByteArray, linearIndex: Int, value: Byte) {
+        val byteIndex = linearIndex / 2
+        val isHighNibble = (linearIndex % 2) == 0
+        
+        // Clamp to 4-bit signed range [-8, 7]
+        val clampedValue = value.toInt().coerceIn(-8, 7)
+        val nibble = if (clampedValue < 0) clampedValue + 16 else clampedValue
+        
+        if (isHighNibble) {
+            // Set high nibble, preserve low nibble
+            packedData[byteIndex] = ((nibble shl 4) or (packedData[byteIndex].toInt() and 0x0F)).toByte()
+        } else {
+            // Set low nibble, preserve high nibble  
+            packedData[byteIndex] = ((packedData[byteIndex].toInt() and 0xF0) or nibble).toByte()
+        }
+    }
+    
+    override fun materialize(): TensorData<Int4, Byte> = this
+    
+    private fun Shape.computeStrides(): IntArray {
+        if (dimensions.isEmpty()) return intArrayOf()
+        val strides = IntArray(dimensions.size)
+        strides[dimensions.size - 1] = 1
+        for (i in dimensions.size - 2 downTo 0) {
+            strides[i] = strides[i + 1] * dimensions[i + 1]
+        }
+        return strides
+    }
+
+    // Basic operations placeholder - would need full implementation
+    override fun matmul(a: Tensor<Int4, Byte>, b: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Matrix multiplication not yet implemented for Int4 tensors")
+    }
+
+    override fun matmul4d(a: Tensor<Int4, Byte>, b: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("4D matrix multiplication not yet implemented for Int4 tensors")
+    }
+
+    override fun scale(a: Tensor<Int4, Byte>, scalar: Double): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Scale operation not yet implemented for Int4 tensors")
+    }
+
+    override fun dot(a: Tensor<Int4, Byte>, b: Tensor<Int4, Byte>): Double {
+        throw UnsupportedOperationException("Dot product not yet implemented for Int4 tensors")
+    }
+
+    // Tensor operations placeholder
+    override fun Tensor<Int4, Byte>.plus(other: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Addition not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.minus(other: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Subtraction not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.times(other: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Multiplication not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.div(other: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Division not yet implemented for Int4 tensors")
+    }
+
+    // Scalar operations placeholder
+    override fun Tensor<Int4, Byte>.plus(scalar: Int): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Scalar addition not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.minus(scalar: Int): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Scalar subtraction not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.times(scalar: Int): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Scalar multiplication not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.div(scalar: Int): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Scalar division not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.plus(scalar: Float): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Float scalar addition not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.minus(scalar: Float): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Float scalar subtraction not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.times(scalar: Float): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Float scalar multiplication not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.div(scalar: Float): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Float scalar division not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.plus(scalar: Double): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Double scalar addition not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.minus(scalar: Double): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Double scalar subtraction not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.times(scalar: Double): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Double scalar multiplication not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.div(scalar: Double): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Double scalar division not yet implemented for Int4 tensors")
+    }
+
+    // Scalar-tensor operations placeholder
+    override fun Double.plus(t: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Scalar-tensor addition not yet implemented for Int4 tensors")
+    }
+
+    override fun Double.minus(t: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Scalar-tensor subtraction not yet implemented for Int4 tensors")
+    }
+
+    override fun Double.times(t: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Scalar-tensor multiplication not yet implemented for Int4 tensors")
+    }
+
+    override fun Double.div(t: Tensor<Int4, Byte>): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Scalar-tensor division not yet implemented for Int4 tensors")
+    }
+
+    // Advanced operations placeholder
+    override fun Tensor<Int4, Byte>.t(): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Transpose not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.relu(): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("ReLU not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.sigmoid(): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Sigmoid not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.tanh(): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Tanh not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.softmax(dimension: Int): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Softmax not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.flatten(startDim: Int, endDim: Int): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Flatten not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.reshape(newShape: Shape): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Reshape not yet implemented for Int4 tensors")
+    }
+
+    override fun Tensor<Int4, Byte>.reshape(vararg dimensions: Int): Tensor<Int4, Byte> {
+        throw UnsupportedOperationException("Reshape not yet implemented for Int4 tensors")
+    }
+
+    public companion object {
+        /**
+         * Creates a tensor from packed byte data.
+         */
+        public fun fromPackedByteArray(shape: Shape, data: ByteArray): CpuTensorInt4 {
+            val expectedBytes = (shape.volume + 1) / 2
+            require(data.size == expectedBytes) {
+                "Data size ${data.size} doesn't match expected packed size $expectedBytes bytes"
+            }
+            return CpuTensorInt4(shape, data)
+        }
+    }
+}
+
+/**
+ * A CPU-based tensor for Ternary/Byte values with packed 2-bit storage.
+ * Each byte stores 4 Ternary values: 2 bits per value.
+ * Values are ternary integers: -1, 0, 1 (mapped to 00->-1, 01->0, 10->1).
+ */
+public class CpuTensorTernary(
+    override val shape: Shape,
+    internal val data: ByteArray  // Packed data: 4 values per byte
+) : TensorTernary {
+
+    // TensorData implementation
+    override val strides: IntArray = shape.computeStrides()
+    override val offset: Int = 0
+    override val isContiguous: Boolean = true
+    
+    init {
+        val expectedBytes = (shape.volume + 3) / 4  // Ceiling division for 4 values per byte
+        require(data.size == expectedBytes) {
+            "Data size ${data.size} doesn't match expected packed size $expectedBytes bytes for ${shape.volume} Ternary values"
+        }
+        require(shape.rank in 1..4) {
+            "Only 1-4 dimensional tensors are supported, got ${shape.rank}"
+        }
+    }
+
+    override fun get(vararg indices: Int): Byte {
+        val linearIndex = shape.index(indices)
+        val byteIndex = linearIndex / 4
+        val bitOffset = (linearIndex % 4) * 2  // 2 bits per value
+        
+        // Extract 2 bits and map to ternary value
+        val value = (data[byteIndex].toInt() shr bitOffset) and 0x03
+        return when (value) {
+            0 -> -1  // 00 -> -1
+            1 -> 0   // 01 -> 0  
+            2 -> 1   // 10 -> 1
+            else -> throw IllegalStateException("Invalid ternary value: $value")
+        }
+    }
+    
+    override fun copyTo(dest: Array<Byte>, destOffset: Int) {
+        for (i in 0 until shape.volume) {
+            val byteIndex = i / 4
+            val bitOffset = (i % 4) * 2
+            
+            val value = (data[byteIndex].toInt() shr bitOffset) and 0x03
+            dest[destOffset + i] = when (value) {
+                0 -> -1  // 00 -> -1
+                1 -> 0   // 01 -> 0  
+                2 -> 1   // 10 -> 1
+                else -> throw IllegalStateException("Invalid ternary value: $value")
+            }
+        }
+    }
+    
+    override fun slice(ranges: IntArray): TensorData<Ternary, Byte> {
+        return slice_impl(ranges)
+    }
+    
+    private fun slice_impl(ranges: IntArray): CpuTensorTernary {
+        require(ranges.size == shape.rank * 2) {
+            "Ranges array must have size ${shape.rank * 2} (start,end pairs), got ${ranges.size}"
+        }
+        
+        // Parse ranges and calculate new shape
+        val sliceRanges = mutableListOf<Pair<Int, Int>>()
+        for (i in 0 until shape.rank) {
+            val start = ranges[i * 2]
+            val end = ranges[i * 2 + 1]
+            val dimSize = shape.dimensions[i]
+            
+            require(start >= 0 && start < dimSize) {
+                "Start index $start out of bounds for dimension $i (size $dimSize)"
+            }
+            require(end > start && end <= dimSize) {
+                "End index $end must be > start ($start) and <= dimension size ($dimSize)"
+            }
+            
+            sliceRanges.add(start to end)
+        }
+        
+        val newDimensions = sliceRanges.map { (start, end) -> end - start }.toIntArray()
+        val newShape = Shape(newDimensions)
+        val newSize = newShape.volume
+        val newPackedSize = (newSize + 3) / 4
+        val newData = ByteArray(newPackedSize)
+        
+        // Extract sliced values and pack them
+        var destLinearIndex = 0
+        
+        when (shape.rank) {
+            1 -> {
+                val (start0, end0) = sliceRanges[0]
+                for (i in start0 until end0) {
+                    val value = get(i)
+                    packValue(newData, destLinearIndex, value)
+                    destLinearIndex++
+                }
+            }
+            2 -> {
+                val (start0, end0) = sliceRanges[0]
+                val (start1, end1) = sliceRanges[1]
+                for (i in start0 until end0) {
+                    for (j in start1 until end1) {
+                        val value = get(i, j)
+                        packValue(newData, destLinearIndex, value)
+                        destLinearIndex++
+                    }
+                }
+            }
+            else -> throw UnsupportedOperationException("Slicing not fully implemented for ${shape.rank}D tensors")
+        }
+        
+        return CpuTensorTernary(newShape, newData)
+    }
+    
+    private fun packValue(packedData: ByteArray, linearIndex: Int, value: Byte) {
+        val byteIndex = linearIndex / 4
+        val bitOffset = (linearIndex % 4) * 2
+        
+        // Map ternary value to 2-bit representation
+        val bits = when (value.toInt()) {
+            -1 -> 0  // -1 -> 00
+            0 -> 1   // 0 -> 01
+            1 -> 2   // 1 -> 10
+            else -> throw IllegalArgumentException("Invalid ternary value: $value")
+        }
+        
+        // Clear the 2 bits at bitOffset and set new value
+        val mask = 0x03 shl bitOffset
+        packedData[byteIndex] = ((packedData[byteIndex].toInt() and mask.inv()) or (bits shl bitOffset)).toByte()
+    }
+    
+    override fun materialize(): TensorData<Ternary, Byte> = this
+    
+    private fun Shape.computeStrides(): IntArray {
+        if (dimensions.isEmpty()) return intArrayOf()
+        val strides = IntArray(dimensions.size)
+        strides[dimensions.size - 1] = 1
+        for (i in dimensions.size - 2 downTo 0) {
+            strides[i] = strides[i + 1] * dimensions[i + 1]
+        }
+        return strides
+    }
+
+    // Placeholder operations - similar to CpuTensorInt4
+    override fun matmul(a: Tensor<Ternary, Byte>, b: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Matrix multiplication not yet implemented for Ternary tensors")
+    }
+
+    override fun matmul4d(a: Tensor<Ternary, Byte>, b: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("4D matrix multiplication not yet implemented for Ternary tensors")
+    }
+
+    override fun scale(a: Tensor<Ternary, Byte>, scalar: Double): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Scale operation not yet implemented for Ternary tensors")
+    }
+
+    override fun dot(a: Tensor<Ternary, Byte>, b: Tensor<Ternary, Byte>): Double {
+        throw UnsupportedOperationException("Dot product not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.plus(other: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Addition not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.minus(other: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Subtraction not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.times(other: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Multiplication not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.div(other: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Division not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.plus(scalar: Int): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Scalar addition not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.minus(scalar: Int): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Scalar subtraction not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.times(scalar: Int): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Scalar multiplication not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.div(scalar: Int): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Scalar division not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.plus(scalar: Float): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Float scalar addition not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.minus(scalar: Float): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Float scalar subtraction not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.times(scalar: Float): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Float scalar multiplication not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.div(scalar: Float): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Float scalar division not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.plus(scalar: Double): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Double scalar addition not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.minus(scalar: Double): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Double scalar subtraction not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.times(scalar: Double): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Double scalar multiplication not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.div(scalar: Double): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Double scalar division not yet implemented for Ternary tensors")
+    }
+
+    override fun Double.plus(t: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Scalar-tensor addition not yet implemented for Ternary tensors")
+    }
+
+    override fun Double.minus(t: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Scalar-tensor subtraction not yet implemented for Ternary tensors")
+    }
+
+    override fun Double.times(t: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Scalar-tensor multiplication not yet implemented for Ternary tensors")
+    }
+
+    override fun Double.div(t: Tensor<Ternary, Byte>): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Scalar-tensor division not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.t(): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Transpose not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.relu(): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("ReLU not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.sigmoid(): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Sigmoid not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.tanh(): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Tanh not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.softmax(dimension: Int): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Softmax not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.flatten(startDim: Int, endDim: Int): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Flatten not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.reshape(newShape: Shape): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Reshape not yet implemented for Ternary tensors")
+    }
+
+    override fun Tensor<Ternary, Byte>.reshape(vararg dimensions: Int): Tensor<Ternary, Byte> {
+        throw UnsupportedOperationException("Reshape not yet implemented for Ternary tensors")
+    }
+
+    public companion object {
+        /**
+         * Creates a tensor from packed byte data.
+         */
+        public fun fromPackedByteArray(shape: Shape, data: ByteArray): CpuTensorTernary {
+            val expectedBytes = (shape.volume + 3) / 4
+            require(data.size == expectedBytes) {
+                "Data size ${data.size} doesn't match expected packed size $expectedBytes bytes"
+            }
+            return CpuTensorTernary(shape, data)
+        }
+    }
+}
+
+/**
+ * A CPU-based tensor for FP16/Float values with 16-bit floating point storage.
+ * Each value uses 2 bytes and is converted to FP32 for operations.
+ * This implementation converts FP16 data to FP32 for processing.
+ */
+public class CpuTensorFP16(
+    override val shape: Shape,
+    internal val data: FloatArray  // Converted FP32 data
+) : TensorFP16 {
+
+    // TensorData implementation
+    override val strides: IntArray = shape.computeStrides()
+    override val offset: Int = 0
+    override val isContiguous: Boolean = true
+    
+    init {
+        require(shape.rank in 1..4) {
+            "Only 1-4 dimensional tensors are supported, got ${shape.rank}"
+        }
+        require(data.size == shape.volume) {
+            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
+        }
+    }
+
+    override fun get(vararg indices: Int): Float {
+        val linearIndex = shape.index(indices)
+        return data[linearIndex]
+    }
+    
+    override fun copyTo(dest: Array<Float>, destOffset: Int) {
+        for (i in data.indices) {
+            dest[destOffset + i] = data[i]
+        }
+    }
+    
+    override fun slice(ranges: IntArray): TensorData<FP16, Float> {
+        return slice_impl(ranges)
+    }
+    
+    private fun slice_impl(ranges: IntArray): CpuTensorFP16 {
+        require(ranges.size == shape.rank * 2) {
+            "Ranges array must have size ${shape.rank * 2} (start,end pairs), got ${ranges.size}"
+        }
+        
+        // Parse ranges and calculate new shape
+        val sliceRanges = mutableListOf<Pair<Int, Int>>()
+        for (i in 0 until shape.rank) {
+            val start = ranges[i * 2]
+            val end = ranges[i * 2 + 1]
+            val dimSize = shape.dimensions[i]
+            
+            require(start >= 0 && start < dimSize) {
+                "Start index $start out of bounds for dimension $i (size $dimSize)"
+            }
+            require(end > start && end <= dimSize) {
+                "End index $end must be > start ($start) and <= dimension size ($dimSize)"
+            }
+            
+            sliceRanges.add(start to end)
+        }
+        
+        val newDimensions = sliceRanges.map { (start, end) -> end - start }.toIntArray()
+        val newShape = Shape(newDimensions)
+        val newData = FloatArray(newShape.volume)
+        
+        // Extract sliced values
+        var destLinearIndex = 0
+        
+        when (shape.rank) {
+            1 -> {
+                val (start0, end0) = sliceRanges[0]
+                for (i in start0 until end0) {
+                    newData[destLinearIndex++] = get(i)
+                }
+            }
+            2 -> {
+                val (start0, end0) = sliceRanges[0]
+                val (start1, end1) = sliceRanges[1]
+                for (i in start0 until end0) {
+                    for (j in start1 until end1) {
+                        newData[destLinearIndex++] = get(i, j)
+                    }
+                }
+            }
+            else -> throw UnsupportedOperationException("Slicing not fully implemented for ${shape.rank}D tensors")
+        }
+        
+        return CpuTensorFP16(newShape, newData)
+    }
+    
+    override fun materialize(): TensorData<FP16, Float> = this
+    
+    private fun Shape.computeStrides(): IntArray {
+        if (dimensions.isEmpty()) return intArrayOf()
+        val strides = IntArray(dimensions.size)
+        strides[dimensions.size - 1] = 1
+        for (i in dimensions.size - 2 downTo 0) {
+            strides[i] = strides[i + 1] * dimensions[i + 1]
+        }
+        return strides
+    }
+
+    // Placeholder operations - similar to other tensor types
+    override fun matmul(a: Tensor<FP16, Float>, b: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Matrix multiplication not yet implemented for FP16 tensors")
+    }
+
+    override fun matmul4d(a: Tensor<FP16, Float>, b: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("4D matrix multiplication not yet implemented for FP16 tensors")
+    }
+
+    override fun scale(a: Tensor<FP16, Float>, scalar: Double): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Scale operation not yet implemented for FP16 tensors")
+    }
+
+    override fun dot(a: Tensor<FP16, Float>, b: Tensor<FP16, Float>): Double {
+        throw UnsupportedOperationException("Dot product not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.plus(other: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Addition not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.minus(other: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Subtraction not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.times(other: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Multiplication not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.div(other: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Division not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.plus(scalar: Int): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Scalar addition not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.minus(scalar: Int): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Scalar subtraction not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.times(scalar: Int): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Scalar multiplication not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.div(scalar: Int): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Scalar division not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.plus(scalar: Float): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Float scalar addition not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.minus(scalar: Float): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Float scalar subtraction not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.times(scalar: Float): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Float scalar multiplication not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.div(scalar: Float): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Float scalar division not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.plus(scalar: Double): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Double scalar addition not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.minus(scalar: Double): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Double scalar subtraction not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.times(scalar: Double): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Double scalar multiplication not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.div(scalar: Double): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Double scalar division not yet implemented for FP16 tensors")
+    }
+
+    override fun Double.plus(t: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Scalar-tensor addition not yet implemented for FP16 tensors")
+    }
+
+    override fun Double.minus(t: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Scalar-tensor subtraction not yet implemented for FP16 tensors")
+    }
+
+    override fun Double.times(t: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Scalar-tensor multiplication not yet implemented for FP16 tensors")
+    }
+
+    override fun Double.div(t: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Scalar-tensor division not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.t(): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Transpose not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.relu(): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("ReLU not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.sigmoid(): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Sigmoid not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.tanh(): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Tanh not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.softmax(dimension: Int): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Softmax not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.flatten(startDim: Int, endDim: Int): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Flatten not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.reshape(newShape: Shape): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Reshape not yet implemented for FP16 tensors")
+    }
+
+    override fun Tensor<FP16, Float>.reshape(vararg dimensions: Int): Tensor<FP16, Float> {
+        throw UnsupportedOperationException("Reshape not yet implemented for FP16 tensors")
+    }
+
+    public companion object {
+        /**
+         * Creates a tensor from FP16 byte data by converting to FP32.
+         */
+        public fun fromFP16ByteArray(shape: Shape, data: ByteArray): CpuTensorFP16 {
+            val expectedBytes = shape.volume * 2  // 2 bytes per FP16 value
+            require(data.size == expectedBytes) {
+                "Data size ${data.size} doesn't match expected FP16 size $expectedBytes bytes"
+            }
+            
+            // Convert FP16 bytes to FP32 floats
+            val floatData = FloatArray(shape.volume)
+            for (i in 0 until shape.volume) {
+                val fp16Bytes = (data[i * 2].toInt() and 0xFF) or ((data[i * 2 + 1].toInt() and 0xFF) shl 8)
+                floatData[i] = fp16ToFp32(fp16Bytes)
+            }
+            
+            return CpuTensorFP16(shape, floatData)
+        }
+        
+        /**
+         * Converts a 16-bit FP16 value to 32-bit FP32 value.
+         * This is a basic implementation - production code might need more sophisticated handling.
+         */
+        private fun fp16ToFp32(fp16: Int): Float {
+            val sign = (fp16 shr 15) and 0x1
+            val exponent = (fp16 shr 10) and 0x1F
+            val mantissa = fp16 and 0x3FF
+            
+            return when {
+                exponent == 0 -> {
+                    // Zero or denormal
+                    if (mantissa == 0) {
+                        if (sign == 1) -0.0f else 0.0f
+                    } else {
+                        // Denormal - convert to normal FP32
+                        val normalizedMantissa = mantissa.toFloat() / 1024.0f
+                        val value = normalizedMantissa * 2.0.pow(-14.0).toFloat()
+                        if (sign == 1) -value else value
+                    }
+                }
+                exponent == 31 -> {
+                    // Infinity or NaN  
+                    if (mantissa == 0) {
+                        if (sign == 1) Float.NEGATIVE_INFINITY else Float.POSITIVE_INFINITY
+                    } else {
+                        Float.NaN
+                    }
+                }
+                else -> {
+                    // Normal number
+                    val fp32Exponent = exponent - 15 + 127  // Convert bias
+                    val fp32Mantissa = mantissa shl 13  // Shift mantissa
+                    val fp32Bits = (sign shl 31) or (fp32Exponent shl 23) or fp32Mantissa
+                    Float.fromBits(fp32Bits)
+                }
+            }
+        }
     }
 }

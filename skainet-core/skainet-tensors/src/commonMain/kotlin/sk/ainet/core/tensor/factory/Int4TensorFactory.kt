@@ -45,10 +45,7 @@ public object Int4TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<I
             "Data size mismatch: expected $expectedBytes bytes for packed Int4 data (${shape.volume} values), got ${data.size}"
         }
         
-        throw NotImplementedError(
-            "Int4TensorFactory is not yet implemented. " +
-            "This requires CpuTensorInt4 implementation and 4-bit unpacking utilities. " +
-            "Storage strategy: 2 values per byte with high/low nibble packing."
-        )
+        // Create CpuTensorInt4 instance with packed data
+        return sk.ainet.core.tensor.backend.CpuTensorInt4.fromPackedByteArray(shape, data)
     }
 }
