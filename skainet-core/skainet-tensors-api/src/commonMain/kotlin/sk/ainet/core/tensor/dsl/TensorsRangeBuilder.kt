@@ -1,10 +1,8 @@
 package sk.ainet.core.tensor.dsl
 
 import sk.ainet.core.tensor.DType
-import sk.ainet.core.tensor.NCHWViewHelper
 import sk.ainet.core.tensor.Slice
 import sk.ainet.core.tensor.SliceDescriptor
-import sk.ainet.core.tensor.SliceIndexMapper
 import sk.ainet.core.tensor.Tensor
 
 /**

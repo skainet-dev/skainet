@@ -8,7 +8,6 @@ import sk.ainet.core.tensor.backend.CpuBackendInt8
 import sk.ainet.core.tensor.backend.CpuBackendInt32
 import sk.ainet.core.tensor.backend.CpuTensorFP16
 import sk.ainet.core.tensor.backend.CpuBackendFP16
-import sk.ainet.core.tensor.dsl.*
 import kotlin.test.*
 
 class ReshapeSlicingDslTest {
@@ -125,7 +124,7 @@ class ReshapeSlicingDslTest {
                 segment { all() }
                 segment { all() }
             }.let { view ->
-                original.reshape(Shape(6, 2))
+                view.reshape(Shape(6, 2))
             }
         }
 
@@ -153,7 +152,7 @@ class ReshapeSlicingDslTest {
                 segment { all() }
                 segment { all() }
             }.let { view ->
-                original.reshape(Shape(2, 3))
+                view.reshape(Shape(2, 3))
             }
         }
 
@@ -178,7 +177,7 @@ class ReshapeSlicingDslTest {
             sliceTensor(original) {
                 segment { all() }
             }.let { view ->
-                original.reshape(Shape(1, 1))
+                view.reshape(Shape(1, 1))
             }
         }
         assertEquals(Shape(1, 1), reshaped1.shape)
@@ -188,7 +187,7 @@ class ReshapeSlicingDslTest {
             sliceTensor(original) {
                 segment { all() }
             }.let { view ->
-                original.reshape(Shape(1, 1, 1))
+                view.reshape(Shape(1, 1, 1))
             }
         }
         assertEquals(Shape(1, 1, 1), reshaped2.shape)
@@ -205,7 +204,7 @@ class ReshapeSlicingDslTest {
             sliceTensor(original) {
                 segment { all() }
             }.let { view ->
-                original.reshape(Shape(2, 3, 2, 2))
+                view.reshape(Shape(2, 3, 2, 2))
             }
         }
 
@@ -260,7 +259,7 @@ class ReshapeSlicingDslTest {
             sliceTensor(original) {
                 segment { all() }
             }.let { view ->
-                original.reshape(Shape(2, 2))
+                view.reshape(Shape(2, 2))
             }
         }
 
@@ -288,7 +287,7 @@ class ReshapeSlicingDslTest {
                 segment { all() }
                 segment { all() }
             }.let { view ->
-                original.reshape(Shape(12, 5))
+                view.reshape(Shape(12, 5))
             }
         }
 
@@ -297,7 +296,7 @@ class ReshapeSlicingDslTest {
                 segment { all() }
                 segment { all() }
             }.let { view ->
-                step1.reshape(Shape(60))
+                view.reshape(Shape(60))
             }
         }
 
@@ -305,7 +304,7 @@ class ReshapeSlicingDslTest {
             sliceTensor(step2) {
                 segment { all() }
             }.let { view ->
-                step2.reshape(Shape(6, 10))
+                view.reshape(Shape(6, 10))
             }
         }
 
@@ -314,7 +313,7 @@ class ReshapeSlicingDslTest {
                 segment { all() }
                 segment { all() }
             }.let { view ->
-                step3.reshape(Shape(2, 3, 10))
+                view.reshape(Shape(2, 3, 10))
             }
         }
 
@@ -390,11 +389,6 @@ class ReshapeSlicingDslTest {
 
             assertEquals(firstRow.shape, Shape(1, 5))
 
-            val lastRow = sliceTensor(original) {
-                segment { range(3, 4) } // Last row only
-                segment { all() }       // All columns
-            }
-
             // For this test, we'll just demonstrate with first row reshaped
             // Convert view to CpuTensorFP32 first, then reshape
             val dataArray = Array<Float>(firstRow.shape.volume) { 0f }
@@ -424,7 +418,7 @@ class ReshapeSlicingDslTest {
                     segment { all() }
                     segment { all() }
                 }.let { view ->
-                    tensor.reshape(Shape(2, 4)) // Volume = 8, original volume = 6
+                    view.reshape(Shape(2, 4)) // Volume = 8, original volume = 6
                 }
             }
         }

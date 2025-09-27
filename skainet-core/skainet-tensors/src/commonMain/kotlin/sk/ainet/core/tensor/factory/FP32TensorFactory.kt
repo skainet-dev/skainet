@@ -1,6 +1,5 @@
 package sk.ainet.core.tensor.factory
 
-import sk.ainet.core.tensor.DType
 import sk.ainet.core.tensor.FP32
 import sk.ainet.core.tensor.Shape
 import sk.ainet.core.tensor.Tensor

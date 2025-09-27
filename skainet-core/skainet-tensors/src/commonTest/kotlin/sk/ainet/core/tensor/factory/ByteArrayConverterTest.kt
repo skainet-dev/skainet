@@ -1,6 +1,5 @@
 package sk.ainet.core.tensor.factory
 
-import sk.ainet.core.tensor.*
 import kotlin.test.*
 
 /**

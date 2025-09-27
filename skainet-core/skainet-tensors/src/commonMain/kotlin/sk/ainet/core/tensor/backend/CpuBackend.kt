@@ -591,7 +591,7 @@ public class CpuTensorInt8(
         // For integer tensors, sigmoid is approximated and scaled to byte range
         val result = this.data.map { 
             val sigmoid = 1.0 / (1.0 + exp(-it.toDouble() / 127.0))  // Scale input to [-1, 1] range
-            clampToByte((sigmoid * 254 - 127).toDouble())  // Scale output to byte range
+            clampToByte((sigmoid * 254 - 127))  // Scale output to byte range
         }.toByteArray()
         return CpuTensorInt8(this.shape, result)
     }
@@ -601,7 +601,7 @@ public class CpuTensorInt8(
         // For integer tensors, tanh is approximated and scaled to byte range
         val result = this.data.map { 
             val tanhValue = tanh(it.toDouble() / 127.0)  // Scale input to [-1, 1] range
-            clampToByte((tanhValue * 127).toDouble())  // Scale output to byte range
+            clampToByte((tanhValue * 127))  // Scale output to byte range
         }.toByteArray()
         return CpuTensorInt8(this.shape, result)
     }
@@ -2365,7 +2365,7 @@ public class CpuBackendInt8 : ComputeBackend<Int8, Byte> {
     override fun Double.minus(t: Tensor<Int8, Byte>): Tensor<Int8, Byte> =
         (t as CpuTensorInt8).minus(this).let {
             CpuTensorInt8.fromArray(t.shape, ByteArray(t.shape.volume) { i ->
-                ((this - (t as CpuTensorInt8).data[i].toInt()).toInt().toByte())
+                ((this - t.data[i].toInt()).toInt().toByte())
             })
         }
 
@@ -2395,11 +2395,47 @@ public class CpuBackendInt8 : ComputeBackend<Int8, Byte> {
     override fun Tensor<Int8, Byte>.flatten(startDim: Int, endDim: Int): Tensor<Int8, Byte> =
         (this as CpuTensorInt8).flatten(startDim, endDim)
 
-    override fun Tensor<Int8, Byte>.reshape(newShape: Shape): Tensor<Int8, Byte> =
-        (this as CpuTensorInt8).reshape(newShape)
+    override fun Tensor<Int8, Byte>.reshape(newShape: Shape): Tensor<Int8, Byte> {
+        require(this.shape.volume == newShape.volume) {
+            "Cannot reshape tensor with ${this.shape.volume} elements to shape with ${newShape.volume} elements"
+        }
+        
+        // Handle both CpuTensorInt8 and sliced tensors
+        if (this is CpuTensorInt8) {
+            // Direct access to data for CpuTensorInt8
+            return CpuTensorInt8.fromArray(newShape, this.data.copyOf())
+        } else {
+            // For sliced tensors, extract data using copyTo
+            val tensorData = Array<Byte>(this.shape.volume) { 0 }
+            this.copyTo(tensorData)
+            return CpuTensorInt8.fromArray(newShape, tensorData.toByteArray())
+        }
+    }
 
-    override fun Tensor<Int8, Byte>.reshape(vararg dimensions: Int): Tensor<Int8, Byte> =
-        (this as CpuTensorInt8).reshape(*dimensions)
+    override fun Tensor<Int8, Byte>.reshape(vararg dimensions: Int): Tensor<Int8, Byte> {
+        // Count -1 dimensions and validate
+        val minusOneCount = dimensions.count { it == -1 }
+        require(minusOneCount <= 1) { "Only one dimension can be -1, found $minusOneCount" }
+        
+        val totalKnownElements = dimensions.filter { it != -1 }.fold(1) { acc, dim ->
+            require(dim > 0) { "All dimensions must be positive or -1, got $dim" }
+            acc * dim
+        }
+        
+        val inferredDimensions = if (minusOneCount == 1) {
+            // Calculate the missing dimension
+            val missingDimSize = this.shape.volume / totalKnownElements
+            require(this.shape.volume % totalKnownElements == 0) {
+                "Cannot infer dimension size: volume ${this.shape.volume} is not divisible by known dimensions product $totalKnownElements"
+            }
+            dimensions.map { if (it == -1) missingDimSize else it }.toIntArray()
+        } else {
+            dimensions
+        }
+        
+        val newShape = Shape(inferredDimensions)
+        return this.reshape(newShape)
+    }
 
     override fun zeros(shape: Shape): Tensor<Int8, Byte> =
         CpuTensorInt8.zeros(shape)
@@ -2570,11 +2606,47 @@ public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
     override fun Tensor<Int32, Int>.flatten(startDim: Int, endDim: Int): Tensor<Int32, Int> =
         (this as CpuTensorInt32).flatten(startDim, endDim)
 
-    override fun Tensor<Int32, Int>.reshape(newShape: Shape): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).reshape(newShape)
+    override fun Tensor<Int32, Int>.reshape(newShape: Shape): Tensor<Int32, Int> {
+        require(this.shape.volume == newShape.volume) {
+            "Cannot reshape tensor with ${this.shape.volume} elements to shape with ${newShape.volume} elements"
+        }
+        
+        // Handle both CpuTensorInt32 and sliced tensors
+        if (this is CpuTensorInt32) {
+            // Direct access to data for CpuTensorInt32
+            return CpuTensorInt32.fromArray(newShape, this.data.copyOf())
+        } else {
+            // For sliced tensors, extract data using copyTo
+            val tensorData = Array<Int>(this.shape.volume) { 0 }
+            this.copyTo(tensorData)
+            return CpuTensorInt32.fromArray(newShape, tensorData.toIntArray())
+        }
+    }
 
-    override fun Tensor<Int32, Int>.reshape(vararg dimensions: Int): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).reshape(*dimensions)
+    override fun Tensor<Int32, Int>.reshape(vararg dimensions: Int): Tensor<Int32, Int> {
+        // Count -1 dimensions and validate
+        val minusOneCount = dimensions.count { it == -1 }
+        require(minusOneCount <= 1) { "Only one dimension can be -1, found $minusOneCount" }
+        
+        val totalKnownElements = dimensions.filter { it != -1 }.fold(1) { acc, dim ->
+            require(dim > 0) { "All dimensions must be positive or -1, got $dim" }
+            acc * dim
+        }
+        
+        val inferredDimensions = if (minusOneCount == 1) {
+            // Calculate the missing dimension
+            val missingDimSize = this.shape.volume / totalKnownElements
+            require(this.shape.volume % totalKnownElements == 0) {
+                "Cannot infer dimension size: volume ${this.shape.volume} is not divisible by known dimensions product $totalKnownElements"
+            }
+            dimensions.map { if (it == -1) missingDimSize else it }.toIntArray()
+        } else {
+            dimensions
+        }
+        
+        val newShape = Shape(inferredDimensions)
+        return this.reshape(newShape)
+    }
 
     override fun zeros(shape: Shape): Tensor<Int32, Int> =
         CpuTensorInt32.zeros(shape)
