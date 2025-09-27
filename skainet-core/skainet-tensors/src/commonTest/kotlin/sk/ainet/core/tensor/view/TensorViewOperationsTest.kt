@@ -2,7 +2,6 @@ package sk.ainet.core.tensor.view
 
 import sk.ainet.core.tensor.*
 import sk.ainet.core.tensor.backend.CpuBackend
-import sk.ainet.core.tensor.dsl.sliceView
 import kotlin.test.*
 
 /**
@@ -18,7 +17,7 @@ class TensorViewOperationsTest {
     fun testTensorViewExtendsTensor() {
         // Task 36: Ensure all TensorOps methods work with tensor views (unified architecture)
         val tensor = backend.ones(Shape(4, 4))
-        val view = sliceView(tensor) {
+        val view = sliceTensor(tensor) {
             segment { range(0, 2) }
             segment { range(0, 2) }
         }
@@ -34,11 +33,11 @@ class TensorViewOperationsTest {
         val tensorA = backend.ones(Shape(3, 3))
         val tensorB = backend.ones(Shape(3, 3))
         
-        val viewA = sliceView(tensorA) {
+        val viewA = sliceTensor(tensorA) {
             segment { range(0, 2) }
             segment { range(0, 2) }
         }
-        val viewB = sliceView(tensorB) {
+        val viewB = sliceTensor(tensorB) {
             segment { range(0, 2) }
             segment { range(0, 2) }
         }
@@ -60,11 +59,11 @@ class TensorViewOperationsTest {
     fun testElementWiseOperationsWithViews() {
         // Task 38: Verify element-wise operations (+, -, *, /) on views
         val tensor = backend.ones(Shape(4, 4))
-        val view1 = sliceView(tensor) {
+        val view1 = sliceTensor(tensor) {
             segment { range(0, 2) }
             segment { range(0, 2) }
         }
-        val view2 = sliceView(tensor) {
+        val view2 = sliceTensor(tensor) {
             segment { range(1, 3) }
             segment { range(1, 3) }
         }
@@ -90,7 +89,7 @@ class TensorViewOperationsTest {
     fun testActivationFunctionsWithViews() {
         // Task 39: Test activation functions (relu, softmax, sigmoid) with views
         val tensor = backend.ones(Shape(3, 3))
-        val view = sliceView(tensor) {
+        val view = sliceTensor(tensor) {
             segment { range(0, 2) }
             segment { range(0, 2) }
         }
@@ -116,7 +115,7 @@ class TensorViewOperationsTest {
     fun testPerformanceBenchmarkViewsVsDense() {
         // Task 40: Add performance benchmarks for operations on views vs dense tensors
         val largeTensor = backend.ones(Shape(10, 10))
-        val view = sliceView(largeTensor) {
+        val view = sliceTensor(largeTensor) {
             segment { range(2, 8) }
             segment { range(2, 8) }
         }
@@ -142,7 +141,7 @@ class TensorViewOperationsTest {
     fun testDifferentDataTypesWithViews() {
         // Task 43: Test view operations with different data types (Float32, Int32, etc.)
         val floatTensor = backend.ones(Shape(4, 4))
-        val floatView = sliceView(floatTensor) {
+        val floatView = sliceTensor(floatTensor) {
             segment { range(0, 2) }
             segment { range(0, 2) }
         }

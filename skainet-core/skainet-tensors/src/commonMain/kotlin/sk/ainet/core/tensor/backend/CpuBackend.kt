@@ -2174,18 +2174,23 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
     }
 
     override fun Tensor<FP32, Float>.reshape(newShape: Shape): Tensor<FP32, Float> {
-        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
         require(this.shape.volume == newShape.volume) {
             "Cannot reshape tensor with ${this.shape.volume} elements to shape with ${newShape.volume} elements"
         }
         
-        // Create new tensor with same data but new shape
-        return CpuTensorFP32(newShape, this.data.copyOf())
+        // Handle both CpuTensorFP32 and sliced tensors
+        if (this is CpuTensorFP32) {
+            // Direct access to data for CpuTensorFP32
+            return CpuTensorFP32(newShape, this.data.copyOf())
+        } else {
+            // For sliced tensors, extract data using copyTo
+            val tensorData = Array<Float>(this.shape.volume) { 0f }
+            this.copyTo(tensorData)
+            return CpuTensorFP32(newShape, tensorData.toFloatArray())
+        }
     }
     
     override fun Tensor<FP32, Float>.reshape(vararg dimensions: Int): Tensor<FP32, Float> {
-        require(this is CpuTensorFP32) { "Tensor must be CpuTensorFP32" }
-        
         // Count -1 dimensions and validate
         val minusOneCount = dimensions.count { it == -1 }
         require(minusOneCount <= 1) { "Only one dimension can be -1, found $minusOneCount" }
