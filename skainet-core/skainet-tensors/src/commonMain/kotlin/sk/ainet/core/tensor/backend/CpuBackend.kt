@@ -3223,6 +3223,180 @@ public class CpuTensorTernary(
 }
 
 /**
+ * A CPU-based implementation of the ComputeBackend interface for FP16/Float tensors.
+ */
+public class CpuBackendFP16 : ComputeBackend<FP16, Float> {
+    override val name: String = "CPU-FP16"
+    
+    init {
+        TensorFactoryInitializer.ensureInitialized()
+    }
+
+    override fun matmul4d(a: Tensor<FP16, Float>, b: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        (a as CpuTensorFP16).matmul4d(a, b)
+
+    override fun matmul(a: Tensor<FP16, Float>, b: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        (a as CpuTensorFP16).matmul(a, b)
+
+    override fun scale(a: Tensor<FP16, Float>, scalar: Double): Tensor<FP16, Float> =
+        (a as CpuTensorFP16).scale(a, scalar)
+
+    override fun dot(a: Tensor<FP16, Float>, b: Tensor<FP16, Float>): Double =
+        (a as CpuTensorFP16).dot(a, b)
+
+    override fun Tensor<FP16, Float>.plus(other: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).plus(other)
+
+    override fun Tensor<FP16, Float>.minus(other: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).minus(other)
+
+    override fun Tensor<FP16, Float>.times(other: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).times(other)
+
+    override fun Tensor<FP16, Float>.div(other: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).div(other)
+
+    override fun Tensor<FP16, Float>.plus(scalar: Int): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).plus(scalar)
+
+    override fun Tensor<FP16, Float>.minus(scalar: Int): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).minus(scalar)
+
+    override fun Tensor<FP16, Float>.times(scalar: Int): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).times(scalar)
+
+    override fun Tensor<FP16, Float>.div(scalar: Int): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).div(scalar)
+
+    override fun Tensor<FP16, Float>.plus(scalar: Float): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).plus(scalar)
+
+    override fun Tensor<FP16, Float>.minus(scalar: Float): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).minus(scalar)
+
+    override fun Tensor<FP16, Float>.times(scalar: Float): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).times(scalar)
+
+    override fun Tensor<FP16, Float>.div(scalar: Float): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).div(scalar)
+
+    override fun Tensor<FP16, Float>.plus(scalar: Double): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).plus(scalar)
+
+    override fun Tensor<FP16, Float>.minus(scalar: Double): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).minus(scalar)
+
+    override fun Tensor<FP16, Float>.times(scalar: Double): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).times(scalar)
+
+    override fun Tensor<FP16, Float>.div(scalar: Double): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).div(scalar)
+
+    override fun Double.plus(t: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        (t as CpuTensorFP16).plus(this)
+
+    override fun Double.minus(t: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        CpuTensorFP16.fromArray(t.shape, FloatArray(t.shape.volume) { i ->
+            (this - (t as CpuTensorFP16).data[i]).toFloat()
+        })
+
+    override fun Double.times(t: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        (t as CpuTensorFP16).times(this)
+
+    override fun Double.div(t: Tensor<FP16, Float>): Tensor<FP16, Float> =
+        CpuTensorFP16.fromArray(t.shape, FloatArray(t.shape.volume) { i ->
+            (this / (t as CpuTensorFP16).data[i]).toFloat()
+        })
+
+    override fun Tensor<FP16, Float>.t(): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).t()
+
+    override fun Tensor<FP16, Float>.relu(): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).relu()
+
+    override fun Tensor<FP16, Float>.sigmoid(): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).sigmoid()
+
+    override fun Tensor<FP16, Float>.tanh(): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).tanh()
+
+    override fun Tensor<FP16, Float>.softmax(dimension: Int): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).softmax(dimension)
+
+    override fun Tensor<FP16, Float>.flatten(startDim: Int, endDim: Int): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).flatten(startDim, endDim)
+
+    override fun Tensor<FP16, Float>.reshape(newShape: Shape): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).reshape(newShape)
+
+    override fun Tensor<FP16, Float>.reshape(vararg dimensions: Int): Tensor<FP16, Float> =
+        (this as CpuTensorFP16).reshape(*dimensions)
+
+    override fun zeros(shape: Shape): Tensor<FP16, Float> =
+        CpuTensorFP16.fromArray(shape, FloatArray(shape.volume))
+
+    override fun ones(shape: Shape): Tensor<FP16, Float> =
+        CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { 1f })
+
+    override fun random(shape: Shape): Tensor<FP16, Float> =
+        CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { kotlin.random.Random.nextFloat() })
+
+    override fun random(shape: Shape, seed: Long): Tensor<FP16, Float> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { random.nextFloat() })
+    }
+
+    override fun random(shape: Shape, random: kotlin.random.Random): Tensor<FP16, Float> =
+        CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { random.nextFloat() })
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double): Tensor<FP16, Float> {
+        val random = kotlin.random.Random
+        return CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { 
+            generateNormalDistributionFP16(random, mean, std)
+        })
+    }
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double, seed: Long): Tensor<FP16, Float> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { 
+            generateNormalDistributionFP16(random, mean, std)
+        })
+    }
+
+    override fun randomNormal(shape: Shape, mean: Double, std: Double, random: kotlin.random.Random): Tensor<FP16, Float> =
+        CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { 
+            generateNormalDistributionFP16(random, mean, std)
+        })
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double): Tensor<FP16, Float> {
+        val random = kotlin.random.Random
+        return CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { 
+            (random.nextDouble() * (max - min) + min).toFloat()
+        })
+    }
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double, seed: Long): Tensor<FP16, Float> {
+        val random = kotlin.random.Random(seed)
+        return CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { 
+            (random.nextDouble() * (max - min) + min).toFloat()
+        })
+    }
+
+    override fun randomUniform(shape: Shape, min: Double, max: Double, random: kotlin.random.Random): Tensor<FP16, Float> =
+        CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { 
+            (random.nextDouble() * (max - min) + min).toFloat()
+        })
+
+    private fun generateNormalDistributionFP16(random: kotlin.random.Random, mean: Double, std: Double): Float {
+        // Box-Muller transform for generating normal distribution
+        val u1 = random.nextDouble()
+        val u2 = random.nextDouble()
+        val z0 = sqrt(-2.0 * ln(u1)) * cos(2.0 * PI * u2)
+        return (z0 * std + mean).toFloat()
+    }
+}
+
+/**
  * A CPU-based tensor for FP16/Float values with 16-bit floating point storage.
  * Each value uses 2 bytes and is converted to FP32 for operations.
  * This implementation converts FP16 data to FP32 for processing.
@@ -3446,14 +3620,58 @@ public class CpuTensorFP16(
     }
 
     override fun Tensor<FP16, Float>.reshape(newShape: Shape): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Reshape not yet implemented for FP16 tensors")
+        require(this.shape.volume == newShape.volume) {
+            "Cannot reshape tensor with ${this.shape.volume} elements to shape with ${newShape.volume} elements"
+        }
+        
+        // Handle both CpuTensorFP16 and sliced tensors
+        if (this is CpuTensorFP16) {
+            // Direct access to data for CpuTensorFP16
+            return CpuTensorFP16(newShape, this.data.copyOf())
+        } else {
+            // For sliced tensors, extract data using copyTo
+            val tensorData = Array<Float>(this.shape.volume) { 0f }
+            this.copyTo(tensorData)
+            return CpuTensorFP16(newShape, tensorData.toFloatArray())
+        }
     }
-
+    
     override fun Tensor<FP16, Float>.reshape(vararg dimensions: Int): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Reshape not yet implemented for FP16 tensors")
+        // Count -1 dimensions and validate
+        val minusOneCount = dimensions.count { it == -1 }
+        require(minusOneCount <= 1) { "Only one dimension can be -1, found $minusOneCount" }
+        
+        val totalKnownElements = dimensions.filter { it != -1 }.fold(1) { acc, dim ->
+            require(dim > 0) { "All dimensions must be positive or -1, got $dim" }
+            acc * dim
+        }
+        
+        val inferredDimensions = if (minusOneCount == 1) {
+            // Calculate the missing dimension
+            val missingDimSize = this.shape.volume / totalKnownElements
+            require(this.shape.volume % totalKnownElements == 0) {
+                "Cannot infer dimension size: volume ${this.shape.volume} is not divisible by known dimensions product $totalKnownElements"
+            }
+            dimensions.map { if (it == -1) missingDimSize else it }.toIntArray()
+        } else {
+            dimensions
+        }
+        
+        val newShape = Shape(inferredDimensions)
+        return this.reshape(newShape)
     }
 
     public companion object {
+        /**
+         * Creates a tensor from a float array.
+         */
+        public fun fromArray(shape: Shape, data: FloatArray): CpuTensorFP16 {
+            require(data.size == shape.volume) {
+                "Data size ${data.size} doesn't match shape volume ${shape.volume}"
+            }
+            return CpuTensorFP16(shape, data.copyOf())
+        }
+        
         /**
          * Creates a tensor from FP16 byte data by converting to FP32.
          */
