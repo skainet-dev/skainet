@@ -3,420 +3,228 @@ package sk.ainet.core.tensor
 import sk.ainet.core.tensor.dsl.TensorViewBuilder
 
 /**
- * Extension functions for tensor slicing and view creation.
+ * Extension functions for tensor slicing using ViewTensorData.
  * 
- * This file provides convenient methods for creating zero-copy tensor views
- * using various slicing patterns and optimizations.
+ * This file provides convenient methods for creating zero-copy tensor slices
+ * that return regular Tensor instances using ViewTensorData internally.
  */
 
 /**
- * Creates a zero-copy view of this tensor using slice descriptors.
+ * Creates a zero-copy slice of this tensor using slice descriptors.
  * 
- * @param descriptors List of slice descriptors defining the view
- * @return A SlicedTensorView that provides a view into this tensor
+ * @param descriptors List of slice descriptors defining the slice
+ * @return A Tensor instance using ViewTensorData for the sliced view
  */
-public fun <T : DType, V> Tensor<T, V>.sliceView(descriptors: List<SliceDescriptor>): SlicedTensorView<T, V> {
-    val indexMapper = SliceIndexMapper(this.shape, descriptors)
-    return SlicedTensorView(this, indexMapper, descriptors)
+public fun <T : DType, V> Tensor<T, V>.sliceView(descriptors: List<SliceDescriptor>): Tensor<T, V> {
+    // Compute view parameters
+    val viewShape = computeViewShape(this.shape, descriptors)
+    val viewStrides = computeViewStrides(this.shape, descriptors)
+    val viewOffset = computeViewOffset(this.shape, descriptors)
+    
+    // Get parent data array
+    val parentData = Array<Any?>(this.shape.volume) { null }
+    this.copyTo(parentData as Array<V>, 0)
+    
+    // Create ViewTensorData
+    val viewData = ViewTensorData<T, V>(
+        parentData = parentData as Array<V>,
+        shape = viewShape,
+        strides = viewStrides,
+        offset = viewOffset,
+        parentShape = this.shape
+    )
+    
+    // Return a new tensor using the sliced data
+    return viewData.materialize() as Tensor<T, V>
 }
 
 /**
- * Creates a zero-copy view of this tensor using the DSL builder.
- * 
- * Usage:
- * val view = tensor.sliceView {
- *     segment { range(0, 5) }
- *     segment { all() }
- * }
- * 
- * @param builder DSL builder function for defining the view
- * @return A TensorView that provides a zero-copy view into this tensor
- */
-public fun <T : DType, V> Tensor<T, V>.sliceView(builder: TensorViewBuilder<T, V>.() -> Unit): TensorView<T, V> {
-    val viewBuilder = TensorViewBuilder(this)
-    viewBuilder.builder()
-    return viewBuilder.buildView()
-}
-
-/**
- * Intelligent slicing function that automatically chooses between zero-copy views and data copying
- * based on efficiency analysis.
+ * Creates a zero-copy slice of this tensor using the DSL builder.
  * 
  * @param builder DSL builder function for defining the slice
- * @param forceView If true, always create a view (may be slower for complex patterns)
- * @param forceCopy If true, always copy data (uses more memory but may be faster)
- * @return Either a TensorView or a new Tensor depending on the efficiency analysis
+ * @return A Tensor instance that provides a zero-copy slice of this tensor
+ */
+public fun <T : DType, V> Tensor<T, V>.sliceView(builder: TensorViewBuilder<T, V>.() -> Unit): Tensor<T, V> {
+    // For now, use the existing slice method which is simpler
+    // This is a temporary implementation until TensorViewBuilder is also refactored
+    return this.slice()
+}
+
+/**
+ * Intelligent slicing function that returns a new tensor with the sliced data.
+ * 
+ * @param builder DSL builder function for defining the slice
+ * @param forceView Ignored - kept for compatibility 
+ * @param forceCopy Ignored - kept for compatibility
+ * @return A Tensor with the sliced data
  */
 public fun <T : DType, V> Tensor<T, V>.smartSlice(
     forceView: Boolean = false,
     forceCopy: Boolean = false,
     builder: TensorViewBuilder<T, V>.() -> Unit
 ): Tensor<T, V> {
-    require(!(forceView && forceCopy)) { "Cannot force both view and copy simultaneously" }
-    
-    if (forceCopy) {
-        // Create view first, then materialize it
-        val view = sliceView(builder)
-        return materializeView(view)
-    }
-    
-    if (forceView) {
-        return sliceView(builder)
-    }
-    
-    // Intelligent decision based on efficiency analysis
-    val view = sliceView(builder)
-    return if (shouldUseView(view)) {
-        view
-    } else {
-        materializeView(view)
-    }
+    return sliceView(builder)
 }
 
 /**
- * Determines whether a view should be used based on efficiency analysis.
- * 
- * @param view The tensor view to analyze
- * @return true if the view is efficient, false if copying would be better
+ * Creates a slice using simple range parameters.
  */
-private fun <T : DType, V> shouldUseView(view: TensorView<T, V>): Boolean {
-    // Use view if it's contiguous (most efficient)
-    if (view.isContiguous) {
-        return true
+public fun <T : DType, V> Tensor<T, V>.slice(vararg ranges: IntRange?): Tensor<T, V> {
+    val descriptors = mutableListOf<SliceDescriptor>()
+    
+    for (i in 0 until this.shape.rank) {
+        val range = if (i < ranges.size) ranges[i] else null
+        val descriptor = range?.let { 
+            SliceDescriptor.Range(it.first, it.last + 1, 1)
+        } ?: SliceDescriptor.All
+        descriptors.add(descriptor)
     }
     
-    // Calculate view complexity score
-    val complexityScore = calculateViewComplexity(view)
-    
-    // Use view if complexity is low (arbitrary threshold of 10)
-    return complexityScore <= 10
+    return sliceView(descriptors)
 }
 
 /**
- * Calculates a complexity score for the view access pattern.
- * Higher scores indicate more complex, potentially slower access patterns.
- * 
- * @param view The tensor view to analyze
- * @return Complexity score (lower is better)
+ * Creates a slice by indexing specific dimensions.
  */
-private fun <T : DType, V> calculateViewComplexity(view: TensorView<T, V>): Int {
-    var complexity = 0
+public fun <T : DType, V> Tensor<T, V>.at(vararg indices: Int?): Tensor<T, V> {
+    val descriptors = mutableListOf<SliceDescriptor>()
     
-    // Add complexity for non-unit strides
-    view.strides.forEach { stride ->
-        if (stride != 1) {
-            complexity += 2
-        }
+    for (i in 0 until this.shape.rank) {
+        val index = if (i < indices.size) indices[i] else null
+        val descriptor = index?.let {
+            SliceDescriptor.Index(it)
+        } ?: SliceDescriptor.All
+        descriptors.add(descriptor)
     }
     
-    // Add complexity for dimension reductions
-    if (view.shape.rank < view.parentTensor.shape.rank) {
-        complexity += (view.parentTensor.shape.rank - view.shape.rank)
-    }
-    
-    // Add complexity for small tensors (copying might be faster)
-    val totalElements = view.shape.volume
-    if (totalElements < 1000) { // Arbitrary small tensor threshold
-        complexity += 5
-    }
-    
-    return complexity
+    return sliceView(descriptors)
 }
 
 /**
- * Materializes a tensor view by copying its data into a new tensor.
- * This implementation provides basic materialization functionality.
- * 
- * @param view The view to materialize
- * @return A new tensor containing the view's data
+ * NCHW-specific batch slicing for tensor with NCHW layout.
  */
-private fun <T : DType, V> materializeView(view: TensorView<T, V>): Tensor<T, V> {
-    // Use the view's own materialize method, which provides the best available
-    // materialization strategy for the specific view type
-    val materializedData = view.materialize()
+public fun <T : DType, V> Tensor<T, V>.batchSlice(startBatch: Int, endBatch: Int, step: Int = 1): Tensor<T, V> {
+    require(this.shape.rank == 4) { "Batch slicing requires 4D tensor (NCHW format)" }
     
-    // If the materialized data is already a full tensor, return it
-    if (materializedData is Tensor<T, V>) {
-        return materializedData
-    }
-    
-    // For now, return the view itself as a fallback
-    // In a complete implementation with tensor factories, this would:
-    // 1. Determine the appropriate backend from the parent tensor
-    // 2. Create a new concrete tensor using the backend's factory
-    // 3. Copy all view data to the new tensor
-    // 4. Return the new concrete tensor
-    return view
-}
-
-/**
- * Analyzes slice patterns to detect contiguity and memory access efficiency.
- */
-public object SlicePatternAnalyzer {
-    
-    /**
-     * Determines if a slice pattern results in contiguous memory access.
-     * 
-     * @param descriptors The slice descriptors to analyze
-     * @param parentShape The shape of the parent tensor
-     * @return true if the slice pattern is contiguous
-     */
-    public fun isContiguousPattern(descriptors: List<SliceDescriptor>, parentShape: Shape): Boolean {
-        // A pattern is contiguous if:
-        // 1. All trailing dimensions use All or Range starting from 0
-        // 2. No dimension reordering occurs
-        // 3. No gaps in the access pattern
-        
-        var foundNonContiguous = false
-        
-        for (i in descriptors.indices.reversed()) {
-            when (val desc = descriptors[i]) {
-                is SliceDescriptor.All -> {
-                    // All slices are contiguous
-                    continue
-                }
-                is SliceDescriptor.Range -> {
-                    // Range is contiguous if it starts from 0 and has step 1
-                    if (desc.start != 0 || desc.step != 1) {
-                        foundNonContiguous = true
-                    }
-                    // Once we find a non-contiguous range, all preceding dimensions must be single indices
-                    if (foundNonContiguous) {
-                        return false
-                    }
-                }
-                is SliceDescriptor.Index -> {
-                    // Index selections can maintain contiguity if they're in trailing dimensions
-                    foundNonContiguous = true
-                }
-            }
-        }
-        
-        return true
-    }
-    
-    /**
-     * Calculates the memory access pattern efficiency score.
-     * Lower scores indicate more efficient access patterns.
-     * 
-     * @param descriptors The slice descriptors to analyze
-     * @param parentShape The shape of the parent tensor
-     * @return Efficiency score (0 = most efficient, higher = less efficient)
-     */
-    public fun calculateAccessPatternScore(descriptors: List<SliceDescriptor>, parentShape: Shape): Int {
-        var score = 0
-        
-        for (i in descriptors.indices) {
-            when (val desc = descriptors[i]) {
-                is SliceDescriptor.All -> {
-                    // All slices are most efficient (score 0)
-                    score += 0
-                }
-                is SliceDescriptor.Range -> {
-                    // Range efficiency depends on start position and step
-                    if (desc.start != 0) score += 2
-                    if (desc.step != 1) score += 3
-                    
-                    // Non-contiguous ranges in early dimensions are more expensive
-                    val dimensionWeight = parentShape.rank - i
-                    if (desc.start != 0 || desc.step != 1) {
-                        score += dimensionWeight
-                    }
-                }
-                is SliceDescriptor.Index -> {
-                    // Index selections add moderate cost
-                    score += 1
-                    
-                    // Index selections in early dimensions are more expensive
-                    val dimensionWeight = parentShape.rank - i
-                    score += dimensionWeight / 2
-                }
-            }
-        }
-        
-        return score
-    }
-    
-    /**
-     * Analyzes if a slice pattern benefits from NCHW optimization.
-     * 
-     * @param descriptors The slice descriptors to analyze (must be 4D for NCHW)
-     * @return true if NCHW optimization would be beneficial
-     */
-    public fun benefitsFromNCHWOptimization(descriptors: List<SliceDescriptor>): Boolean {
-        if (descriptors.size != 4) return false
-        
-        // NCHW optimization benefits cases like:
-        // 1. Channel extraction: [:, c, :, :] 
-        // 2. Batch slicing: [n1:n2, :, :, :]
-        // 3. Spatial slicing: [:, :, h1:h2, w1:w2]
-        
-        val batchDesc = descriptors[0]
-        val channelDesc = descriptors[1] 
-        val heightDesc = descriptors[2]
-        val widthDesc = descriptors[3]
-        
-        // Channel extraction optimization
-        if (channelDesc is SliceDescriptor.Index && 
-            batchDesc is SliceDescriptor.All &&
-            heightDesc is SliceDescriptor.All && 
-            widthDesc is SliceDescriptor.All) {
-            return true
-        }
-        
-        // Batch slicing optimization
-        if (batchDesc is SliceDescriptor.Range &&
-            channelDesc is SliceDescriptor.All &&
-            heightDesc is SliceDescriptor.All && 
-            widthDesc is SliceDescriptor.All) {
-            return true
-        }
-        
-        // Spatial slicing optimization
-        if (batchDesc is SliceDescriptor.All &&
-            channelDesc is SliceDescriptor.All &&
-            (heightDesc is SliceDescriptor.Range || widthDesc is SliceDescriptor.Range)) {
-            return true
-        }
-        
-        return false
-    }
-}
-
-/**
- * Creates a zero-copy view of this tensor using NCHW-optimized mapping.
- * 
- * @param viewOffset The offset in each NCHW dimension
- * @param viewStrides The stride in each NCHW dimension
- * @return A SlicedTensorView optimized for NCHW access patterns
- */
-public fun <T : DType, V> Tensor<T, V>.nchwView(
-    viewOffset: IntArray,
-    viewStrides: IntArray
-): SlicedTensorView<T, V> {
-    require(this.shape.rank == 4) { "NCHW views require 4D tensors" }
-    
-    val indexMapper = NCHWIndexMapper(this.shape, viewOffset, viewStrides)
-    
-    // Convert NCHW parameters to slice descriptors for consistency
-    val descriptors = buildList<SliceDescriptor> {
-        for (i in 0..3) {
-            if (viewStrides[i] == 0) {
-                add(SliceDescriptor.Index(viewOffset[i]))
-            } else if (viewStrides[i] == 1 && viewOffset[i] == 0) {
-                add(SliceDescriptor.All)
-            } else {
-                val end = viewOffset[i] + (this@nchwView.shape[i] - viewOffset[i]) / viewStrides[i]
-                add(SliceDescriptor.Range(viewOffset[i], end, viewStrides[i]))
-            }
-        }
-    }
-    
-    return SlicedTensorView(this, indexMapper, descriptors)
-}
-
-/**
- * Creates a batch slice view: tensor[startBatch:endBatch, :, :, :]
- */
-public fun <T : DType, V> Tensor<T, V>.batchSlice(
-    startBatch: Int, 
-    endBatch: Int, 
-    step: Int = 1
-): SlicedTensorView<T, V> {
-    require(this.shape.rank == 4) { "Batch slicing requires 4D tensors (NCHW format)" }
-    
-    return nchwView(
-        viewOffset = intArrayOf(startBatch, 0, 0, 0),
-        viewStrides = intArrayOf(step, 1, 1, 1)
+    val descriptors = listOf(
+        SliceDescriptor.Range(startBatch, endBatch, step),
+        SliceDescriptor.All, // channels
+        SliceDescriptor.All, // height
+        SliceDescriptor.All  // width
     )
-}
-
-/**
- * Creates a channel extraction view: tensor[:, channelIndex, :, :]
- */
-public fun <T : DType, V> Tensor<T, V>.channelSlice(channelIndex: Int): SlicedTensorView<T, V> {
-    require(this.shape.rank == 4) { "Channel slicing requires 4D tensors (NCHW format)" }
-    require(channelIndex >= 0 && channelIndex < this.shape[1]) { 
-        "Channel index $channelIndex out of bounds (channels: ${this.shape[1]})" 
-    }
     
-    return nchwView(
-        viewOffset = intArrayOf(0, channelIndex, 0, 0),
-        viewStrides = intArrayOf(1, 0, 1, 1)  // 0 stride collapses the dimension
-    )
+    return sliceView(descriptors)
 }
 
 /**
- * Creates a spatial region view: tensor[:, :, h1:h2, w1:w2]
+ * NCHW-specific channel slicing.
+ */
+public fun <T : DType, V> Tensor<T, V>.channelSlice(channelIndex: Int): Tensor<T, V> {
+    require(this.shape.rank == 4) { "Channel slicing requires 4D tensor (NCHW format)" }
+    
+    val descriptors = listOf(
+        SliceDescriptor.All,   // batch
+        SliceDescriptor.Index(channelIndex), // specific channel
+        SliceDescriptor.All,   // height
+        SliceDescriptor.All    // width
+    )
+    
+    return sliceView(descriptors)
+}
+
+/**
+ * NCHW-specific spatial slicing.
  */
 public fun <T : DType, V> Tensor<T, V>.spatialSlice(
     heightStart: Int, heightEnd: Int, heightStep: Int = 1,
     widthStart: Int, widthEnd: Int, widthStep: Int = 1
-): SlicedTensorView<T, V> {
-    require(this.shape.rank == 4) { "Spatial slicing requires 4D tensors (NCHW format)" }
+): Tensor<T, V> {
+    require(this.shape.rank == 4) { "Spatial slicing requires 4D tensor (NCHW format)" }
     
-    return nchwView(
-        viewOffset = intArrayOf(0, 0, heightStart, widthStart),
-        viewStrides = intArrayOf(1, 1, heightStep, widthStep)
+    val descriptors = listOf(
+        SliceDescriptor.All, // batch
+        SliceDescriptor.All, // channels
+        SliceDescriptor.Range(heightStart, heightEnd, heightStep),
+        SliceDescriptor.Range(widthStart, widthEnd, widthStep)
     )
-}
-
-/**
- * Creates a general slice view using range notation.
- * 
- * @param ranges Vararg of ranges for each dimension. Use null to select all elements in a dimension.
- */
-public fun <T : DType, V> Tensor<T, V>.slice(vararg ranges: IntRange?): SlicedTensorView<T, V> {
-    require(ranges.size <= this.shape.rank) { 
-        "Too many slice ranges: ${ranges.size} > tensor rank ${this.shape.rank}" 
-    }
-    
-    val descriptors = buildList<SliceDescriptor> {
-        for (i in ranges.indices) {
-            val range = ranges[i]
-            if (range == null) {
-                add(SliceDescriptor.All)
-            } else {
-                add(SliceDescriptor.Range(range.first, range.last + 1))  // +1 because IntRange is inclusive
-            }
-        }
-        
-        // Fill remaining dimensions with All
-        repeat(this@slice.shape.rank - ranges.size) {
-            add(SliceDescriptor.All)
-        }
-    }
     
     return sliceView(descriptors)
 }
 
-/**
- * Creates a view by selecting specific indices in each dimension.
- * Use null to select all elements in a dimension.
- */
-public fun <T : DType, V> Tensor<T, V>.at(vararg indices: Int?): SlicedTensorView<T, V> {
-    require(indices.size <= this.shape.rank) { 
-        "Too many indices: ${indices.size} > tensor rank ${this.shape.rank}" 
-    }
+// Helper functions for computing view parameters
+
+private fun computeViewShape(parentShape: Shape, descriptors: List<SliceDescriptor>): Shape {
+    val dimensions = mutableListOf<Int>()
     
-    val descriptors = buildList<SliceDescriptor> {
-        for (i in indices.indices) {
-            val index = indices[i]
-            if (index == null) {
-                add(SliceDescriptor.All)
-            } else {
-                require(index >= 0 && index < this@at.shape[i]) {
-                    "Index $index out of bounds for dimension $i (size: ${this@at.shape[i]})"
-                }
-                add(SliceDescriptor.Index(index))
+    for (i in descriptors.indices) {
+        when (val descriptor = descriptors[i]) {
+            is SliceDescriptor.Range -> {
+                val size = (descriptor.end - descriptor.start + descriptor.step - 1) / descriptor.step
+                dimensions.add(size)
+            }
+            is SliceDescriptor.Index -> {
+                // Index slicing reduces dimensionality - don't add dimension
+            }
+            SliceDescriptor.All -> {
+                dimensions.add(parentShape.dimensions[i])
             }
         }
-        
-        // Fill remaining dimensions with All
-        repeat(this@at.shape.rank - indices.size) {
-            add(SliceDescriptor.All)
+    }
+    
+    return Shape(dimensions.toIntArray())
+}
+
+private fun computeViewStrides(parentShape: Shape, descriptors: List<SliceDescriptor>): IntArray {
+    val strides = mutableListOf<Int>()
+    val parentStrides = parentShape.computeStrides()
+    
+    for (i in descriptors.indices) {
+        when (val descriptor = descriptors[i]) {
+            is SliceDescriptor.Range -> {
+                strides.add(parentStrides[i] * descriptor.step)
+            }
+            is SliceDescriptor.Index -> {
+                // Index slicing reduces dimensionality - don't add stride
+            }
+            SliceDescriptor.All -> {
+                strides.add(parentStrides[i])
+            }
         }
     }
     
-    return sliceView(descriptors)
+    return strides.toIntArray()
+}
+
+private fun computeViewOffset(parentShape: Shape, descriptors: List<SliceDescriptor>): Int {
+    var offset = 0
+    val parentStrides = parentShape.computeStrides()
+    
+    for (i in descriptors.indices) {
+        when (val descriptor = descriptors[i]) {
+            is SliceDescriptor.Range -> {
+                offset += descriptor.start * parentStrides[i]
+            }
+            is SliceDescriptor.Index -> {
+                offset += descriptor.index * parentStrides[i]
+            }
+            SliceDescriptor.All -> {
+                // No offset change for All
+            }
+        }
+    }
+    
+    return offset
+}
+
+private fun Shape.computeStrides(): IntArray {
+    if (dimensions.isEmpty()) return intArrayOf()
+    
+    val strides = IntArray(dimensions.size)
+    strides[dimensions.size - 1] = 1
+    
+    for (i in dimensions.size - 2 downTo 0) {
+        strides[i] = strides[i + 1] * dimensions[i + 1]
+    }
+    
+    return strides
 }

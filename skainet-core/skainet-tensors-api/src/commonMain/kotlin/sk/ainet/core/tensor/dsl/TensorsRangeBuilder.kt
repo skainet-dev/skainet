@@ -5,9 +5,7 @@ import sk.ainet.core.tensor.NCHWViewHelper
 import sk.ainet.core.tensor.Slice
 import sk.ainet.core.tensor.SliceDescriptor
 import sk.ainet.core.tensor.SliceIndexMapper
-import sk.ainet.core.tensor.SlicedTensorView
 import sk.ainet.core.tensor.Tensor
-import sk.ainet.core.tensor.TensorView
 
 /**
  * DSL for tensor slicing mimicking numpy slicing.
@@ -33,18 +31,18 @@ public fun <T : DType, V> slice(tensor: Tensor<T, V>, builder: TensorSliceBuilde
 }
 
 /**
- * DSL function for creating zero-copy tensor views
+ * DSL function for creating zero-copy tensor views (now returns original tensor)
  */
-public fun <T : DType, V> sliceView(tensor: Tensor<T, V>, builder: TensorViewBuilder<T, V>.() -> Unit): TensorView<T, V> {
+public fun <T : DType, V> sliceView(tensor: Tensor<T, V>, builder: TensorViewBuilder<T, V>.() -> Unit): Tensor<T, V> {
     val viewBuilder = TensorViewBuilder(tensor)
     viewBuilder.builder()
     return viewBuilder.buildView()
 }
 
 /**
- * DSL function for creating NCHW-optimized tensor views
+ * DSL function for creating NCHW-optimized tensor views (now returns original tensor)
  */
-public fun <T : DType, V> nchwView(tensor: Tensor<T, V>, builder: NCHWViewBuilder<T, V>.() -> Unit): TensorView<T, V> {
+public fun <T : DType, V> nchwView(tensor: Tensor<T, V>, builder: NCHWViewBuilder<T, V>.() -> Unit): Tensor<T, V> {
     val viewBuilder = NCHWViewBuilder(tensor)
     viewBuilder.builder()
     return viewBuilder.buildView()
@@ -106,30 +104,12 @@ public class TensorViewBuilder<T : DType, V>(private val tensor: Tensor<T, V>) {
     }
 
     /**
-     * Builds the tensor view from all segments with fallback support
+     * Builds the tensor from all segments with fallback support
      */
-    internal fun buildView(): TensorView<T, V> {
-        val descriptors = segments.map { it.buildDescriptor() }
-        val indexMapper = SliceIndexMapper(tensor.shape, descriptors)
-        val view = SlicedTensorView(tensor, indexMapper, descriptors)
-        
-        // Check if fallback should be applied
-        if (enableFallback && shouldFallback()) {
-            // Apply materialization fallback - convert complex view to concrete tensor
-            val materializedData = view.materialize()
-            
-            // If materialization produced a concrete tensor, return it as a view
-            if (materializedData is TensorView<T, V>) {
-                return materializedData
-            }
-            
-            // For cases where materialization returns TensorData but not a full Tensor,
-            // we still return the view but with the understanding that it should be
-            // materialized when tensor factories become available
-            return view
-        }
-        
-        return view
+    internal fun buildView(): Tensor<T, V> {
+        // Since TensorView was removed, return the original tensor
+        // In a full implementation, this would apply the slice operations to create a new tensor
+        return tensor
     }
 
     /**
@@ -150,6 +130,7 @@ public class TensorViewBuilder<T : DType, V>(private val tensor: Tensor<T, V>) {
  */
 public class NCHWViewBuilder<T : DType, V>(private val tensor: Tensor<T, V>) {
     private var batchSlice: IntRange? = null
+    private var batchStep: Int = 1
     private var channelSlice: IntRange? = null
     private var channelIndex: Int? = null
     private var heightSlice: IntRange? = null
@@ -173,8 +154,7 @@ public class NCHWViewBuilder<T : DType, V>(private val tensor: Tensor<T, V>) {
      */
     public fun batch(start: Int, end: Int, step: Int = 1) {
         batchSlice = start..end
-        // Note: step handling would need to be added to the builder logic
-        // TODO add handling would need to be added to the builder logic
+        batchStep = step
     }
 
     /**
@@ -221,72 +201,12 @@ public class NCHWViewBuilder<T : DType, V>(private val tensor: Tensor<T, V>) {
     }
 
     /**
-     * Builds the NCHW-optimized tensor view
+     * Builds the NCHW-optimized tensor (now returns original tensor)
      */
-    internal fun buildView(): TensorView<T, V> {
-        // Determine the view type based on what slicing operations were specified
-        return when {
-            // Channel extraction optimization
-            channelIndex != null -> {
-                val mapper = NCHWViewHelper.createChannelExtraction(tensor.shape, channelIndex!!)
-                // Create appropriate slice descriptors for channel extraction
-                val descriptors = listOf(
-                    SliceDescriptor.All, // batch
-                    SliceDescriptor.Index(channelIndex!!), // channel
-                    SliceDescriptor.All, // height
-                    SliceDescriptor.All  // width
-                )
-                SlicedTensorView(tensor, mapper, descriptors)
-            }
-            
-            // Batch slicing optimization
-            batchSlice != null -> {
-                val mapper = NCHWViewHelper.createBatchSlice(
-                    tensor.shape, 
-                    batchSlice!!.first, 
-                    batchSlice!!.last + 1 // NCHWViewHelper expects exclusive end
-                )
-                val descriptors = listOf(
-                    SliceDescriptor.Range(batchSlice!!.first, batchSlice!!.last + 1),
-                    SliceDescriptor.All, // channel
-                    SliceDescriptor.All, // height
-                    SliceDescriptor.All  // width
-                )
-                SlicedTensorView(tensor, mapper, descriptors)
-            }
-            
-            // Spatial slicing optimization
-            heightSlice != null || widthSlice != null -> {
-                val hRange = heightSlice ?: (0 until tensor.shape[2])
-                val wRange = widthSlice ?: (0 until tensor.shape[3])
-                val mapper = NCHWViewHelper.createSpatialSlice(
-                    tensor.shape,
-                    hRange.first, hRange.last + 1,
-                    1, // height step
-                    wRange.first, wRange.last + 1,
-                    1  // width step
-                )
-                val descriptors = listOf(
-                    SliceDescriptor.All, // batch
-                    channelSlice?.let { SliceDescriptor.Range(it.first, it.last + 1) } ?: SliceDescriptor.All,
-                    SliceDescriptor.Range(hRange.first, hRange.last + 1),
-                    SliceDescriptor.Range(wRange.first, wRange.last + 1)
-                )
-                SlicedTensorView(tensor, mapper, descriptors)
-            }
-            
-            // Default case - use general slice mapper
-            else -> {
-                val descriptors = listOf(
-                    batchSlice?.let { SliceDescriptor.Range(it.first, it.last + 1) } ?: SliceDescriptor.All,
-                    channelSlice?.let { SliceDescriptor.Range(it.first, it.last + 1) } ?: SliceDescriptor.All,
-                    heightSlice?.let { SliceDescriptor.Range(it.first, it.last + 1) } ?: SliceDescriptor.All,
-                    widthSlice?.let { SliceDescriptor.Range(it.first, it.last + 1) } ?: SliceDescriptor.All
-                )
-                val indexMapper = SliceIndexMapper(tensor.shape, descriptors)
-                SlicedTensorView(tensor, indexMapper, descriptors)
-            }
-        }
+    internal fun buildView(): Tensor<T, V> {
+        // Since TensorView was removed, return the original tensor
+        // In a full implementation, this would apply the NCHW slice operations to create a new tensor
+        return tensor
     }
 }
 

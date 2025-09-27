@@ -6,8 +6,9 @@ import sk.ainet.core.tensor.dsl.sliceView
 import kotlin.test.*
 
 /**
- * Tests to verify that all TensorOps methods work correctly with TensorView instances.
+ * Tests to verify that all TensorOps methods work correctly with tensor view instances.
  * This addresses tasks 36-40 from the slicing tasks.
+ * Updated to use unified Tensor architecture instead of TensorView interface.
  */
 class TensorViewOperationsTest {
     
@@ -15,16 +16,15 @@ class TensorViewOperationsTest {
     
     @Test
     fun testTensorViewExtendsTensor() {
-        // Task 36: Ensure all TensorOps methods work with TensorView
+        // Task 36: Ensure all TensorOps methods work with tensor views (unified architecture)
         val tensor = backend.ones(Shape(4, 4))
         val view = sliceView(tensor) {
             segment { range(0, 2) }
             segment { range(0, 2) }
         }
         
-        // Verify that view is indeed a TensorView that extends Tensor
-        assertTrue(view is TensorView<*, *>, "View should be a TensorView")
-        assertTrue(view is Tensor<*, *>, "View should extend Tensor interface")
+        // Verify that view is a Tensor with correct shape (unified architecture)
+        assertTrue(view is Tensor<*, *>, "View should be a Tensor")
         assertEquals(Shape(2, 2), view.shape)
     }
     
@@ -73,16 +73,16 @@ class TensorViewOperationsTest {
             // Test addition - should work since views implement Tensor interface
             val resultAdd = view1 + view2
             assertEquals(Shape(2, 2), resultAdd.shape)
-            assertEquals(2.0f, resultAdd.get(0, 0)) // 1 + 1 = 2
+            assertEquals(2.0f, resultAdd[0, 0]) // 1 + 1 = 2
             
             // Test subtraction
             val resultSub = view1 - view2
             assertEquals(Shape(2, 2), resultSub.shape)
-            assertEquals(0.0f, resultSub.get(0, 0)) // 1 - 1 = 0
+            assertEquals(0.0f, resultSub[0, 0]) // 1 - 1 = 0
             
             // Test scalar operations
             val resultScalarAdd = view1 + 5.0f
-            assertEquals(6.0f, resultScalarAdd.get(0, 0)) // 1 + 5 = 6
+            assertEquals(6.0f, resultScalarAdd[0, 0]) // 1 + 5 = 6
         }
     }
     

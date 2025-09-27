@@ -1530,69 +1530,105 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
         return sum
     }
 
-    // Tensor-Tensor operations - implement actual computation logic
+    // Tensor-Tensor operations - stride-aware implementation
     override fun Tensor<FP32, Float>.plus(other: Tensor<FP32, Float>): Tensor<FP32, Float> {
         require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for addition: ${this.shape} vs ${other.shape}" }
 
         val resultShape = getBroadcastShape(this.shape, other.shape)
-        val result = FloatArray(resultShape.volume)
+        val result = Array<Float>(resultShape.volume) { 0.0f }
         
-        for (i in result.indices) {
-            val thisIndex = broadcastIndex(i, resultShape, this.shape)
-            val otherIndex = broadcastIndex(i, resultShape, other.shape)
-            val thisCoords = flatIndexToCoords(thisIndex, this.shape)
-            val otherCoords = flatIndexToCoords(otherIndex, other.shape)
-            result[i] = this.get(*thisCoords) + other.get(*otherCoords)
+        // Optimize for contiguous tensors of same shape
+        if (this.isContiguous && other.isContiguous && this.shape == other.shape) {
+            for (i in result.indices) {
+                val coords = flatIndexToCoords(i, this.shape)
+                result[i] = this.get(*coords) + other.get(*coords)
+            }
+        } else {
+            // General case with broadcasting
+            for (i in result.indices) {
+                val thisIndex = broadcastIndex(i, resultShape, this.shape)
+                val otherIndex = broadcastIndex(i, resultShape, other.shape)
+                val thisCoords = flatIndexToCoords(thisIndex, this.shape)
+                val otherCoords = flatIndexToCoords(otherIndex, other.shape)
+                result[i] = this.get(*thisCoords) + other.get(*otherCoords)
+            }
         }
-        return CpuTensorFP32(DenseTensorData<FP32, Float>(resultShape, result.toTypedArray()))
+        return CpuTensorFP32(DenseTensorData(resultShape, result))
     }
 
     override fun Tensor<FP32, Float>.minus(other: Tensor<FP32, Float>): Tensor<FP32, Float> {
         require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for subtraction: ${this.shape} vs ${other.shape}" }
 
         val resultShape = getBroadcastShape(this.shape, other.shape)
-        val result = FloatArray(resultShape.volume)
+        val result = Array<Float>(resultShape.volume) { 0.0f }
         
-        for (i in result.indices) {
-            val thisIndex = broadcastIndex(i, resultShape, this.shape)
-            val otherIndex = broadcastIndex(i, resultShape, other.shape)
-            val thisCoords = flatIndexToCoords(thisIndex, this.shape)
-            val otherCoords = flatIndexToCoords(otherIndex, other.shape)
-            result[i] = this.get(*thisCoords) - other.get(*otherCoords)
+        // Optimize for contiguous tensors of same shape
+        if (this.isContiguous && other.isContiguous && this.shape == other.shape) {
+            for (i in result.indices) {
+                val coords = flatIndexToCoords(i, this.shape)
+                result[i] = this.get(*coords) - other.get(*coords)
+            }
+        } else {
+            // General case with broadcasting
+            for (i in result.indices) {
+                val thisIndex = broadcastIndex(i, resultShape, this.shape)
+                val otherIndex = broadcastIndex(i, resultShape, other.shape)
+                val thisCoords = flatIndexToCoords(thisIndex, this.shape)
+                val otherCoords = flatIndexToCoords(otherIndex, other.shape)
+                result[i] = this.get(*thisCoords) - other.get(*otherCoords)
+            }
         }
-        return CpuTensorFP32(DenseTensorData<FP32, Float>(resultShape, result.toTypedArray()))
+        return CpuTensorFP32(DenseTensorData(resultShape, result))
     }
 
     override fun Tensor<FP32, Float>.times(other: Tensor<FP32, Float>): Tensor<FP32, Float> {
         require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise multiplication: ${this.shape} vs ${other.shape}" }
 
         val resultShape = getBroadcastShape(this.shape, other.shape)
-        val result = FloatArray(resultShape.volume)
+        val result = Array<Float>(resultShape.volume) { 0.0f }
         
-        for (i in result.indices) {
-            val thisIndex = broadcastIndex(i, resultShape, this.shape)
-            val otherIndex = broadcastIndex(i, resultShape, other.shape)
-            val thisCoords = flatIndexToCoords(thisIndex, this.shape)
-            val otherCoords = flatIndexToCoords(otherIndex, other.shape)
-            result[i] = this.get(*thisCoords) * other.get(*otherCoords)
+        // Optimize for contiguous tensors of same shape
+        if (this.isContiguous && other.isContiguous && this.shape == other.shape) {
+            for (i in result.indices) {
+                val coords = flatIndexToCoords(i, this.shape)
+                result[i] = this.get(*coords) * other.get(*coords)
+            }
+        } else {
+            // General case with broadcasting
+            for (i in result.indices) {
+                val thisIndex = broadcastIndex(i, resultShape, this.shape)
+                val otherIndex = broadcastIndex(i, resultShape, other.shape)
+                val thisCoords = flatIndexToCoords(thisIndex, this.shape)
+                val otherCoords = flatIndexToCoords(otherIndex, other.shape)
+                result[i] = this.get(*thisCoords) * other.get(*otherCoords)
+            }
         }
-        return CpuTensorFP32(DenseTensorData<FP32, Float>(resultShape, result.toTypedArray()))
+        return CpuTensorFP32(DenseTensorData(resultShape, result))
     }
 
     override fun Tensor<FP32, Float>.div(other: Tensor<FP32, Float>): Tensor<FP32, Float> {
         require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise division: ${this.shape} vs ${other.shape}" }
 
         val resultShape = getBroadcastShape(this.shape, other.shape)
-        val result = FloatArray(resultShape.volume)
+        val result = Array<Float>(resultShape.volume) { 0.0f }
         
-        for (i in result.indices) {
-            val thisIndex = broadcastIndex(i, resultShape, this.shape)
-            val otherIndex = broadcastIndex(i, resultShape, other.shape)
-            val thisCoords = flatIndexToCoords(thisIndex, this.shape)
-            val otherCoords = flatIndexToCoords(otherIndex, other.shape)
-            result[i] = this.get(*thisCoords) / other.get(*otherCoords)
+        // Optimize for contiguous tensors of same shape
+        if (this.isContiguous && other.isContiguous && this.shape == other.shape) {
+            for (i in result.indices) {
+                val coords = flatIndexToCoords(i, this.shape)
+                result[i] = this.get(*coords) / other.get(*coords)
+            }
+        } else {
+            // General case with broadcasting
+            for (i in result.indices) {
+                val thisIndex = broadcastIndex(i, resultShape, this.shape)
+                val otherIndex = broadcastIndex(i, resultShape, other.shape)
+                val thisCoords = flatIndexToCoords(thisIndex, this.shape)
+                val otherCoords = flatIndexToCoords(otherIndex, other.shape)
+                result[i] = this.get(*thisCoords) / other.get(*otherCoords)
+            }
         }
-        return CpuTensorFP32(DenseTensorData<FP32, Float>(resultShape, result.toTypedArray()))
+        return CpuTensorFP32(DenseTensorData(resultShape, result))
     }
 
     // Tensor-Scalar operations
@@ -1936,67 +1972,98 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
     }
 
     override fun Tensor<FP32, Float>.relu(): Tensor<FP32, Float> {
-        // Use TensorData abstraction - work with any Tensor implementation
-        val resultData = Array<Float>(this.shape.volume) { 0f }
+        val result = Array<Float>(this.shape.volume) { 0.0f }
         
-        // For now, if it's CpuTensorFP32, use fast path, otherwise use generic approach
-        if (this is CpuTensorFP32) {
-            val data = this.data
-            for (i in data.indices) {
-                resultData[i] = maxOf(0f, data[i])
+        // Optimize for contiguous data
+        if (this.isContiguous) {
+            // Fast path: iterate through tensor using coordinate-based access
+            for (i in result.indices) {
+                val coords = flatIndexToCoords(i, this.shape)
+                result[i] = maxOf(0.0f, this.get(*coords))
             }
         } else {
-            // Generic path for other tensor implementations (like views)
+            // Generic stride-aware path for non-contiguous data
+            val coords = IntArray(this.shape.rank)
             var index = 0
-            this.copyTo(resultData, 0)
-            for (i in resultData.indices) {
-                resultData[i] = maxOf(0f, resultData[i])
+            
+            fun iterate(dim: Int) {
+                if (dim == this.shape.rank) {
+                    result[index++] = maxOf(0.0f, this.get(*coords))
+                    return
+                }
+                for (i in 0 until this.shape[dim]) {
+                    coords[dim] = i
+                    iterate(dim + 1)
+                }
             }
+            iterate(0)
         }
         
-        return CpuTensorFP32(DenseTensorData<FP32, Float>(this.shape, resultData))
+        return CpuTensorFP32(DenseTensorData(this.shape, result))
     }
 
     override fun Tensor<FP32, Float>.sigmoid(): Tensor<FP32, Float> {
-        // Use TensorData abstraction - work with any Tensor implementation
-        val resultData = Array<Float>(this.shape.volume) { 0f }
+        val result = Array<Float>(this.shape.volume) { 0.0f }
         
-        // For now, if it's CpuTensorFP32, use fast path, otherwise use generic approach
-        if (this is CpuTensorFP32) {
-            val data = this.data
-            for (i in data.indices) {
-                resultData[i] = 1f / (1f + exp(-data[i]))
+        // Optimize for contiguous data
+        if (this.isContiguous) {
+            // Fast path: iterate through tensor using coordinate-based access
+            for (i in result.indices) {
+                val coords = flatIndexToCoords(i, this.shape)
+                val value = this.get(*coords)
+                result[i] = 1.0f / (1.0f + exp(-value))
             }
         } else {
-            // Generic path for other tensor implementations (like views)
-            this.copyTo(resultData, 0)
-            for (i in resultData.indices) {
-                resultData[i] = 1f / (1f + exp(-resultData[i]))
+            // Generic stride-aware path for non-contiguous data
+            val coords = IntArray(this.shape.rank)
+            var index = 0
+            
+            fun iterate(dim: Int) {
+                if (dim == this.shape.rank) {
+                    val value = this.get(*coords)
+                    result[index++] = 1.0f / (1.0f + exp(-value))
+                    return
+                }
+                for (i in 0 until this.shape[dim]) {
+                    coords[dim] = i
+                    iterate(dim + 1)
+                }
             }
+            iterate(0)
         }
         
-        return CpuTensorFP32(DenseTensorData<FP32, Float>(this.shape, resultData))
+        return CpuTensorFP32(DenseTensorData(this.shape, result))
     }
 
     override fun Tensor<FP32, Float>.tanh(): Tensor<FP32, Float> {
-        // Use TensorData abstraction - work with any Tensor implementation
-        val resultData = Array<Float>(this.shape.volume) { 0f }
+        val result = Array<Float>(this.shape.volume) { 0.0f }
         
-        // For now, if it's CpuTensorFP32, use fast path, otherwise use generic approach
-        if (this is CpuTensorFP32) {
-            val data = this.data
-            for (i in data.indices) {
-                resultData[i] = tanh(data[i])
+        // Optimize for contiguous data
+        if (this.isContiguous) {
+            // Fast path: iterate through tensor using coordinate-based access
+            for (i in result.indices) {
+                val coords = flatIndexToCoords(i, this.shape)
+                result[i] = tanh(this.get(*coords))
             }
         } else {
-            // Generic path for other tensor implementations (like views)
-            this.copyTo(resultData, 0)
-            for (i in resultData.indices) {
-                resultData[i] = tanh(resultData[i])
+            // Generic stride-aware path for non-contiguous data
+            val coords = IntArray(this.shape.rank)
+            var index = 0
+            
+            fun iterate(dim: Int) {
+                if (dim == this.shape.rank) {
+                    result[index++] = tanh(this.get(*coords))
+                    return
+                }
+                for (i in 0 until this.shape[dim]) {
+                    coords[dim] = i
+                    iterate(dim + 1)
+                }
             }
+            iterate(0)
         }
         
-        return CpuTensorFP32(DenseTensorData<FP32, Float>(this.shape, resultData))
+        return CpuTensorFP32(DenseTensorData(this.shape, result))
     }
 
     override fun Tensor<FP32, Float>.softmax(dimension: Int): Tensor<FP32, Float> {
