@@ -10,18 +10,12 @@ import sk.ainet.core.tensor.Tensor
  * 
  * Ternary tensors use 2-bit values representing three states: -1, 0, 1.
  * Storage uses bit packing with 4 values per byte.
- * 
- * TODO: Add TODO implementation for ternary value handling (-1, 0, 1)
- * TODO: Implement bit unpacking for 2-bit ternary values
- * TODO: Plan storage strategy (4 values per byte)
  */
 public object TernaryTensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<Ternary, Byte> {
     
     /**
      * Creates a tensor from GGUF-style byte data with packed Ternary values.
      * 
-     * TODO: This is a placeholder implementation.
-     * When CpuTensorTernary becomes available, this should:
      * 1. Implement bit unpacking for 2-bit ternary values (4 values per byte)
      * 2. Handle ternary value mapping (00 -> -1, 01 -> 0, 10 -> 1, 11 -> invalid)
      * 3. Validate input data size matches expected packed size (ceil(shape.volume / 4) bytes)

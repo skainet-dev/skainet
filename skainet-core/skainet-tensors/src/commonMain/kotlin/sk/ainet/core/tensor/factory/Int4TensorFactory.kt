@@ -10,16 +10,12 @@ import sk.ainet.core.tensor.Tensor
  * 
  * Int4 tensors use packed 4-bit integer values, storing 2 values per byte.
  * 
- * TODO: Add TODO implementation for packed 4-bit integer handling
- * TODO: Implement bit unpacking utilities for 4-bit values
- * TODO: Plan storage strategy (2 values per byte)
  */
 public object Int4TensorFactory : TensorFactoryRegistry.TensorFromBytesFactory<Int4, Byte> {
     
     /**
      * Creates a tensor from GGUF-style byte data with packed Int4 values.
      * 
-     * TODO: This is a placeholder implementation.
      * When CpuTensorInt4 becomes available, this should:
      * 1. Implement bit unpacking for 4-bit values (2 values per byte)
      * 2. Handle signed 4-bit integers (range -8 to 7)
