@@ -218,6 +218,40 @@ public class CpuTensorFP32(
         public fun full(shape: Shape, value: Float): CpuTensorFP32 {
             return CpuTensorFP32(shape, FloatArray(shape.volume) { value })
         }
+
+        /**
+         * Creates a 2D tensor from a nested list structure.
+         * Similar to numpy.array([[2.0, 1.5, 4.2, 3.1], [1.0, 2.5, 3.0, 4.5]])
+         * 
+         * @param data The nested list where outer list represents rows and inner lists represent columns
+         * @return A new CpuTensorFP32 instance with shape inferred from the nested structure
+         * @throws IllegalArgumentException if the nested list structure is invalid or inconsistent
+         */
+        public fun fromNestedList(data: List<List<Float>>): CpuTensorFP32 {
+            require(data.isNotEmpty()) { "Data cannot be empty" }
+            
+            val rows = data.size
+            val cols = data[0].size
+            require(cols > 0) { "Each row must have at least one element" }
+            
+            // Validate that all rows have the same number of columns
+            for (i in data.indices) {
+                require(data[i].size == cols) {
+                    "All rows must have the same number of columns. Row 0 has $cols columns, but row $i has ${data[i].size} columns"
+                }
+            }
+            
+            // Create the flat array in row-major order
+            val flatArray = FloatArray(rows * cols)
+            var index = 0
+            for (row in data) {
+                for (value in row) {
+                    flatArray[index++] = value
+                }
+            }
+            
+            return CpuTensorFP32(Shape(rows, cols), flatArray)
+        }
     }
 }
 
@@ -1293,6 +1327,40 @@ public class CpuTensorInt32(
          */
         public fun full(shape: Shape, value: Int): CpuTensorInt32 {
             return CpuTensorInt32(shape, IntArray(shape.volume) { value })
+        }
+
+        /**
+         * Creates a 2D tensor from a nested list structure.
+         * Similar to numpy.array([[2, 1, 4, 3], [1, 2, 3, 4], [4, 3, 2, 1]])
+         * 
+         * @param data The nested list where outer list represents rows and inner lists represent columns
+         * @return A new CpuTensorInt32 instance with shape inferred from the nested structure
+         * @throws IllegalArgumentException if the nested list structure is invalid or inconsistent
+         */
+        public fun fromNestedList(data: List<List<Int>>): CpuTensorInt32 {
+            require(data.isNotEmpty()) { "Data cannot be empty" }
+            
+            val rows = data.size
+            val cols = data[0].size
+            require(cols > 0) { "Each row must have at least one element" }
+            
+            // Validate that all rows have the same number of columns
+            for (i in data.indices) {
+                require(data[i].size == cols) {
+                    "All rows must have the same number of columns. Row 0 has $cols columns, but row $i has ${data[i].size} columns"
+                }
+            }
+            
+            // Create the flat array in row-major order
+            val flatArray = IntArray(rows * cols)
+            var index = 0
+            for (row in data) {
+                for (value in row) {
+                    flatArray[index++] = value
+                }
+            }
+            
+            return CpuTensorInt32(Shape(rows, cols), flatArray)
         }
     }
 }

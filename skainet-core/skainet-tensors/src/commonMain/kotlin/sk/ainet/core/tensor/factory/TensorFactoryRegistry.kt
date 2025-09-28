@@ -7,7 +7,6 @@ import kotlin.reflect.KClass
 
 /**
  * Registry-based factory system for creating tensors from byte data based on DType information.
- * This is particularly useful for loading tensors from files like GGUF format.
  */
 public object TensorFactoryRegistry {
     
@@ -30,9 +29,11 @@ public object TensorFactoryRegistry {
          * Creates a tensor from byte data with the specified shape
          * @param shape The desired shape of the tensor
          * @param data The byte array containing the tensor data
+         * @param littleEndian true for little-endian, false for big-endian
+         *
          * @return A new tensor instance
          */
-        public fun fromByteArray(shape: Shape, data: ByteArray): Tensor<T, V>
+        public fun fromByteArray(shape: Shape, data: ByteArray, littleEndian: Boolean = true): Tensor<T, V>
     }
     
     /**

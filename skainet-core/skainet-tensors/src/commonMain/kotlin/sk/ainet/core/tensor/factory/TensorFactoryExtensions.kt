@@ -36,31 +36,6 @@ public fun fromBytes(
     return TensorFactoryRegistry.createTensor(dtype, shape, data)
 }
 
-/**
- * Creates a tensor from GGUF-style byte data with additional validation and error context.
- * This method provides more detailed error messages and logging for GGUF file loading scenarios.
- * 
- * Task 5.1: Extension functions for easy GGUF-style loading
- * 
- * @param dtype The DType from GGUF metadata
- * @param shape The tensor shape from GGUF metadata
- * @param data The raw tensor data from GGUF file
- * @param tensorName Optional name for better error reporting (useful for debugging GGUF files)
- * @return A new tensor instance
- */
-public fun fromGGUF(
-    dtype: DType,
-    shape: Shape, 
-    data: ByteArray,
-    tensorName: String? = null
-): Tensor<*, *> {
-    return try {
-        TensorFactoryRegistry.createTensor(dtype, shape, data)
-    } catch (e: IllegalArgumentException) {
-        val nameContext = tensorName?.let { " for tensor '$it'" } ?: ""
-        throw IllegalArgumentException("Failed to create tensor from GGUF data$nameContext: ${e.message}", e)
-    }
-}
 
 /**
  * Batch tensor creation for loading multiple tensors from GGUF files efficiently.
