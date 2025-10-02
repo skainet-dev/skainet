@@ -37,7 +37,9 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":skainet-core:skainet-tensors-api"))
-                implementation(project(":skainet-core:skainet-tensors-api"))
+                implementation(project(":skainet-core:skainet-tensors"))
+                implementation(project(":skainet-nn:skainet-nn-api"))
+
             }
         }
 
@@ -49,7 +51,7 @@ kotlin {
 }
 
 android {
-    namespace = "sk.ainet.core.api"
+    namespace = "sk.ainet.core.reflection"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

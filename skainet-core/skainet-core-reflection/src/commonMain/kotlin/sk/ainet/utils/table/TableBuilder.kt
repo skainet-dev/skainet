@@ -8,13 +8,13 @@ public fun table(block: Table.() -> Unit): Table {
 // The Table DSL class
 public class Table {
     // A cell style configuration object
-    public val cellStyle = CellStyle()
+    public val cellStyle: CellStyle = CellStyle()
 
     // Optional header section
     public var header: Header? = null
 
     // List of body rows
-    public val rows = mutableListOf<Row>()
+    public val rows: MutableList<Row> = mutableListOf<Row>()
 
     // DSL function to configure the cell style
     public fun cellStyle(block: CellStyle.() -> Unit) {
@@ -97,28 +97,28 @@ public class Table {
 }
 
 // A simple header container allowing multiple header rows.
-class Header {
-    val rows = mutableListOf<Row>()
+public class Header {
+    public val rows: MutableList<Row> = mutableListOf<Row>()
 
-    fun row(block: Row.() -> Unit) {
+    public fun row(block: Row.() -> Unit): Unit {
         rows.add(Row().apply(block))
     }
 }
 
 // Represents a row in the table.
-class Row {
-    val cells = mutableListOf<Cell>()
+public class Row {
+    public val cells: MutableList<Cell> = mutableListOf<Cell>()
 
     // Adds a cell to the row.
-    fun cell(value: Any?) {
+    public fun cell(value: Any?): Unit {
         cells.add(Cell(value?.toString() ?: ""))
     }
 }
 
 // Represents a cell containing text.
-class Cell(val content: String)
+public class Cell(public val content: String)
 
 // A configuration class for cell style options.
-class CellStyle {
-    var border: Boolean = false
+public class CellStyle {
+    public var border: Boolean = false
 }

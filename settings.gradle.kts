@@ -13,12 +13,12 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "skainet"
+rootProject.name = "SKaiNET"
 
 include("skainet-core:skainet-tensors-api")
 include("skainet-core:skainet-tensors")
 include("skainet-core:skainet-performance")
-include("skainet-core:skainet-reflection")
+include("skainet-core:skainet-core-reflection")
 include("skainet-nn:skainet-nn-api")
 include("skainet-nn:skainet-nn-relection")
 include("skainet-data:skainet-data-api")

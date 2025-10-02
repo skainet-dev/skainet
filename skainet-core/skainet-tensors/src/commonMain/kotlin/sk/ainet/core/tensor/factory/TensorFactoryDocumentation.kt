@@ -101,12 +101,10 @@ package sk.ainet.core.tensor.factory
  *     
  *     private fun parseGGUFMetadata(ggufFile: ByteArray): GGUFMetadata {
  *         // Implementation would parse GGUF headers and metadata
- *         TODO("GGUF metadata parsing implementation")
  *     }
  *     
  *     private fun extractTensorData(ggufFile: ByteArray, offset: Long, size: Long): ByteArray {
  *         // Implementation would extract tensor data from specific offset/size
- *         TODO("GGUF tensor data extraction implementation")
  *     }
  * }
  * 

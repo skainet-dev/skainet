@@ -133,4 +133,136 @@ public object ByteArrayConverter {
     public fun getElementCount(data: ByteArray, elementSizeBytes: Int): Int {
         return data.size / elementSizeBytes
     }
+    
+    // ==========================================
+    // Conversion methods: Primitive arrays -> ByteArray
+    // ==========================================
+    
+    /**
+     * Converts a FloatArray to a ByteArray using little-endian byte order.
+     * @param floats The source FloatArray
+     * @return ByteArray containing the converted values
+     */
+    public fun convertFloatArrayToBytes(floats: FloatArray): ByteArray {
+        return convertFloatArrayToBytes(floats, littleEndian = true)
+    }
+    
+    /**
+     * Converts a FloatArray to a ByteArray with specified endianness.
+     * @param floats The source FloatArray
+     * @param littleEndian true for little-endian, false for big-endian
+     * @return ByteArray containing the converted values
+     */
+    public fun convertFloatArrayToBytes(floats: FloatArray, littleEndian: Boolean = true): ByteArray {
+        val result = ByteArray(floats.size * 4)
+        
+        for (i in floats.indices) {
+            val intBits = floats[i].toBits()
+            val byteIndex = i * 4
+            
+            if (littleEndian) {
+                // Little-endian: least significant byte first
+                result[byteIndex] = (intBits and 0xFF).toByte()
+                result[byteIndex + 1] = ((intBits shr 8) and 0xFF).toByte()
+                result[byteIndex + 2] = ((intBits shr 16) and 0xFF).toByte()
+                result[byteIndex + 3] = ((intBits shr 24) and 0xFF).toByte()
+            } else {
+                // Big-endian: most significant byte first
+                result[byteIndex] = ((intBits shr 24) and 0xFF).toByte()
+                result[byteIndex + 1] = ((intBits shr 16) and 0xFF).toByte()
+                result[byteIndex + 2] = ((intBits shr 8) and 0xFF).toByte()
+                result[byteIndex + 3] = (intBits and 0xFF).toByte()
+            }
+        }
+        
+        return result
+    }
+    
+    /**
+     * Converts a DoubleArray to a ByteArray using little-endian byte order.
+     * @param doubles The source DoubleArray
+     * @return ByteArray containing the converted values
+     */
+    public fun convertDoubleArrayToBytes(doubles: DoubleArray): ByteArray {
+        return convertDoubleArrayToBytes(doubles, littleEndian = true)
+    }
+    
+    /**
+     * Converts a DoubleArray to a ByteArray with specified endianness.
+     * @param doubles The source DoubleArray
+     * @param littleEndian true for little-endian, false for big-endian
+     * @return ByteArray containing the converted values
+     */
+    public fun convertDoubleArrayToBytes(doubles: DoubleArray, littleEndian: Boolean = true): ByteArray {
+        val result = ByteArray(doubles.size * 8)
+        
+        for (i in doubles.indices) {
+            val longBits = doubles[i].toBits()
+            val byteIndex = i * 8
+            
+            if (littleEndian) {
+                // Little-endian: least significant byte first
+                result[byteIndex] = (longBits and 0xFF).toByte()
+                result[byteIndex + 1] = ((longBits shr 8) and 0xFF).toByte()
+                result[byteIndex + 2] = ((longBits shr 16) and 0xFF).toByte()
+                result[byteIndex + 3] = ((longBits shr 24) and 0xFF).toByte()
+                result[byteIndex + 4] = ((longBits shr 32) and 0xFF).toByte()
+                result[byteIndex + 5] = ((longBits shr 40) and 0xFF).toByte()
+                result[byteIndex + 6] = ((longBits shr 48) and 0xFF).toByte()
+                result[byteIndex + 7] = ((longBits shr 56) and 0xFF).toByte()
+            } else {
+                // Big-endian: most significant byte first
+                result[byteIndex] = ((longBits shr 56) and 0xFF).toByte()
+                result[byteIndex + 1] = ((longBits shr 48) and 0xFF).toByte()
+                result[byteIndex + 2] = ((longBits shr 40) and 0xFF).toByte()
+                result[byteIndex + 3] = ((longBits shr 32) and 0xFF).toByte()
+                result[byteIndex + 4] = ((longBits shr 24) and 0xFF).toByte()
+                result[byteIndex + 5] = ((longBits shr 16) and 0xFF).toByte()
+                result[byteIndex + 6] = ((longBits shr 8) and 0xFF).toByte()
+                result[byteIndex + 7] = (longBits and 0xFF).toByte()
+            }
+        }
+        
+        return result
+    }
+    
+    /**
+     * Converts an IntArray to a ByteArray using little-endian byte order.
+     * @param ints The source IntArray
+     * @return ByteArray containing the converted values
+     */
+    public fun convertIntArrayToBytes(ints: IntArray): ByteArray {
+        return convertIntArrayToBytes(ints, littleEndian = true)
+    }
+    
+    /**
+     * Converts an IntArray to a ByteArray with specified endianness.
+     * @param ints The source IntArray
+     * @param littleEndian true for little-endian, false for big-endian
+     * @return ByteArray containing the converted values
+     */
+    public fun convertIntArrayToBytes(ints: IntArray, littleEndian: Boolean = true): ByteArray {
+        val result = ByteArray(ints.size * 4)
+        
+        for (i in ints.indices) {
+            val intValue = ints[i]
+            val byteIndex = i * 4
+            
+            if (littleEndian) {
+                // Little-endian: least significant byte first
+                result[byteIndex] = (intValue and 0xFF).toByte()
+                result[byteIndex + 1] = ((intValue shr 8) and 0xFF).toByte()
+                result[byteIndex + 2] = ((intValue shr 16) and 0xFF).toByte()
+                result[byteIndex + 3] = ((intValue shr 24) and 0xFF).toByte()
+            } else {
+                // Big-endian: most significant byte first
+                result[byteIndex] = ((intValue shr 24) and 0xFF).toByte()
+                result[byteIndex + 1] = ((intValue shr 16) and 0xFF).toByte()
+                result[byteIndex + 2] = ((intValue shr 8) and 0xFF).toByte()
+                result[byteIndex + 3] = (intValue and 0xFF).toByte()
+            }
+        }
+        
+        return result
+    }
 }
