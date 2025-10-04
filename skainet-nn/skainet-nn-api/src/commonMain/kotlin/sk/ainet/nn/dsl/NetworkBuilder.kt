@@ -10,7 +10,7 @@ import sk.ainet.core.tensor.Int8
 import sk.ainet.core.tensor.Int32
 import sk.ainet.core.tensor.TensorFactory
 import sk.ainet.core.tensor.DefaultTensorFactories
-import sk.ainet.core.tensor.backend.CpuBackend
+import sk.ainet.core.tensor.TensorData
 import sk.ainet.nn.Flatten
 import sk.ainet.nn.Input
 import sk.ainet.nn.Linear
@@ -59,65 +59,12 @@ public fun <T : DType, V> network(
         .apply(content)
         .create()
 
-/**
- * Backward compatibility function - creates a network using FP32/Float precision.
- * This function maintains compatibility with existing code that doesn't specify generic types.
- * Uses CpuBackend as default factory.
- *
- * @param content The DSL content block that defines the network structure
- * @return A Module<FP32, Float> representing the complete neural network
- */
-@NetworkDsl
-@JvmName("networkFP32Default")
-public fun network(content: NeuralNetworkDsl<FP32, Float>.() -> Unit): Module<FP32, Float> =
-    network(CpuBackend(), content)
-
-/**
- * Convenience function for creating FP32/Float precision networks.
- * Provides explicit type specification for better code readability.
- * Uses CpuBackend as default factory.
- *
- * @param content The DSL content block that defines the network structure
- * @return A Module<FP32, Float> representing the complete neural network
- */
-@NetworkDsl
-public fun networkFP32(content: NeuralNetworkDsl<FP32, Float>.() -> Unit): Module<FP32, Float> =
-    network(CpuBackend(), content)
-
-/**
- * Generic network builder function with automatic factory resolution.
- * This function automatically selects the appropriate TensorFactory based on the generic types.
- *
- * Currently supports:
- * - FP32, Float → Uses CPU FP32 backend
- * - Int8, Byte → Uses CPU Int8 backend
- * - Int32, Int → Uses CPU Int32 backend
- *
- * @param T The data type (DType) - must extend DType (e.g., FP32, Int8, Int32)
- * @param V The value type - must match the DType's native type
- * @param content The DSL content block that defines the network structure
- * @return A Module<T, V> representing the complete neural network
- *
- * Example usage:
- * ```kotlin
- * val fpNetwork = network<FP32, Float> {
- *     input(784)
- *     dense(128)
- *     dense(10)
- * }
- *
- * val intNetwork = network<Int8, Byte> {
- *     input(28)
- *     dense(16)
- * }
- * ```
- */
 @NetworkDsl
 @JvmName("networkWithAutoFactory")
 public inline fun <reified T : DType, reified V> network(
     noinline content: NeuralNetworkDsl<T, V>.() -> Unit
 ): Module<T, V> {
-    CpuBackend()
+//    CpuBackend()
     val factory = when {
         T::class == FP32::class && V::class == Float::class -> {
             @Suppress("UNCHECKED_CAST")
@@ -228,7 +175,9 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
 public interface DENSE<T : DType, V> : NetworkDslItem {
     public var activation: (Tensor<T, V>) -> Tensor<T, V>
     public var units: Int
-    public fun weights(initBlock: (Shape) -> Tensor<T, V>)
+
+    //public fun weights(initBlock: (Shape) -> Tensor<T, V>)
+    public fun weights(initBlock: WeightsScope<T, V>.(Shape) -> Tensor<T, V>)
     public fun bias(initBlock: (Shape) -> Tensor<T, V>)
 
     // Factory-based convenience methods
@@ -310,22 +259,6 @@ public interface DENSE<T : DType, V> : NetworkDslItem {
         factory.randomUniform(shape, min, max, random)
 }
 
-// Extension functions for convenient parameterless initialization
-/**
- * Extension function for weights initialization with implicit shape context.
- */
-public fun <T : DType, V> DENSE<T, V>.weights(initBlock: WeightsScope<T, V>.() -> Tensor<T, V>) {
-    val scope = WeightsScopeImpl(factory, weightsShape)
-    weights { scope.initBlock() }
-}
-
-/**
- * Extension function for bias initialization with implicit shape context.
- */
-public fun <T : DType, V> DENSE<T, V>.bias(initBlock: BiasScope<T, V>.() -> Tensor<T, V>) {
-    val scope = BiasScopeImpl(factory, biasShape)
-    bias { scope.initBlock() }
-}
 
 /**
  * Scope for weights initialization with implicit shape context.
@@ -334,6 +267,26 @@ public fun <T : DType, V> DENSE<T, V>.bias(initBlock: BiasScope<T, V>.() -> Tens
 public interface WeightsScope<T : DType, V> {
     public val factory: TensorFactory<T, V>
     public val shape: Shape
+
+    // fromXX Float
+    public fun from(vararg data: Float): Tensor<T, V> = fromArray(data.toTypedArray().toFloatArray())
+    public fun fromList(data: List<Float>): Tensor<T, V> = fromArray(data.toFloatArray())
+    public fun fromArray(data: FloatArray): Tensor<T, V> {
+        require(data.size == shape.volume) {
+            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
+        }
+        return factory.fromArray(shape, data)
+    }
+
+    // fromXX Int
+    public fun from(vararg data: Int): Tensor<T, V> = fromArray(data.toTypedArray().toIntArray())
+    public fun fromList(data: List<Int>): Tensor<T, V> = fromArray(data.toIntArray())
+    public fun fromArray(data: IntArray): Tensor<T, V> {
+        require(data.size == shape.volume) {
+            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
+        }
+        return factory.fromArray(shape, data)
+    }
 
     public fun zeros(): Tensor<T, V> = factory.zeros(shape)
     public fun ones(): Tensor<T, V> = factory.ones(shape)
@@ -421,6 +374,11 @@ public class BiasScopeImpl<T : DType, V>(
 public interface FLATTEN<T : DType, V> : NetworkDslItem {
     public var startDim: Int
     public var endDim: Int
+}
+
+@NetworkDsl
+public interface VALUES<T : DType, V> : NetworkDslItem {
+    public var tensorValues: TensorData<T, V>
 }
 
 private fun getDefaultName(id: String, s: String, size: Int): String {
@@ -551,8 +509,16 @@ public class DenseImpl<T : DType, V>(
             _outputDimension = value
         }
 
-    override fun weights(initBlock: (Shape) -> Tensor<T, V>) {
-        weightsValue = initBlock(weightsShape)
+    private fun initWeights(tensor: Tensor<T, V>) {
+        tensor
+
+    }
+
+    override fun weights(initBlock: WeightsScope<T, V>.(Shape) -> Tensor<T, V>) {
+        val scope = WeightsScopeImpl(factory, weightsShape)
+        //initWeights = scope.initBlock(weightsShape)
+
+
     }
 
     override fun bias(initBlock: (Shape) -> Tensor<T, V>) {

@@ -6,7 +6,6 @@ import sk.ainet.nn.Linear
 import sk.ainet.nn.topology.ModuleParameters
 import sk.ainet.nn.topology.weights
 import sk.ainet.nn.topology.bias
-import sk.ainet.nn.dsl.extensions.*
 import sk.ainet.core.tensor.factory.fromBytes
 import sk.ainet.core.tensor.factory.ByteArrayConverter
 import kotlin.test.*
