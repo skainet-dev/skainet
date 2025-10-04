@@ -12,16 +12,16 @@ import sk.ainet.core.tensor.Tensor
 /**
  * Creates a tensor from byte data using the factory registry.
  * This provides a convenient way to load tensors from GGUF files and similar formats.
- * 
+ *
  * Task 5.1 & 5.2: Extension functions for easy GGUF-style loading and Tensor.fromBytes method
- * 
+ *
  * @param dtype The DType instance indicating the tensor type
  * @param shape The desired shape of the tensor
  * @param data The byte array containing the tensor data
  * @return A new tensor instance
  * @throws IllegalArgumentException if no factory is registered for the given DType
  * @throws IllegalArgumentException if shape or data validation fails
- * 
+ *
  * Example usage:
  * ```kotlin
  * val floatData = byteArrayOf(/* float bytes */)
@@ -29,8 +29,8 @@ import sk.ainet.core.tensor.Tensor
  * ```
  */
 public fun fromBytes(
-    dtype: DType, 
-    shape: Shape, 
+    dtype: DType,
+    shape: Shape,
     data: ByteArray
 ): Tensor<*, *> {
     return TensorFactoryRegistry.createTensor(dtype, shape, data)
@@ -40,13 +40,13 @@ public fun fromBytes(
 /**
  * Batch tensor creation for loading multiple tensors from GGUF files efficiently.
  * This method can optimize memory allocation and validation for multiple tensor creation.
- * 
+ *
  * Task 5.3: Implement batch tensor creation for multiple tensors
- * 
+ *
  * @param tensors List of tensor specifications (dtype, shape, data, optional name)
  * @return Map of tensor names (or indices as strings) to created tensors
  * @throws IllegalArgumentException if any tensor creation fails
- * 
+ *
  * Example usage:
  * ```kotlin
  * val specs = listOf(
@@ -60,7 +60,7 @@ public fun createBatch(
     tensors: List<TensorSpec>
 ): Map<String, Tensor<*, *>> {
     val result = mutableMapOf<String, Tensor<*, *>>()
-    
+
     for ((index, spec) in tensors.withIndex()) {
         val tensorName = spec.name ?: "tensor_$index"
         try {
@@ -70,13 +70,13 @@ public fun createBatch(
             throw IllegalArgumentException("Batch tensor creation failed at tensor '$tensorName': ${e.message}", e)
         }
     }
-    
+
     return result
 }
 
 /**
  * Data class representing a tensor specification for batch creation.
- * 
+ *
  * @param dtype The tensor data type
  * @param shape The tensor shape
  * @param data The raw byte data
@@ -114,17 +114,17 @@ public data class TensorSpec(
 /**
  * Support for custom factory registration by external libraries.
  * This allows third-party libraries to register their own DType factories.
- * 
+ *
  * Task 5.4: Add support for custom factory registration by external libraries
- * 
+ *
  * @param factory The custom factory implementation
  * @throws IllegalArgumentException if a factory is already registered for this DType
- * 
+ *
  * Example usage:
  * ```kotlin
  * class CustomDType : DType { /* implementation */ }
  * class CustomTensorFactory : TensorFromBytesFactory<CustomDType, Float> { /* implementation */ }
- * 
+ *
  * Tensor.registerCustomFactory<CustomDType>(CustomTensorFactory())
  * ```
  */
@@ -140,9 +140,9 @@ public inline fun <reified D : DType> registerCustomFactory(
 /**
  * Fluent API builder for common tensor creation patterns.
  * This provides a more readable way to create tensors with validation and error handling.
- * 
+ *
  * Task 5.5: Create fluent API for common tensor creation patterns
- * 
+ *
  * Example usage:
  * ```kotlin
  * val tensor = tensorBuilder()
@@ -220,9 +220,9 @@ public class TensorBuilder {
      */
     public fun build(): Tensor<*, *> {
         val finalDType = dtype ?: throw IllegalStateException("DType must be specified")
-        val finalShape = shape ?: throw IllegalStateException("Shape must be specified") 
+        val finalShape = shape ?: throw IllegalStateException("Shape must be specified")
         val finalData = data ?: throw IllegalStateException("Data must be specified")
-        
+
         return try {
             TensorFactoryRegistry.createTensor(finalDType, finalShape, finalData)
         } catch (e: Exception) {

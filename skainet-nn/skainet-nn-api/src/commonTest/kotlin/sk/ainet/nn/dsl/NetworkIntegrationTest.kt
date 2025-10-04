@@ -147,20 +147,20 @@ class NetworkIntegrationTest {
         // Test that networks with different precisions handle similar architectures
         val networkFP32 = network<FP32, Float> {
             input(2)
-            dense(4) { weights { CpuTensorFP32.ones(it) } }
-            dense(1) { weights { CpuTensorFP32.ones(it) } }
+            dense(4) { weights { CpuTensorFP32.ones() } }
+            dense(1) { weights { CpuTensorFP32.ones() } }
         }
         
         val networkInt8 = network<Int8, Byte> {
             input(2)
-            dense(4) { weights { CpuTensorInt8.ones(it) } }
-            dense(1) { weights { CpuTensorInt8.ones(it) } }
+            dense(4) { weights { CpuTensorInt8.ones() } }
+            dense(1) { weights { CpuTensorInt8.ones() } }
         }
         
         val networkInt32 = network<Int32, Int> {
             input(2)
-            dense(4) { weights { CpuTensorInt32.ones(it) } }
-            dense(1) { weights { CpuTensorInt32.ones(it) } }
+            dense(4) { weights { CpuTensorInt32.ones() } }
+            dense(1) { weights { CpuTensorInt32.ones() } }
         }
         
         // All networks should be created successfully
@@ -265,21 +265,21 @@ class NetworkIntegrationTest {
                 "FP32" -> {
                     val net = network<FP32, Float> {
                         input(4)
-                        dense(2) { weights { CpuTensorFP32.ones(it) } }
+                        dense(2) { weights { CpuTensorFP32.ones() } }
                     }
                     net != null
                 }
                 "Int8" -> {
                     val net = network<Int8, Byte> {
                         input(4)
-                        dense(2) { weights { CpuTensorInt8.ones(it) } }
+                        dense(2) { weights { CpuTensorInt8.ones() } }
                     }
                     net != null
                 }
                 "Int32" -> {
                     val net = network<Int32, Int> {
                         input(4)
-                        dense(2) { weights { CpuTensorInt32.ones(it) } }
+                        dense(2) { weights { CpuTensorInt32.ones() } }
                     }
                     net != null
                 }

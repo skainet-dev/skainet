@@ -22,7 +22,7 @@ class NetworkBuilderTest {
         val network = network {
             input(2)
             dense(4) {
-                weights { shape -> ones(shape) }
+                weights { shape -> ones() }
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
             dense(1) {
@@ -30,10 +30,10 @@ class NetworkBuilderTest {
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
-        
+
         // Test forward pass
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
         val output = network.forward(input)
@@ -55,10 +55,10 @@ class NetworkBuilderTest {
                 bias { shape -> CpuTensorInt8.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
-        
+
         // Test forward pass
         val input = CpuTensorInt8.fromArray(Shape(1, 2), byteArrayOf(1, 2))
         val output = network.forward(input)
@@ -75,9 +75,9 @@ class NetworkBuilderTest {
                 bias { shape -> CpuTensorInt32.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
-        
+
         // Test forward pass
         val input = CpuTensorInt32.fromArray(Shape(1, 3), intArrayOf(1, 2, 3))
         val output = network.forward(input)
@@ -90,7 +90,7 @@ class NetworkBuilderTest {
         val network = network {
             input(2)
             dense(4) {
-                activation = { tensor -> 
+                activation = { tensor ->
                     with(tensor) { relu() }
                 }
                 weights { shape -> CpuTensorFP32.ones(shape) }
@@ -98,9 +98,9 @@ class NetworkBuilderTest {
             }
             dense(1)
         }
-        
+
         assertNotNull(network)
-        
+
         // Verify it's using FP32/Float types
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
         val output = network.forward(input)
@@ -117,7 +117,7 @@ class NetworkBuilderTest {
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
         val output = network.forward(input)
@@ -135,7 +135,7 @@ class NetworkBuilderTest {
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
         }
-        
+
         val networkInt8 = network<Int8, Byte> {
             input(4)
             flatten()
@@ -144,7 +144,7 @@ class NetworkBuilderTest {
                 bias { shape -> CpuTensorInt8.zeros(shape) }
             }
         }
-        
+
         assertNotNull(networkFP32)
         assertNotNull(networkInt8)
     }
@@ -156,7 +156,7 @@ class NetworkBuilderTest {
             input(2)
             sequential {
                 dense(4) {
-                    activation = { tensor -> 
+                    activation = { tensor ->
                         with(tensor) { relu() }
                     }
                     weights { shape -> CpuTensorFP32.ones(shape) }
@@ -169,7 +169,7 @@ class NetworkBuilderTest {
             }
             dense(1)
         }
-        
+
         assertNotNull(network)
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
         val output = network.forward(input)
@@ -183,7 +183,7 @@ class NetworkBuilderTest {
             input(3)
             stage("feature_extraction") {
                 dense(8) {
-                    activation = { tensor -> 
+                    activation = { tensor ->
                         with(tensor) { relu() }
                     }
                     weights { shape -> CpuTensorFP32.ones(shape) }
@@ -198,7 +198,7 @@ class NetworkBuilderTest {
                 }
             }
         }
-        
+
         assertNotNull(network)
         val input = CpuTensorFP32.fromArray(Shape(1, 3), floatArrayOf(1.0f, 2.0f, 3.0f))
         val output = network.forward(input)
@@ -214,13 +214,13 @@ class NetworkBuilderTest {
                 weights { shape -> CpuTensorFP32.ones(shape) }
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
-            activation { tensor -> 
+            activation { tensor ->
                 // Simple ReLU activation function
                 with(tensor) { relu() }
             }
             dense(1)
         }
-        
+
         assertNotNull(network)
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, -1.0f))
         val output = network.forward(input)
@@ -231,22 +231,24 @@ class NetworkBuilderTest {
     fun testNetworkBuilderClass() {
         // Test NetworkBuilder class directly with generic types
         val builder = NetworkBuilder<FP32, Float>()
-        
-        val linear1 = sk.ainet.nn.Linear(2, 4, "layer1", 
-            CpuTensorFP32.ones(Shape(4, 2)), 
+
+        val linear1 = sk.ainet.nn.Linear(
+            2, 4, "layer1",
+            CpuTensorFP32.ones(Shape(4, 2)),
             CpuTensorFP32.zeros(Shape(1, 4))
         )
-        
-        val linear2 = sk.ainet.nn.Linear(4, 1, "layer2",
+
+        val linear2 = sk.ainet.nn.Linear(
+            4, 1, "layer2",
             CpuTensorFP32.ones(Shape(1, 4)),
             CpuTensorFP32.zeros(Shape(1, 1))
         )
-        
+
         val network = builder.add(linear1, linear2).build()
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
-        
+
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
         val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
@@ -255,21 +257,21 @@ class NetworkBuilderTest {
     @Test
     fun testGenericFactoryMethodsFP32() {
         // Test generic factory methods with FP32 - demonstrates the new DSL
-        val network = network {
+        val network = network<FP32, Float> {
             input(2)
             dense(4) {
-                weights { ones(it) }    // Generic factory method instead of CpuTensorFP32.ones(it)
-                bias { zeros(it) }      // Generic factory method instead of CpuTensorFP32.zeros(it)
+                weights { ones() }    // Generic factory method instead of CpuTensorFP32.ones()
+                bias { zeros() }      // Generic factory method instead of CpuTensorFP32.zeros()
             }
             dense(1) {
-                weights { random(it) }  // Generic factory method for random initialization
-                bias { zeros(it) }
+                weights { random() }  // Generic factory method for random initialization
+                bias { zeros() }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
-        
+
         // Test forward pass
         val input = CpuTensorFP32.fromArray(Shape(1, 2), floatArrayOf(1.0f, 2.0f))
         val output = network.forward(input)
@@ -282,17 +284,17 @@ class NetworkBuilderTest {
         val network = network<Int32, Int> {
             input(3)
             dense(2) {
-                weights { ones(it) }    // Uses Int32 ones automatically
-                bias { zeros(it) }      // Uses Int32 zeros automatically
+                weights { ones() }    // Uses Int32 ones automatically
+                bias { zeros() }      // Uses Int32 zeros automatically
             }
             dense(1) {
-                weights { random(it) }  // Uses Int32 random values
-                bias { zeros(it) }
+                weights { random() }  // Uses Int32 random values
+                bias { zeros() }
             }
         }
-        
+
         assertNotNull(network)
-        
+
         // Test forward pass
         val input = CpuTensorInt32.fromArray(Shape(1, 3), intArrayOf(1, 2, 3))
         val output = network.forward(input)
@@ -306,18 +308,18 @@ class NetworkBuilderTest {
             input(4)
             dense(8) {
                 weights { shape ->
-                    if (shape[0] > 5) random(shape) else ones(shape)
+                    if (shape[0] > 5) random() else ones()
                 }
-                bias { zeros(it) }
+                bias { zeros() }
             }
             dense(1) {
-                weights { ones(it) }
+                weights { ones() }
                 bias { shape -> CpuTensorFP32.full(shape, 0.1f) }  // Mix with explicit calls
             }
         }
-        
+
         assertNotNull(network)
-        
+
         val input = CpuTensorFP32.fromArray(Shape(1, 4), floatArrayOf(1.0f, 2.0f, 3.0f, 4.0f))
         val output = network.forward(input)
         assertEquals(Shape(1, 1), output.shape)
@@ -327,38 +329,38 @@ class NetworkBuilderTest {
     fun testAdvancedRandomMethodsWithSeed() {
         // Test seed-controlled random initialization for reproducibility
         val seed = 42L
-        val network1 = network {
+        val network1 = network<FP32,Float> {
             input(3)
             dense(4) {
-                weights { random(it, seed) }  // Same seed
-                bias { randomNormal(it, 0.0, 0.1, seed) }
+                weights { random(seed) }  // Same seed
+                bias { randomNormal(0.0, 0.1, seed) }
             }
             dense(1) {
-                weights { randomUniform(it, -0.5, 0.5, seed) }
-                bias { zeros(it) }
+                weights { randomUniform(-0.5, 0.5, seed) }
+                bias { zeros() }
             }
         }
-        
-        val network2 = network {
+
+        val network2 = network <FP32,Float>{
             input(3)
             dense(4) {
-                weights { random(it, seed) }  // Same seed - should produce identical weights
-                bias { randomNormal(it, 0.0, 0.1, seed) }
+                weights { random(seed) }  // Same seed - should produce identical weights
+                bias { randomNormal(0.0, 0.1, seed) }
             }
             dense(1) {
-                weights { randomUniform(it, -0.5, 0.5, seed) }
-                bias { zeros(it) }
+                weights { randomUniform(-0.5, 0.5, seed) }
+                bias { zeros() }
             }
         }
-        
+
         assertNotNull(network1)
         assertNotNull(network2)
-        
+
         // Test that both networks produce the same output for the same input (deterministic)
         val input = CpuTensorFP32.fromArray(Shape(1, 3), floatArrayOf(1.0f, 2.0f, 3.0f))
         val output1 = network1.forward(input)
         val output2 = network2.forward(input)
-        
+
         assertEquals(output1.shape, output2.shape)
         // Note: We can't easily test exact equality due to potential floating point differences
         // but we can test that both networks are structurally identical
@@ -367,27 +369,27 @@ class NetworkBuilderTest {
     @Test
     fun testDistributionBasedInitialization() {
         // Test normal and uniform distribution initialization
-        val network = network {
+        val network = network<FP32,Float> {
             input(5)
             dense(8) {
                 // Xavier-like initialization using normal distribution
-                weights { randomNormal(it, 0.0, sqrt(2.0 / 5.0)) }
-                bias { zeros(it) }
+                weights { randomNormal(0.0, sqrt(2.0 / 5.0)) }
+                bias { zeros() }
             }
             dense(4) {
                 // Uniform distribution initialization
-                weights { randomUniform(it, -0.1, 0.1) }
-                bias { randomNormal(it, 0.0, 0.01) }
+                weights { randomUniform(-0.1, 0.1) }
+                bias { randomNormal(0.0, 0.01) }
             }
             dense(1) {
-                weights { ones(it) }
-                bias { zeros(it) }
+                weights { ones() }
+                bias { zeros() }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
-        
+
         // Test forward pass
         val input = CpuTensorFP32.fromArray(Shape(1, 5), floatArrayOf(1.0f, 2.0f, 3.0f, 4.0f, 5.0f))
         val output = network.forward(input)
@@ -398,20 +400,20 @@ class NetworkBuilderTest {
     fun testCustomRandomInstanceInitialization() {
         // Test using custom Random instance for advanced control
         val customRandom = kotlin.random.Random(123)
-        val network = network {
+        val network = network<FP32,Float> {
             input(3)
             dense(5) {
-                weights { random(it, customRandom) }
-                bias { randomNormal(it, 0.0, 0.1, customRandom) }
+                weights { random(customRandom) }
+                bias { randomNormal(0.0, 0.1, customRandom) }
             }
             dense(2) {
-                weights { randomUniform(it, -1.0, 1.0, customRandom) }
-                bias { zeros(it) }
+                weights { randomUniform(-1.0, 1.0, customRandom) }
+                bias { zeros() }
             }
         }
-        
+
         assertNotNull(network)
-        
+
         // Test forward pass
         val input = CpuTensorFP32.fromArray(Shape(1, 3), floatArrayOf(1.0f, 2.0f, 3.0f))
         val output = network.forward(input)
@@ -424,17 +426,17 @@ class NetworkBuilderTest {
         val network = network<Int32, Int> {
             input(2)
             dense(3) {
-                weights { randomNormal(it, 0.0, 2.0, 999L) }  // Normal distribution for integers
-                bias { randomUniform(it, -5.0, 5.0) }         // Uniform distribution
+                weights { randomNormal(0.0, 2.0, 999L) }  // Normal distribution for integers
+                bias { randomUniform(-5.0, 5.0) }         // Uniform distribution
             }
             dense(1) {
-                weights { random(it, 555L) }  // Seed-controlled random
-                bias { zeros(it) }
+                weights { random(555L) }  // Seed-controlled random
+                bias { zeros() }
             }
         }
-        
+
         assertNotNull(network)
-        
+
         // Test forward pass
         val input = CpuTensorInt32.fromArray(Shape(1, 2), intArrayOf(10, 20))
         val output = network.forward(input)
