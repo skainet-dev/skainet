@@ -1,8 +1,6 @@
 package sk.ainet.core.tensor.backend
 
 import sk.ainet.core.tensor.DType
-import sk.ainet.core.tensor.Tensor
-import sk.ainet.core.tensor.TensorFactory
 import sk.ainet.core.tensor.TensorOps
 
 
@@ -13,7 +11,7 @@ import sk.ainet.core.tensor.TensorOps
  * hardware platform (CPU, GPU, etc.). Different backends can provide different
  * implementations of the same operations, optimized for their target platform.
  */
-public interface ComputeBackend<D : DType, V> : TensorOps<D, V, Tensor<D, V>>, TensorFactory<D, V> {
+public interface ComputeBackend<D : DType, V, T> : TensorOps<D, V, T> {
     /**
      * The name of the backend.
      */

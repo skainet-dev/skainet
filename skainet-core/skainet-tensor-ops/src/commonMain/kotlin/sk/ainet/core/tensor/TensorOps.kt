@@ -6,7 +6,7 @@ package sk.ainet.core.tensor
  * Keeps math separate from storage, so the same math API can work
  * with multiple backends (dense, sparse, GPU, etc.).
  */
-public interface TensorOps<D : DType, V, T : Tensor<D, V>> {
+public interface TensorOps<D : DType, V, T> {
     /**
      * Performs matrix multiplication of two tensors.
      *
@@ -171,5 +171,3 @@ public interface TensorOps<D : DType, V, T : Tensor<D, V>> {
      */
     public fun T.reshape(vararg dimensions: Int): T
 }
-
-

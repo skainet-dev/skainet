@@ -1,17 +1,17 @@
 package sk.ainet.core.tensor
 
 /**
- * Dense tensor data implementation for contiguous memory layout.
- * This is the most common tensor data representation where all elements
- * are stored in a contiguous array with standard stride patterns.
+ * Optimized TensorData implementation for contiguous memory layout.
+ * This implementation provides fast-path optimizations for operations
+ * on densely packed tensor data.
  */
-public class DenseTensorData<T : DType, V>(
+public class ContiguousTensorData<T : DType, V>(
     override val shape: Shape,
     private val data: Array<V>,
-    override val strides: IntArray = shape.computeStrides(),
     override val offset: Int = 0
 ) : TensorData<T, V> {
 
+    override val strides: IntArray = shape.computeStrides()
     override val isContiguous: Boolean = true
 
     override operator fun get(vararg indices: Int): V {
@@ -31,15 +31,12 @@ public class DenseTensorData<T : DType, V>(
     }
 
     override fun copyTo(dest: Array<V>, destOffset: Int) {
-        if (isContiguous && offset == 0) {
-            // Fast path for contiguous data
+        // Fast path for contiguous data - direct array copy
+        if (offset == 0 && shape.volume == data.size) {
             data.copyInto(dest, destOffset, 0, shape.volume)
         } else {
-            // Stride-based copy for non-contiguous or offset data
-            var destIndex = destOffset
-            iterateAll { flatIndex ->
-                dest[destIndex++] = data[flatIndex]
-            }
+            // Copy with offset consideration
+            data.copyInto(dest, destOffset, offset, offset + shape.volume)
         }
     }
 
@@ -67,47 +64,18 @@ public class DenseTensorData<T : DType, V>(
         }
         
         val newShape = Shape(newDimensions.toIntArray())
-        return ViewTensorData(data, newShape, newStrides.toIntArray(), newOffset, shape)
+        
+        // Check if the result would still be contiguous
+        val expectedStrides = newShape.computeStrides()
+        if (newStrides.toIntArray().contentEquals(expectedStrides)) {
+            return ContiguousTensorData(newShape, data, newOffset)
+        } else {
+            return ViewTensorData(data, newShape, newStrides.toIntArray(), newOffset, shape)
+        }
     }
 
     override fun materialize(): TensorData<T, V> {
         // Already materialized (contiguous)
         return this
     }
-
-    /**
-     * Iterates over all elements in the tensor using stride-based indexing.
-     */
-    private fun iterateAll(action: (flatIndex: Int) -> Unit) {
-        val indices = IntArray(shape.dimensions.size)
-        iterateRecursive(0, offset, indices, action)
-    }
-    
-    private fun iterateRecursive(dim: Int, currentOffset: Int, indices: IntArray, action: (flatIndex: Int) -> Unit) {
-        if (dim == shape.dimensions.size) {
-            action(currentOffset)
-            return
-        }
-        
-        for (i in 0 until shape.dimensions[dim]) {
-            indices[dim] = i
-            iterateRecursive(dim + 1, currentOffset + i * strides[dim], indices, action)
-        }
-    }
-}
-
-/**
- * Computes standard row-major strides for the given shape.
- */
-private fun Shape.computeStrides(): IntArray {
-    if (dimensions.isEmpty()) return intArrayOf()
-    
-    val strides = IntArray(dimensions.size)
-    strides[dimensions.size - 1] = 1
-    
-    for (i in dimensions.size - 2 downTo 0) {
-        strides[i] = strides[i + 1] * dimensions[i + 1]
-    }
-    
-    return strides
 }

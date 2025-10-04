@@ -34,20 +34,14 @@ kotlin {
     }
 
     sourceSets {
-        commonMain.dependencies {
-            implementation(project(":skainet-core:skainet-tensor-data"))
-            implementation(project(":skainet-core:skainet-tensor-ops"))
-        }
-        
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation(project(":skainet-core:skainet-tensors"))
         }
     }
 }
 
 android {
-    namespace = "sk.ai.net.core.api"
+    namespace = "sk.ai.net.core.tensor.data"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

@@ -74,32 +74,23 @@ public class CpuTensorFP32(
         DenseTensorData<FP32, Float>(shape, data.toTypedArray())
     )
 
-    override val shape: Shape get() = tensorData.shape
-    override val strides: IntArray get() = tensorData.strides
-    override val offset: Int get() = tensorData.offset
-    override val isContiguous: Boolean get() = tensorData.isContiguous
+    // Implement composition pattern properties
+    override val data: TensorData<FP32, Float> = tensorData
+    override val ops: TensorOps<FP32, Float, Tensor<FP32, Float>> = CpuBackend()
 
     init {
-        require(shape.rank in 1..4) {
-            "Only 1-4 dimensional tensors are supported, got ${shape.rank}"
+        require(data.shape.rank in 1..4) {
+            "Only 1-4 dimensional tensors are supported, got ${data.shape.rank}"
         }
     }
 
-    override fun get(vararg indices: Int): Float = tensorData.get(*indices)
-
-    override fun copyTo(dest: Array<Float>, destOffset: Int): Unit = tensorData.copyTo(dest, destOffset)
-    
-    override fun slice(ranges: IntArray): TensorData<FP32, Float> = tensorData.slice(ranges)
-    
-    override fun materialize(): TensorData<FP32, Float> = tensorData.materialize()
-
     // Internal data access for CpuBackend operations
-    internal val data: FloatArray get() {
+    internal val floatArrayData: FloatArray get() {
         return when (tensorData) {
             is DenseTensorData -> {
                 // Extract FloatArray from DenseTensorData
-                val floatArray = FloatArray(shape.volume)
-                val arrayFloat = Array<Float>(shape.volume) { 0f }
+                val floatArray = FloatArray(data.shape.volume)
+                val arrayFloat = Array<Float>(data.shape.volume) { 0f }
                 tensorData.copyTo(arrayFloat, 0)
                 for (i in arrayFloat.indices) {
                     floatArray[i] = arrayFloat[i]
@@ -109,8 +100,8 @@ public class CpuTensorFP32(
             else -> {
                 // Materialize other tensor data types to FloatArray
                 val materialized = tensorData.materialize()
-                val floatArray = FloatArray(shape.volume)
-                val arrayFloat = Array<Float>(shape.volume) { 0f }
+                val floatArray = FloatArray(data.shape.volume)
+                val arrayFloat = Array<Float>(data.shape.volume) { 0f }
                 materialized.copyTo(arrayFloat, 0)
                 for (i in arrayFloat.indices) {
                     floatArray[i] = arrayFloat[i]
@@ -119,73 +110,6 @@ public class CpuTensorFP32(
             }
         }
     }
-
-    // Delegate all operations to the CpuBackend
-    private val backend = CpuBackend()
-
-    override fun matmul(a: Tensor<FP32, Float>, b: Tensor<FP32, Float>): Tensor<FP32, Float> = backend.matmul(a, b)
-    override fun matmul4d(a: Tensor<FP32, Float>, b: Tensor<FP32, Float>): Tensor<FP32, Float> = backend.matmul4d(a, b)
-    override fun scale(a: Tensor<FP32, Float>, scalar: Double): Tensor<FP32, Float> = backend.scale(a, scalar)
-    override fun dot(a: Tensor<FP32, Float>, b: Tensor<FP32, Float>): Double = backend.dot(a, b)
-
-    // Tensor-Tensor operations
-    override fun Tensor<FP32, Float>.plus(other: Tensor<FP32, Float>): Tensor<FP32, Float> =
-        with(backend) { this@plus.plus(other) }
-
-    override fun Tensor<FP32, Float>.minus(other: Tensor<FP32, Float>): Tensor<FP32, Float> =
-        with(backend) { this@minus.minus(other) }
-
-    override fun Tensor<FP32, Float>.times(other: Tensor<FP32, Float>): Tensor<FP32, Float> =
-        with(backend) { this@times.times(other) }
-
-    override fun Tensor<FP32, Float>.div(other: Tensor<FP32, Float>): Tensor<FP32, Float> =
-        with(backend) { this@div.div(other) }
-
-    // Tensor-Scalar operations - delegate to backend
-    override fun Tensor<FP32, Float>.plus(scalar: Int): Tensor<FP32, Float> = with(backend) { this@plus.plus(scalar) }
-    override fun Tensor<FP32, Float>.minus(scalar: Int): Tensor<FP32, Float> =
-        with(backend) { this@minus.minus(scalar) }
-
-    override fun Tensor<FP32, Float>.times(scalar: Int): Tensor<FP32, Float> =
-        with(backend) { this@times.times(scalar) }
-
-    override fun Tensor<FP32, Float>.div(scalar: Int): Tensor<FP32, Float> = with(backend) { this@div.div(scalar) }
-
-    override fun Tensor<FP32, Float>.plus(scalar: Float): Tensor<FP32, Float> = with(backend) { this@plus.plus(scalar) }
-    override fun Tensor<FP32, Float>.minus(scalar: Float): Tensor<FP32, Float> =
-        with(backend) { this@minus.minus(scalar) }
-
-    override fun Tensor<FP32, Float>.times(scalar: Float): Tensor<FP32, Float> =
-        with(backend) { this@times.times(scalar) }
-
-    override fun Tensor<FP32, Float>.div(scalar: Float): Tensor<FP32, Float> = with(backend) { this@div.div(scalar) }
-
-    override fun Tensor<FP32, Float>.plus(scalar: Double): Tensor<FP32, Float> =
-        with(backend) { this@plus.plus(scalar) }
-
-    override fun Tensor<FP32, Float>.minus(scalar: Double): Tensor<FP32, Float> =
-        with(backend) { this@minus.minus(scalar) }
-
-    override fun Tensor<FP32, Float>.times(scalar: Double): Tensor<FP32, Float> =
-        with(backend) { this@times.times(scalar) }
-
-    override fun Tensor<FP32, Float>.div(scalar: Double): Tensor<FP32, Float> = with(backend) { this@div.div(scalar) }
-
-    // Scalar-Tensor operations - delegate to backend
-    override fun Double.plus(t: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@plus.plus(t) }
-    override fun Double.minus(t: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@minus.minus(t) }
-    override fun Double.times(t: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@times.times(t) }
-    override fun Double.div(t: Tensor<FP32, Float>): Tensor<FP32, Float> = with(backend) { this@div.div(t) }
-
-    // Advanced tensor operations - delegate to backend
-    override fun Tensor<FP32, Float>.t(): Tensor<FP32, Float> = with(backend) { this@t.t() }
-    override fun Tensor<FP32, Float>.relu(): Tensor<FP32, Float> = with(backend) { this@relu.relu() }
-    override fun Tensor<FP32, Float>.sigmoid(): Tensor<FP32, Float> = with(backend) { this@sigmoid.sigmoid() }
-    override fun Tensor<FP32, Float>.tanh(): Tensor<FP32, Float> = with(backend) { this@tanh.tanh() }
-    override fun Tensor<FP32, Float>.softmax(dimension: Int): Tensor<FP32, Float> = with(backend) { this@softmax.softmax(dimension) }
-    override fun Tensor<FP32, Float>.flatten(startDim: Int, endDim: Int): Tensor<FP32, Float> = with(backend) { this@flatten.flatten(startDim, endDim) }
-    override fun Tensor<FP32, Float>.reshape(newShape: Shape): Tensor<FP32, Float> = with(backend) { this@reshape.reshape(newShape) }
-    override fun Tensor<FP32, Float>.reshape(vararg dimensions: Int): Tensor<FP32, Float> = with(backend) { this@reshape.reshape(*dimensions) }
 
     override fun toString(): String = "CpuTensorFP32(${shape})"
 
@@ -260,139 +184,57 @@ public class CpuTensorFP32(
 /**
  * A CPU-based tensor for Int8/Byte values.
  *
- * This tensor stores data on the CPU using simple ByteArray with NCHW row-major layout.
- * It supports 1-4 dimensional tensors and implements operations directly.
+ * This tensor stores data on the CPU using TensorData abstraction with NCHW row-major layout.
+ * It supports 1-4 dimensional tensors and delegates all operations to CpuBackendInt8.
  */
 public class CpuTensorInt8(
-    override val shape: Shape,
-    internal val data: ByteArray
+    private val tensorData: TensorData<Int8, Byte>
 ) : TensorInt8 {
 
-    // TensorData implementation
-    override val strides: IntArray = shape.computeStrides()
-    override val offset: Int = 0
-    override val isContiguous: Boolean = true
-    
-    override fun copyTo(dest: Array<Byte>, destOffset: Int) {
-        for (i in data.indices) {
-            dest[destOffset + i] = data[i]
-        }
-    }
-    
-    override fun slice(ranges: IntArray): TensorData<Int8, Byte> {
-        require(ranges.size == shape.rank * 2) {
-            "Ranges array must have size ${shape.rank * 2} (start,end pairs), got ${ranges.size}"
-        }
-        
-        // Parse ranges into start/end pairs and validate
-        val sliceRanges = mutableListOf<Pair<Int, Int>>()
-        for (i in 0 until shape.rank) {
-            val start = ranges[i * 2]
-            val end = ranges[i * 2 + 1]
-            val dimSize = shape.dimensions[i]
-            
-            require(start >= 0 && start < dimSize) {
-                "Start index $start out of bounds for dimension $i (size $dimSize)"
-            }
-            require(end > start && end <= dimSize) {
-                "End index $end must be > start ($start) and <= dimension size ($dimSize)"
-            }
-            
-            sliceRanges.add(start to end)
-        }
-        
-        // Calculate new shape
-        val newDimensions = sliceRanges.map { (start, end) -> end - start }.toIntArray()
-        val newShape = Shape(newDimensions)
-        
-        // Create new data array
-        val newData = ByteArray(newShape.volume)
-        var destIndex = 0
-        
-        // Copy sliced data
-        when (shape.rank) {
-            1 -> {
-                val (start0, end0) = sliceRanges[0]
-                for (i in start0 until end0) {
-                    newData[destIndex++] = data[i]
-                }
-            }
-            2 -> {
-                val (start0, end0) = sliceRanges[0]
-                val (start1, end1) = sliceRanges[1]
-                for (i in start0 until end0) {
-                    for (j in start1 until end1) {
-                        val srcIndex = i * shape.dimensions[1] + j
-                        newData[destIndex++] = data[srcIndex]
-                    }
-                }
-            }
-            3 -> {
-                val (start0, end0) = sliceRanges[0]
-                val (start1, end1) = sliceRanges[1]
-                val (start2, end2) = sliceRanges[2]
-                for (i in start0 until end0) {
-                    for (j in start1 until end1) {
-                        for (k in start2 until end2) {
-                            val srcIndex = i * shape.dimensions[1] * shape.dimensions[2] +
-                                         j * shape.dimensions[2] + k
-                            newData[destIndex++] = data[srcIndex]
-                        }
-                    }
-                }
-            }
-            4 -> {
-                val (start0, end0) = sliceRanges[0]
-                val (start1, end1) = sliceRanges[1]
-                val (start2, end2) = sliceRanges[2]
-                val (start3, end3) = sliceRanges[3]
-                for (i in start0 until end0) {
-                    for (j in start1 until end1) {
-                        for (k in start2 until end2) {
-                            for (l in start3 until end3) {
-                                val srcIndex = i * shape.dimensions[1] * shape.dimensions[2] * shape.dimensions[3] +
-                                             j * shape.dimensions[2] * shape.dimensions[3] +
-                                             k * shape.dimensions[3] + l
-                                newData[destIndex++] = data[srcIndex]
-                            }
-                        }
-                    }
-                }
-            }
-            else -> throw UnsupportedOperationException("Slicing not supported for ${shape.rank}D tensors")
-        }
-        
-        return CpuTensorInt8(newShape, newData)
-    }
-    
-    override fun materialize(): TensorData<Int8, Byte> = this
+    // Legacy constructor for backward compatibility
+    public constructor(shape: Shape, data: ByteArray) : this(
+        DenseTensorData<Int8, Byte>(shape, data.toTypedArray())
+    )
+
+    // Implement composition pattern properties
+    override val data: TensorData<Int8, Byte> = tensorData
+    override val ops: TensorOps<Int8, Byte, Tensor<Int8, Byte>> = CpuBackendInt8()
 
     init {
-        require(data.size == shape.volume) {
-            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
-        }
-        require(shape.rank in 1..4) {
-            "Only 1-4 dimensional tensors are supported, got ${shape.rank}"
+        require(data.shape.rank in 1..4) {
+            "Only 1-4 dimensional tensors are supported, got ${data.shape.rank}"
         }
     }
 
-    override fun get(vararg indices: Int): Byte {
-        val index = shape.index(indices)
-        return data[index]
-    }
-    
-    private fun Shape.computeStrides(): IntArray {
-        if (dimensions.isEmpty()) return intArrayOf()
-        val strides = IntArray(dimensions.size)
-        strides[dimensions.size - 1] = 1
-        for (i in dimensions.size - 2 downTo 0) {
-            strides[i] = strides[i + 1] * dimensions[i + 1]
+    // Internal data access for CpuBackendInt8 operations
+    internal val byteArrayData: ByteArray get() {
+        return when (tensorData) {
+            is DenseTensorData -> {
+                // Extract ByteArray from DenseTensorData
+                val byteArray = ByteArray(data.shape.volume)
+                val arrayByte = Array<Byte>(data.shape.volume) { 0 }
+                tensorData.copyTo(arrayByte, 0)
+                for (i in arrayByte.indices) {
+                    byteArray[i] = arrayByte[i]
+                }
+                byteArray
+            }
+            else -> {
+                // Materialize other tensor data types to ByteArray
+                val materialized = tensorData.materialize()
+                val byteArray = ByteArray(data.shape.volume)
+                val arrayByte = Array<Byte>(data.shape.volume) { 0 }
+                materialized.copyTo(arrayByte, 0)
+                for (i in arrayByte.indices) {
+                    byteArray[i] = arrayByte[i]
+                }
+                byteArray
+            }
         }
-        return strides
     }
 
-    // Helper function to clamp values to Byte range
-    private fun clampToByte(value: Double): Byte = value.toInt().coerceIn(Byte.MIN_VALUE.toInt(), Byte.MAX_VALUE.toInt()).toByte()
+    // Helper function to clamp values to Byte range (overflow protection)
+    private fun clampToByte(value: Double): Byte = value.coerceIn(-128.0, 127.0).toInt().toByte()
 
     // Basic operations - implement directly
     override fun matmul4d(a: Tensor<Int8, Byte>, b: Tensor<Int8, Byte>): Tensor<Int8, Byte> {
@@ -934,6 +776,9 @@ public class CpuTensorInt32(
     // Helper function to clamp values to Int range (overflow protection)
     private fun clampToInt(value: Long): Int = value.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
 
+    // Helper function to clamp values to Byte range (overflow protection)
+    private fun clampToByte(value: Double): Byte = value.coerceIn(-128.0, 127.0).toInt().toByte()
+
     // Basic operations - implement directly
     override fun matmul4d(a: Tensor<Int32, Int>, b: Tensor<Int32, Int>): Tensor<Int32, Int> {
         throw UnsupportedOperationException("4D matrix multiplication not yet implemented for Int32 tensors")
@@ -1448,7 +1293,7 @@ private fun flatIndexToCoords(flatIndex: Int, shape: Shape): IntArray {
 /**
  * A CPU-based implementation of the ComputeBackend interface for FP32/Float tensors.
  */
-public class CpuBackend : ComputeBackend<FP32, Float> {
+public class CpuBackend : ComputeBackend<FP32, Float, Tensor<FP32, Float>>, TensorFactory<FP32, Float> {
     override val name: String = "CPU"
     
     init {
@@ -2380,7 +2225,7 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
 /**
  * A CPU-based implementation of the ComputeBackend interface for Int8/Byte tensors.
  */
-public class CpuBackendInt8 : ComputeBackend<Int8, Byte> {
+public class CpuBackendInt8 : ComputeBackend<Int8, Byte, Tensor<Int8, Byte>> {
     override val name: String = "CPU-Int8"
     
     init {
@@ -2607,18 +2452,42 @@ public class CpuBackendInt8 : ComputeBackend<Int8, Byte> {
 /**
  * A CPU-based implementation of the ComputeBackend interface for Int32/Int tensors.
  */
-public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
+public class CpuBackendInt32 : ComputeBackend<Int32, Int, Tensor<Int32, Int>> {
     override val name: String = "CPU-Int32"
     
     init {
         TensorFactoryInitializer.ensureInitialized()
     }
 
-    override fun matmul4d(a: Tensor<Int32, Int>, b: Tensor<Int32, Int>): Tensor<Int32, Int> =
-        (a as CpuTensorInt32).matmul4d(a, b)
+    override fun matmul4d(a: Tensor<Int32, Int>, b: Tensor<Int32, Int>): Tensor<Int32, Int> {
+        throw UnsupportedOperationException("4D matrix multiplication not yet implemented for Int32 tensors")
+    }
 
-    override fun matmul(a: Tensor<Int32, Int>, b: Tensor<Int32, Int>): Tensor<Int32, Int> =
-        (a as CpuTensorInt32).matmul(a, b)
+    override fun matmul(a: Tensor<Int32, Int>, b: Tensor<Int32, Int>): Tensor<Int32, Int> {
+        require(a is CpuTensorInt32 && b is CpuTensorInt32) { "Both tensors must be CpuTensorInt32" }
+        require(a.shape.rank == 2 && b.shape.rank == 2) { "Matrix multiplication requires 2D tensors" }
+        require(a.shape[1] == b.shape[0]) { "Matrix dimensions don't match for multiplication" }
+
+        val rows = a.shape[0]
+        val cols = b.shape[1]
+        val inner = a.shape[1]
+        val result = IntArray(rows * cols)
+
+        for (i in 0 until rows) {
+            for (j in 0 until cols) {
+                var sum = 0L
+                for (k in 0 until inner) {
+                    sum += a.data[i * inner + k].toLong() * b.data[k * cols + j].toLong()
+                }
+                result[i * cols + j] = clampToInt(sum)
+            }
+        }
+
+        return CpuTensorInt32(Shape(rows, cols), result)
+    }
+
+    // Helper function to clamp values to Int range (overflow protection)
+    private fun clampToInt(value: Long): Int = value.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
 
     override fun scale(a: Tensor<Int32, Int>, scalar: Double): Tensor<Int32, Int> =
         (a as CpuTensorInt32).scale(a, scalar)
@@ -2626,53 +2495,138 @@ public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
     override fun dot(a: Tensor<Int32, Int>, b: Tensor<Int32, Int>): Double =
         (a as CpuTensorInt32).dot(a, b)
 
-    override fun Tensor<Int32, Int>.plus(other: Tensor<Int32, Int>): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).plus(other)
+    override fun Tensor<Int32, Int>.plus(other: Tensor<Int32, Int>): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32 && other is CpuTensorInt32) { "Both tensors must be CpuTensorInt32" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for addition: ${this.shape} vs ${other.shape}" }
 
-    override fun Tensor<Int32, Int>.minus(other: Tensor<Int32, Int>): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).minus(other)
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = IntArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = clampToInt(this.data[thisIndex].toLong() + other.data[otherIndex].toLong())
+        }
+        return CpuTensorInt32(resultShape, result)
+    }
 
-    override fun Tensor<Int32, Int>.times(other: Tensor<Int32, Int>): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).times(other)
+    override fun Tensor<Int32, Int>.minus(other: Tensor<Int32, Int>): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32 && other is CpuTensorInt32) { "Both tensors must be CpuTensorInt32" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for subtraction: ${this.shape} vs ${other.shape}" }
 
-    override fun Tensor<Int32, Int>.div(other: Tensor<Int32, Int>): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).div(other)
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = IntArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = clampToInt(this.data[thisIndex].toLong() - other.data[otherIndex].toLong())
+        }
+        return CpuTensorInt32(resultShape, result)
+    }
 
-    override fun Tensor<Int32, Int>.plus(scalar: Int): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).plus(scalar)
+    override fun Tensor<Int32, Int>.times(other: Tensor<Int32, Int>): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32 && other is CpuTensorInt32) { "Both tensors must be CpuTensorInt32" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise multiplication: ${this.shape} vs ${other.shape}" }
 
-    override fun Tensor<Int32, Int>.minus(scalar: Int): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).minus(scalar)
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = IntArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = clampToInt(this.data[thisIndex].toLong() * other.data[otherIndex].toLong())
+        }
+        return CpuTensorInt32(resultShape, result)
+    }
 
-    override fun Tensor<Int32, Int>.times(scalar: Int): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).times(scalar)
+    override fun Tensor<Int32, Int>.div(other: Tensor<Int32, Int>): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32 && other is CpuTensorInt32) { "Both tensors must be CpuTensorInt32" }
+        require(canBroadcast(this.shape, other.shape)) { "Tensors are not broadcast-compatible for element-wise division: ${this.shape} vs ${other.shape}" }
 
-    override fun Tensor<Int32, Int>.div(scalar: Int): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).div(scalar)
+        val resultShape = getBroadcastShape(this.shape, other.shape)
+        val result = IntArray(resultShape.volume)
+        
+        for (i in result.indices) {
+            val thisIndex = broadcastIndex(i, resultShape, this.shape)
+            val otherIndex = broadcastIndex(i, resultShape, other.shape)
+            result[i] = if (other.data[otherIndex] != 0) this.data[thisIndex] / other.data[otherIndex] else 0
+        }
+        return CpuTensorInt32(resultShape, result)
+    }
 
-    override fun Tensor<Int32, Int>.plus(scalar: Float): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).plus(scalar)
+    // Task 4.4: Move scalar operations (Int, Float, Double variants) to backends
+    override fun Tensor<Int32, Int>.plus(scalar: Int): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { clampToInt(it.toLong() + scalar.toLong()) }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
 
-    override fun Tensor<Int32, Int>.minus(scalar: Float): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).minus(scalar)
+    override fun Tensor<Int32, Int>.minus(scalar: Int): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { clampToInt(it.toLong() - scalar.toLong()) }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
 
-    override fun Tensor<Int32, Int>.times(scalar: Float): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).times(scalar)
+    override fun Tensor<Int32, Int>.times(scalar: Int): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { clampToInt(it.toLong() * scalar.toLong()) }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
 
-    override fun Tensor<Int32, Int>.div(scalar: Float): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).div(scalar)
+    override fun Tensor<Int32, Int>.div(scalar: Int): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { if (scalar != 0) it / scalar else 0 }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
 
-    override fun Tensor<Int32, Int>.plus(scalar: Double): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).plus(scalar)
+    override fun Tensor<Int32, Int>.plus(scalar: Float): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { clampToInt((it + scalar).toLong()) }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
 
-    override fun Tensor<Int32, Int>.minus(scalar: Double): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).minus(scalar)
+    override fun Tensor<Int32, Int>.minus(scalar: Float): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { clampToInt((it - scalar).toLong()) }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
 
-    override fun Tensor<Int32, Int>.times(scalar: Double): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).times(scalar)
+    override fun Tensor<Int32, Int>.times(scalar: Float): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { clampToInt((it * scalar).toLong()) }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
 
-    override fun Tensor<Int32, Int>.div(scalar: Double): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).div(scalar)
+    override fun Tensor<Int32, Int>.div(scalar: Float): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { if (scalar != 0f) clampToInt((it / scalar).toLong()) else 0 }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
+
+    override fun Tensor<Int32, Int>.plus(scalar: Double): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { clampToInt((it + scalar).toLong()) }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
+
+    override fun Tensor<Int32, Int>.minus(scalar: Double): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { clampToInt((it - scalar).toLong()) }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
+
+    override fun Tensor<Int32, Int>.times(scalar: Double): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { clampToInt((it * scalar).toLong()) }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
+
+    override fun Tensor<Int32, Int>.div(scalar: Double): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        val result = this.data.map { if (scalar != 0.0) clampToInt((it / scalar).toLong()) else 0 }.toIntArray()
+        return CpuTensorInt32(this.shape, result)
+    }
 
     override fun Double.plus(t: Tensor<Int32, Int>): Tensor<Int32, Int> =
         (t as CpuTensorInt32).plus(this)
@@ -2690,8 +2644,23 @@ public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
             (this / (t as CpuTensorInt32).data[i]).toInt()
         })
 
-    override fun Tensor<Int32, Int>.t(): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).t()
+    // Task 4.3: Move transformation operations to backends (transpose)
+    override fun Tensor<Int32, Int>.t(): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        require(this.shape.rank == 2) { "Transpose only supported for 2D tensors (matrices)" }
+        
+        val rows = this.shape[0]
+        val cols = this.shape[1]
+        val result = IntArray(rows * cols)
+        
+        for (i in 0 until rows) {
+            for (j in 0 until cols) {
+                result[j * rows + i] = this.data[i * cols + j]
+            }
+        }
+        
+        return CpuTensorInt32(Shape(cols, rows), result)
+    }
 
     override fun Tensor<Int32, Int>.relu(): Tensor<Int32, Int> =
         (this as CpuTensorInt32).relu()
@@ -2705,8 +2674,37 @@ public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
     override fun Tensor<Int32, Int>.softmax(dimension: Int): Tensor<Int32, Int> =
         (this as CpuTensorInt32).softmax(dimension)
 
-    override fun Tensor<Int32, Int>.flatten(startDim: Int, endDim: Int): Tensor<Int32, Int> =
-        (this as CpuTensorInt32).flatten(startDim, endDim)
+    // Task 4.3: Move transformation operations to backends (flatten)
+    override fun Tensor<Int32, Int>.flatten(startDim: Int, endDim: Int): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        
+        val actualEndDim = if (endDim == -1) this.shape.rank - 1 else endDim
+        require(startDim >= 0 && startDim < this.shape.rank) { "startDim $startDim is out of bounds" }
+        require(actualEndDim >= startDim && actualEndDim < this.shape.rank) { "endDim $actualEndDim is out of bounds or less than startDim" }
+        
+        if (startDim == actualEndDim) {
+            return CpuTensorInt32(this.shape, this.data.copyOf())
+        }
+        
+        val newDimensions = mutableListOf<Int>()
+        
+        for (i in 0 until startDim) {
+            newDimensions.add(this.shape[i])
+        }
+        
+        var flattenedSize = 1
+        for (i in startDim..actualEndDim) {
+            flattenedSize *= this.shape[i]
+        }
+        newDimensions.add(flattenedSize)
+        
+        for (i in (actualEndDim + 1) until this.shape.rank) {
+            newDimensions.add(this.shape[i])
+        }
+        
+        val newShape = Shape(*newDimensions.toIntArray())
+        return CpuTensorInt32(newShape, this.data.copyOf())
+    }
 
     override fun Tensor<Int32, Int>.reshape(newShape: Shape): Tensor<Int32, Int> {
         require(this.shape.volume == newShape.volume) {
@@ -2748,6 +2746,94 @@ public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
         
         val newShape = Shape(inferredDimensions)
         return this.reshape(newShape)
+    }
+
+    // Task 4.1: Move slicing operations from CpuTensorInt32 to CpuBackendInt32
+    fun Tensor<Int32, Int>.slice(ranges: IntArray): Tensor<Int32, Int> {
+        require(this is CpuTensorInt32) { "Tensor must be CpuTensorInt32" }
+        require(ranges.size == this.shape.rank * 2) {
+            "Ranges array must have size ${this.shape.rank * 2} (start,end pairs), got ${ranges.size}"
+        }
+        
+        // Parse ranges into start/end pairs and validate
+        val sliceRanges = mutableListOf<Pair<Int, Int>>()
+        for (i in 0 until this.shape.rank) {
+            val start = ranges[i * 2]
+            val end = ranges[i * 2 + 1]
+            val dimSize = this.shape.dimensions[i]
+            
+            require(start >= 0 && start < dimSize) {
+                "Start index $start out of bounds for dimension $i (size $dimSize)"
+            }
+            require(end > start && end <= dimSize) {
+                "End index $end must be > start ($start) and <= dimension size ($dimSize)"
+            }
+            
+            sliceRanges.add(start to end)
+        }
+        
+        // Calculate new shape
+        val newDimensions = sliceRanges.map { (start, end) -> end - start }.toIntArray()
+        val newShape = Shape(newDimensions)
+        
+        // Create new data array
+        val newData = IntArray(newShape.volume)
+        var destIndex = 0
+        
+        // Copy sliced data
+        when (this.shape.rank) {
+            1 -> {
+                val (start0, end0) = sliceRanges[0]
+                for (i in start0 until end0) {
+                    newData[destIndex++] = this.data[i]
+                }
+            }
+            2 -> {
+                val (start0, end0) = sliceRanges[0]
+                val (start1, end1) = sliceRanges[1]
+                for (i in start0 until end0) {
+                    for (j in start1 until end1) {
+                        val srcIndex = i * this.shape.dimensions[1] + j
+                        newData[destIndex++] = this.data[srcIndex]
+                    }
+                }
+            }
+            3 -> {
+                val (start0, end0) = sliceRanges[0]
+                val (start1, end1) = sliceRanges[1]
+                val (start2, end2) = sliceRanges[2]
+                for (i in start0 until end0) {
+                    for (j in start1 until end1) {
+                        for (k in start2 until end2) {
+                            val srcIndex = i * this.shape.dimensions[1] * this.shape.dimensions[2] +
+                                         j * this.shape.dimensions[2] + k
+                            newData[destIndex++] = this.data[srcIndex]
+                        }
+                    }
+                }
+            }
+            4 -> {
+                val (start0, end0) = sliceRanges[0]
+                val (start1, end1) = sliceRanges[1]
+                val (start2, end2) = sliceRanges[2]
+                val (start3, end3) = sliceRanges[3]
+                for (i in start0 until end0) {
+                    for (j in start1 until end1) {
+                        for (k in start2 until end2) {
+                            for (l in start3 until end3) {
+                                val srcIndex = i * this.shape.dimensions[1] * this.shape.dimensions[2] * this.shape.dimensions[3] +
+                                             j * this.shape.dimensions[2] * this.shape.dimensions[3] +
+                                             k * this.shape.dimensions[3] + l
+                                newData[destIndex++] = this.data[srcIndex]
+                            }
+                        }
+                    }
+                }
+            }
+            else -> throw UnsupportedOperationException("Slicing not supported for ${this.shape.rank}D tensors")
+        }
+        
+        return CpuTensorInt32(newShape, newData)
     }
 
     override fun zeros(shape: Shape): Tensor<Int32, Int> =
@@ -3413,7 +3499,7 @@ public class CpuTensorTernary(
 /**
  * A CPU-based implementation of the ComputeBackend interface for FP16/Float tensors.
  */
-public class CpuBackendFP16 : ComputeBackend<FP16, Float> {
+public class CpuBackendFP16 : ComputeBackend<FP16, Float, Tensor<FP16, Float>> {
     override val name: String = "CPU-FP16"
     
     init {
@@ -3603,333 +3689,3 @@ public class CpuBackendFP16 : ComputeBackend<FP16, Float> {
  * Each value uses 2 bytes and is converted to FP32 for operations.
  * This implementation converts FP16 data to FP32 for processing.
  */
-public class CpuTensorFP16(
-    override val shape: Shape,
-    internal val data: FloatArray  // Converted FP32 data
-) : TensorFP16 {
-
-    // TensorData implementation
-    override val strides: IntArray = shape.computeStrides()
-    override val offset: Int = 0
-    override val isContiguous: Boolean = true
-    
-    init {
-        require(shape.rank in 1..4) {
-            "Only 1-4 dimensional tensors are supported, got ${shape.rank}"
-        }
-        require(data.size == shape.volume) {
-            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
-        }
-    }
-
-    override fun get(vararg indices: Int): Float {
-        val linearIndex = shape.index(indices)
-        return data[linearIndex]
-    }
-    
-    override fun copyTo(dest: Array<Float>, destOffset: Int) {
-        for (i in data.indices) {
-            dest[destOffset + i] = data[i]
-        }
-    }
-    
-    override fun slice(ranges: IntArray): TensorData<FP16, Float> {
-        return slice_impl(ranges)
-    }
-    
-    private fun slice_impl(ranges: IntArray): CpuTensorFP16 {
-        require(ranges.size == shape.rank * 2) {
-            "Ranges array must have size ${shape.rank * 2} (start,end pairs), got ${ranges.size}"
-        }
-        
-        // Parse ranges and calculate new shape
-        val sliceRanges = mutableListOf<Pair<Int, Int>>()
-        for (i in 0 until shape.rank) {
-            val start = ranges[i * 2]
-            val end = ranges[i * 2 + 1]
-            val dimSize = shape.dimensions[i]
-            
-            require(start >= 0 && start < dimSize) {
-                "Start index $start out of bounds for dimension $i (size $dimSize)"
-            }
-            require(end > start && end <= dimSize) {
-                "End index $end must be > start ($start) and <= dimension size ($dimSize)"
-            }
-            
-            sliceRanges.add(start to end)
-        }
-        
-        val newDimensions = sliceRanges.map { (start, end) -> end - start }.toIntArray()
-        val newShape = Shape(newDimensions)
-        val newData = FloatArray(newShape.volume)
-        
-        // Extract sliced values
-        var destLinearIndex = 0
-        
-        when (shape.rank) {
-            1 -> {
-                val (start0, end0) = sliceRanges[0]
-                for (i in start0 until end0) {
-                    newData[destLinearIndex++] = get(i)
-                }
-            }
-            2 -> {
-                val (start0, end0) = sliceRanges[0]
-                val (start1, end1) = sliceRanges[1]
-                for (i in start0 until end0) {
-                    for (j in start1 until end1) {
-                        newData[destLinearIndex++] = get(i, j)
-                    }
-                }
-            }
-            else -> throw UnsupportedOperationException("Slicing not fully implemented for ${shape.rank}D tensors")
-        }
-        
-        return CpuTensorFP16(newShape, newData)
-    }
-    
-    override fun materialize(): TensorData<FP16, Float> = this
-    
-    private fun Shape.computeStrides(): IntArray {
-        if (dimensions.isEmpty()) return intArrayOf()
-        val strides = IntArray(dimensions.size)
-        strides[dimensions.size - 1] = 1
-        for (i in dimensions.size - 2 downTo 0) {
-            strides[i] = strides[i + 1] * dimensions[i + 1]
-        }
-        return strides
-    }
-
-    // Placeholder operations - similar to other tensor types
-    override fun matmul(a: Tensor<FP16, Float>, b: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Matrix multiplication not yet implemented for FP16 tensors")
-    }
-
-    override fun matmul4d(a: Tensor<FP16, Float>, b: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("4D matrix multiplication not yet implemented for FP16 tensors")
-    }
-
-    override fun scale(a: Tensor<FP16, Float>, scalar: Double): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Scale operation not yet implemented for FP16 tensors")
-    }
-
-    override fun dot(a: Tensor<FP16, Float>, b: Tensor<FP16, Float>): Double {
-        throw UnsupportedOperationException("Dot product not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.plus(other: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Addition not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.minus(other: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Subtraction not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.times(other: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Multiplication not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.div(other: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Division not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.plus(scalar: Int): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Scalar addition not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.minus(scalar: Int): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Scalar subtraction not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.times(scalar: Int): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Scalar multiplication not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.div(scalar: Int): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Scalar division not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.plus(scalar: Float): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Float scalar addition not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.minus(scalar: Float): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Float scalar subtraction not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.times(scalar: Float): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Float scalar multiplication not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.div(scalar: Float): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Float scalar division not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.plus(scalar: Double): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Double scalar addition not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.minus(scalar: Double): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Double scalar subtraction not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.times(scalar: Double): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Double scalar multiplication not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.div(scalar: Double): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Double scalar division not yet implemented for FP16 tensors")
-    }
-
-    override fun Double.plus(t: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Scalar-tensor addition not yet implemented for FP16 tensors")
-    }
-
-    override fun Double.minus(t: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Scalar-tensor subtraction not yet implemented for FP16 tensors")
-    }
-
-    override fun Double.times(t: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Scalar-tensor multiplication not yet implemented for FP16 tensors")
-    }
-
-    override fun Double.div(t: Tensor<FP16, Float>): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Scalar-tensor division not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.t(): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Transpose not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.relu(): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("ReLU not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.sigmoid(): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Sigmoid not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.tanh(): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Tanh not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.softmax(dimension: Int): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Softmax not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.flatten(startDim: Int, endDim: Int): Tensor<FP16, Float> {
-        throw UnsupportedOperationException("Flatten not yet implemented for FP16 tensors")
-    }
-
-    override fun Tensor<FP16, Float>.reshape(newShape: Shape): Tensor<FP16, Float> {
-        require(this.shape.volume == newShape.volume) {
-            "Cannot reshape tensor with ${this.shape.volume} elements to shape with ${newShape.volume} elements"
-        }
-        
-        // Handle both CpuTensorFP16 and sliced tensors
-        if (this is CpuTensorFP16) {
-            // Direct access to data for CpuTensorFP16
-            return CpuTensorFP16(newShape, this.data.copyOf())
-        } else {
-            // For sliced tensors, extract data using copyTo
-            val tensorData = Array<Float>(this.shape.volume) { 0f }
-            this.copyTo(tensorData)
-            return CpuTensorFP16(newShape, tensorData.toFloatArray())
-        }
-    }
-    
-    override fun Tensor<FP16, Float>.reshape(vararg dimensions: Int): Tensor<FP16, Float> {
-        // Count -1 dimensions and validate
-        val minusOneCount = dimensions.count { it == -1 }
-        require(minusOneCount <= 1) { "Only one dimension can be -1, found $minusOneCount" }
-        
-        val totalKnownElements = dimensions.filter { it != -1 }.fold(1) { acc, dim ->
-            require(dim > 0) { "All dimensions must be positive or -1, got $dim" }
-            acc * dim
-        }
-        
-        val inferredDimensions = if (minusOneCount == 1) {
-            // Calculate the missing dimension
-            val missingDimSize = this.shape.volume / totalKnownElements
-            require(this.shape.volume % totalKnownElements == 0) {
-                "Cannot infer dimension size: volume ${this.shape.volume} is not divisible by known dimensions product $totalKnownElements"
-            }
-            dimensions.map { if (it == -1) missingDimSize else it }.toIntArray()
-        } else {
-            dimensions
-        }
-        
-        val newShape = Shape(inferredDimensions)
-        return this.reshape(newShape)
-    }
-
-    public companion object {
-        /**
-         * Creates a tensor from a float array.
-         */
-        public fun fromArray(shape: Shape, data: FloatArray): CpuTensorFP16 {
-            require(data.size == shape.volume) {
-                "Data size ${data.size} doesn't match shape volume ${shape.volume}"
-            }
-            return CpuTensorFP16(shape, data.copyOf())
-        }
-        
-        /**
-         * Creates a tensor from FP16 byte data by converting to FP32.
-         */
-        public fun fromFP16ByteArray(shape: Shape, data: ByteArray): CpuTensorFP16 {
-            val expectedBytes = shape.volume * 2  // 2 bytes per FP16 value
-            require(data.size == expectedBytes) {
-                "Data size ${data.size} doesn't match expected FP16 size $expectedBytes bytes"
-            }
-            
-            // Convert FP16 bytes to FP32 floats
-            val floatData = FloatArray(shape.volume)
-            for (i in 0 until shape.volume) {
-                val fp16Bytes = (data[i * 2].toInt() and 0xFF) or ((data[i * 2 + 1].toInt() and 0xFF) shl 8)
-                floatData[i] = fp16ToFp32(fp16Bytes)
-            }
-            
-            return CpuTensorFP16(shape, floatData)
-        }
-        
-        /**
-         * Converts a 16-bit FP16 value to 32-bit FP32 value.
-         * This is a basic implementation - production code might need more sophisticated handling.
-         */
-        private fun fp16ToFp32(fp16: Int): Float {
-            val sign = (fp16 shr 15) and 0x1
-            val exponent = (fp16 shr 10) and 0x1F
-            val mantissa = fp16 and 0x3FF
-            
-            return when {
-                exponent == 0 -> {
-                    // Zero or denormal
-                    if (mantissa == 0) {
-                        if (sign == 1) -0.0f else 0.0f
-                    } else {
-                        // Denormal - convert to normal FP32
-                        val normalizedMantissa = mantissa.toFloat() / 1024.0f
-                        val value = normalizedMantissa * 2.0.pow(-14.0).toFloat()
-                        if (sign == 1) -value else value
-                    }
-                }
-                exponent == 31 -> {
-                    // Infinity or NaN  
-                    if (mantissa == 0) {
-                        if (sign == 1) Float.NEGATIVE_INFINITY else Float.POSITIVE_INFINITY
-                    } else {
-                        Float.NaN
-                    }
-                }
-                else -> {
-                    // Normal number
-                    val fp32Exponent = exponent - 15 + 127  // Convert bias
-                    val fp32Mantissa = mantissa shl 13  // Shift mantissa
-                    val fp32Bits = (sign shl 31) or (fp32Exponent shl 23) or fp32Mantissa
-                    Float.fromBits(fp32Bits)
-                }
-            }
-        }
-    }
-}
