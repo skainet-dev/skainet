@@ -49,8 +49,8 @@ class MLOperationsTest {
         val featureShape = Shape(1, 2, 3, 3) // 1x2x3x3
         val filterShape = Shape(18, 8) // Flattened: 2*3*3=18 input features, 8 filters
 
-        val featureData = FloatArray(18) { (it + 1).toFloat() }
-        val filterData = FloatArray(144) { (it % 5 + 1).toFloat() }
+        val featureData = FloatArray(featureShape.volume) { (it + 1).toFloat() }
+        val filterData = FloatArray(filterShape.volume) { (it % 5 + 1).toFloat() }
 
         // Flatten feature map for matrix multiplication
         val flatFeatureShape = Shape(1, 18) // Batch size 1, 18 features

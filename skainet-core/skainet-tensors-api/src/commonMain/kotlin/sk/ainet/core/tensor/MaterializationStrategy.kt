@@ -10,20 +10,20 @@ package sk.ainet.core.tensor
 public interface MaterializationStrategy<T : DType, V> {
     
     /**
-     * Materializes a tensor view into a concrete tensor.
+     * Materializes a tensor into a concrete tensor.
      * 
-     * @param view The tensor view to materialize
+     * @param tensor The tensor to materialize
      * @return A materialized tensor with copied data
      */
-    public fun materialize(view: TensorView<T, V>): Tensor<T, V>
+    public fun materialize(tensor: Tensor<T, V>): Tensor<T, V>
     
     /**
-     * Determines whether a view should be materialized based on the strategy's criteria.
+     * Determines whether a tensor should be materialized based on the strategy's criteria.
      * 
-     * @param view The tensor view to evaluate
-     * @return True if the view should be materialized, false otherwise
+     * @param tensor The tensor to evaluate
+     * @return True if the tensor should be materialized, false otherwise
      */
-    public fun shouldMaterialize(view: TensorView<T, V>): Boolean
+    public fun shouldMaterialize(tensor: Tensor<T, V>): Boolean
     
     /**
      * Gets the name of this materialization strategy for debugging/logging purposes.
@@ -42,13 +42,13 @@ public class CopyMaterializationStrategy<T : DType, V> : MaterializationStrategy
     
     override val strategyName: String = "CopyMaterialization"
     
-    override fun materialize(view: TensorView<T, V>): Tensor<T, V> {
-        // For now, return the view as-is. In a full implementation, this would copy all data.
+    override fun materialize(tensor: Tensor<T, V>): Tensor<T, V> {
+        // For now, return the tensor as-is. In a full implementation, this would copy all data.
         // This represents the interface contract for immediate materialization.
-        return view
+        return tensor
     }
     
-    override fun shouldMaterialize(view: TensorView<T, V>): Boolean {
+    override fun shouldMaterialize(tensor: Tensor<T, V>): Boolean {
         // This strategy always materializes immediately
         return true
     }
@@ -67,29 +67,27 @@ public class LazyMaterializationStrategy<T : DType, V>(
     
     override val strategyName: String = "LazyMaterialization"
     
-    override fun materialize(view: TensorView<T, V>): Tensor<T, V> {
-        // Return the view with lazy evaluation logic
-        // In a full implementation, this would wrap the view with access counting
-        return view
+    override fun materialize(tensor: Tensor<T, V>): Tensor<T, V> {
+        // Return the tensor with lazy evaluation logic
+        // In a full implementation, this would wrap the tensor with access counting
+        return tensor
     }
     
-    override fun shouldMaterialize(view: TensorView<T, V>): Boolean {
-        // Only materialize if the view complexity is high or access patterns suggest it would be beneficial
-        val complexity = calculateViewComplexity(view)
-        return complexity > 50 || !view.isContiguous
+    override fun shouldMaterialize(tensor: Tensor<T, V>): Boolean {
+        // Only materialize if the tensor complexity is high or access patterns suggest it would be beneficial
+        val complexity = calculateTensorComplexity(tensor)
+        return complexity > 50
     }
     
-    private fun calculateViewComplexity(view: TensorView<T, V>): Int {
-        // Simple complexity calculation based on stride patterns and shape
+    private fun calculateTensorComplexity(tensor: Tensor<T, V>): Int {
+        // Simple complexity calculation based on tensor properties
         var complexity = 0
         
-        // Add complexity for non-unit strides
-        view.strides.forEach { stride ->
-            if (stride != 1) complexity += 10
-        }
+        // Add complexity for multi-dimensional tensors
+        complexity += tensor.shape.dimensions.size * 5
         
-        // Add complexity for multi-dimensional views
-        complexity += view.shape.dimensions.size * 5
+        // Add complexity for larger tensors
+        if (tensor.shape.volume > 1000) complexity += 20
         
         return complexity
     }
@@ -109,113 +107,39 @@ public class AutoMaterializationStrategy<T : DType, V>(
     
     override val strategyName: String = "AutoMaterialization"
     
-    override fun materialize(view: TensorView<T, V>): Tensor<T, V> {
-        val complexity = calculateViewComplexity(view)
+    override fun materialize(tensor: Tensor<T, V>): Tensor<T, V> {
+        val complexity = calculateTensorComplexity(tensor)
         
         return when {
             complexity > complexityThreshold -> {
                 // High complexity: use immediate materialization
-                CopyMaterializationStrategy<T, V>().materialize(view)
+                CopyMaterializationStrategy<T, V>().materialize(tensor)
             }
-            view.shape.volume > sizeThreshold -> {
+            tensor.shape.volume > sizeThreshold -> {
                 // Large size: use lazy materialization
-                LazyMaterializationStrategy<T, V>().materialize(view)
+                LazyMaterializationStrategy<T, V>().materialize(tensor)
             }
             else -> {
-                // Low complexity and small size: keep as view
-                view
+                // Low complexity and small size: keep as tensor
+                tensor
             }
         }
     }
     
-    override fun shouldMaterialize(view: TensorView<T, V>): Boolean {
-        val complexity = calculateViewComplexity(view)
-        return complexity > complexityThreshold || view.shape.volume > sizeThreshold
+    override fun shouldMaterialize(tensor: Tensor<T, V>): Boolean {
+        val complexity = calculateTensorComplexity(tensor)
+        return complexity > complexityThreshold || tensor.shape.volume > sizeThreshold
     }
     
-    private fun calculateViewComplexity(view: TensorView<T, V>): Int {
+    private fun calculateTensorComplexity(tensor: Tensor<T, V>): Int {
         var score = 0
-        
-        // Non-contiguous access patterns increase complexity
-        if (!view.isContiguous) score += 30
-        
-        // Multiple dimensions with non-unit strides
-        view.strides.forEachIndexed { index, stride ->
-            if (stride != 1) score += (index + 1) * 5
-        }
         
         // Shape complexity
-        score += view.shape.dimensions.size * 3
+        score += tensor.shape.dimensions.size * 3
+        
+        // Size complexity
+        if (tensor.shape.volume > 10000) score += 20
         
         return score
-    }
-}
-
-/**
- * View complexity scoring system for materialization decisions.
- * This addresses task 50 from the slicing tasks.
- */
-public object ViewComplexityScorer {
-    
-    /**
-     * Calculates a complexity score for a tensor view.
-     * Higher scores indicate views that would benefit from materialization.
-     * 
-     * @param view The tensor view to score
-     * @return Complexity score (0-100+)
-     */
-    public fun <T : DType, V> calculateComplexity(view: TensorView<T, V>): Int {
-        var score = 0
-        
-        // Base score for non-contiguous access
-        if (!view.isContiguous) {
-            score += 40
-        }
-        
-        // Stride pattern analysis
-        val maxStride = view.strides.maxOrNull() ?: 1
-        val minStride = view.strides.minOrNull() ?: 1
-        val strideRange = maxStride - minStride
-        score += (strideRange / 10).coerceAtMost(25)
-        
-        // Dimensionality complexity
-        score += (view.shape.dimensions.size - 1) * 5
-        
-        // Memory access pattern complexity
-        val volume = view.shape.volume
-        if (volume > 10000) {
-            score += 15
-        }
-        
-        // Check for irregular access patterns
-        if (hasIrregularAccessPattern(view)) {
-            score += 20
-        }
-        
-        return score.coerceAtMost(100)
-    }
-    
-    private fun <T : DType, V> hasIrregularAccessPattern(view: TensorView<T, V>): Boolean {
-        // Simple heuristic: if strides are not in decreasing order, consider it irregular
-        val strides = view.strides
-        for (i in 0 until strides.size - 1) {
-            if (strides[i] < strides[i + 1]) {
-                return true
-            }
-        }
-        return false
-    }
-}
-
-/**
- * Extension function to apply materialization strategy to tensor views.
- */
-public fun <T : DType, V> TensorView<T, V>.materialize(
-    strategy: MaterializationStrategy<T, V> = CopyMaterializationStrategy()
-): Tensor<T, V> {
-    return if (strategy.shouldMaterialize(this)) {
-        strategy.materialize(this)
-    } else {
-        this // Return the view as-is if materialization is not needed
     }
 }

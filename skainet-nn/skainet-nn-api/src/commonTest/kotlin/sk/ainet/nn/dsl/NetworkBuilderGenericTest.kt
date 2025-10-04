@@ -31,7 +31,7 @@ class NetworkBuilderGenericTest {
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
     }
@@ -46,7 +46,7 @@ class NetworkBuilderGenericTest {
                 bias { shape -> CpuTensorInt8.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
     }
@@ -61,7 +61,7 @@ class NetworkBuilderGenericTest {
                 bias { shape -> CpuTensorInt32.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
     }
@@ -80,7 +80,7 @@ class NetworkBuilderGenericTest {
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
     }
@@ -88,14 +88,14 @@ class NetworkBuilderGenericTest {
     @Test
     fun testNetworkFP32HelperFunction() {
         // Test networkFP32 convenience function
-        val network = networkFP32 {
+        val network = network {
             input(2)
             dense(1) {
                 weights { shape -> CpuTensorFP32.ones(shape) }
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
     }
@@ -111,7 +111,7 @@ class NetworkBuilderGenericTest {
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
         }
-        
+
         val networkInt8 = network<Int8, Byte> {
             input(4)
             flatten()
@@ -120,7 +120,7 @@ class NetworkBuilderGenericTest {
                 bias { shape -> CpuTensorInt8.zeros(shape) }
             }
         }
-        
+
         assertNotNull(networkFP32)
         assertNotNull(networkInt8)
         assertEquals("MLP", networkFP32.name)
@@ -147,7 +147,7 @@ class NetworkBuilderGenericTest {
                 bias { shape -> CpuTensorFP32.zeros(shape) }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
     }
@@ -171,7 +171,7 @@ class NetworkBuilderGenericTest {
                 }
             }
         }
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
     }
@@ -180,19 +180,21 @@ class NetworkBuilderGenericTest {
     fun testNetworkBuilderClassGeneric() {
         // Test NetworkBuilder class directly with generic types
         val builder = NetworkBuilder<FP32, Float>()
-        
-        val linear1 = Linear(2, 4, "layer1",
-            CpuTensorFP32.ones(Shape(4, 2)), 
+
+        val linear1 = Linear(
+            2, 4, "layer1",
+            CpuTensorFP32.ones(Shape(4, 2)),
             CpuTensorFP32.zeros(Shape(4))
         )
-        
-        val linear2 = Linear(4, 1, "layer2",
+
+        val linear2 = Linear(
+            4, 1, "layer2",
             CpuTensorFP32.ones(Shape(1, 4)),
             CpuTensorFP32.zeros(Shape(1))
         )
-        
+
         val network = builder.add(linear1, linear2).build()
-        
+
         assertNotNull(network)
         assertEquals("MLP", network.name)
     }
@@ -202,33 +204,33 @@ class NetworkBuilderGenericTest {
         // Test that different DTypes create different network types
         val networkFP32 = network<FP32, Float> {
             input(2)
-            dense(1) { 
-                weights { CpuTensorFP32.ones(it) }
-                bias { CpuTensorFP32.zeros(it) }
+            dense(1) {
+                weights { ones() }
+                bias { zeros() }
             }
         }
 
         val networkInt8 = network<Int8, Byte> {
             input(2)
-            dense(1) { 
-                weights { CpuTensorInt8.ones(it) }
-                bias { CpuTensorInt8.zeros(it) }
+            dense(1) {
+                weights { ones() }
+                bias { zeros() }
             }
         }
 
         val networkInt32 = network<Int32, Int> {
             input(2)
-            dense(1) { 
-                weights { CpuTensorInt32.ones(it) }
-                bias { CpuTensorInt32.zeros(it) }
+            dense(1) {
+                weights { ones() }
+                bias { zeros() }
             }
         }
-        
+
         // All should be created successfully
         assertNotNull(networkFP32)
         assertNotNull(networkInt8)
         assertNotNull(networkInt32)
-        
+
         // All should have the same structure name but different implementations
         assertEquals("MLP", networkFP32.name)
         assertEquals("MLP", networkInt8.name)

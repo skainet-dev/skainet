@@ -21,9 +21,9 @@ kotlin {
 
     iosArm64()
     iosSimulatorArm64()
-    macosArm64()
-    linuxX64()
-    linuxArm64()
+    macosArm64 ()
+    linuxX64 ()
+    linuxArm64 ()
 
     jvm()
 
@@ -34,19 +34,24 @@ kotlin {
     }
 
     sourceSets {
-        commonMain.dependencies {
-            implementation(project(":skainet-core:skainet-tensors-api"))
+        val commonMain by getting {
+            dependencies {
+                implementation(project(":skainet-core:skainet-tensors-api"))
+                implementation(project(":skainet-core:skainet-tensors"))
+                implementation(project(":skainet-nn:skainet-nn-api"))
+
+            }
         }
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation(libs.kotlinx.coroutines.test)
+            implementation(project(":skainet-core:skainet-performance"))
         }
     }
 }
 
 android {
-    namespace = "sk.ai.net.core.performance"
+    namespace = "sk.ainet.core.reflection"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

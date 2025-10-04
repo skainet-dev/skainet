@@ -151,6 +151,8 @@ class MockTensor<T : DType, V>(
     override fun Tensor<T, V>.sigmoid(): Tensor<T, V> = this@MockTensor
     override fun Tensor<T, V>.tanh(): Tensor<T, V> = this@MockTensor
     override fun Tensor<T, V>.flatten(startDim: Int, endDim: Int): Tensor<T, V> = this@MockTensor
+    override fun Tensor<T, V>.reshape(newShape: Shape): Tensor<T, V> = this@MockTensor
+    override fun Tensor<T, V>.reshape(vararg dimensions: Int): Tensor<T, V> = this@MockTensor
 }
 
 class TensorsRangeBuilderTest {
