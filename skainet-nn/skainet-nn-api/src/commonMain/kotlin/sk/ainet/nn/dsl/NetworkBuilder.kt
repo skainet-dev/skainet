@@ -178,7 +178,7 @@ public interface DENSE<T : DType, V> : NetworkDslItem {
 
     //public fun weights(initBlock: (Shape) -> Tensor<T, V>)
     public fun weights(initBlock: WeightsScope<T, V>.(Shape) -> Tensor<T, V>)
-    public fun bias(initBlock: (Shape) -> Tensor<T, V>)
+    public fun bias(initBlock: BiasScope<T, V>.(Shape) -> Tensor<T, V>)
 
     // Factory-based convenience methods
     public val factory: TensorFactory<T, V>
@@ -270,6 +270,7 @@ public interface WeightsScope<T : DType, V> {
 
     // fromXX Float
     public fun from(vararg data: Float): Tensor<T, V> = fromArray(data.toTypedArray().toFloatArray())
+
     public fun fromList(data: List<Float>): Tensor<T, V> = fromArray(data.toFloatArray())
     public fun fromArray(data: FloatArray): Tensor<T, V> {
         require(data.size == shape.volume) {
@@ -280,7 +281,7 @@ public interface WeightsScope<T : DType, V> {
 
     // fromXX Int
     public fun from(vararg data: Int): Tensor<T, V> = fromArray(data.toTypedArray().toIntArray())
-    public fun fromList(data: List<Int>): Tensor<T, V> = fromArray(data.toIntArray())
+    public fun fromIntList(data: List<Int>): Tensor<T, V> = fromArray(data.toIntArray())
     public fun fromArray(data: IntArray): Tensor<T, V> {
         require(data.size == shape.volume) {
             "Data size ${data.size} doesn't match shape volume ${shape.volume}"
@@ -516,172 +517,170 @@ public class DenseImpl<T : DType, V>(
 
     override fun weights(initBlock: WeightsScope<T, V>.(Shape) -> Tensor<T, V>) {
         val scope = WeightsScopeImpl(factory, weightsShape)
-        //initWeights = scope.initBlock(weightsShape)
 
 
     }
 
-    override fun bias(initBlock: (Shape) -> Tensor<T, V>) {
-        biasValue = initBlock(biasShape)
+    override fun bias(initBlock: BiasScope<T, V>.(Shape) -> Tensor<T, V>) {
+        //biasValue = initBlock(biasShape)
     }
 
-}
 
-// Stage implementation
-public class StageImpl<T : DType, V>(
-    private val id: String,
-    private val factory: TensorFactory<T, V>
-) : NeuralNetworkDsl<T, V> {
-    public val modules: MutableList<Module<T, V>> = mutableListOf<Module<T, V>>()
-    public var lastDimension: Int = 0
-    public var inputDimension: Int = 0
+    // Stage implementation
+    public class StageImpl<T : DType, V>(
+        private val id: String,
+        private val factory: TensorFactory<T, V>
+    ) : NeuralNetworkDsl<T, V> {
+        public val modules: MutableList<Module<T, V>> = mutableListOf<Module<T, V>>()
+        public var lastDimension: Int = 0
+        public var inputDimension: Int = 0
 
-    public fun create(): Module<T, V> = MLP(*modules.toTypedArray(), name = id)
+        public fun create(): Module<T, V> = MLP(*modules.toTypedArray(), name = id)
 
-    override fun input(inputSize: Int, id: String) {
-        lastDimension = inputSize
-        modules.add(Input(name = getDefaultName(id, "Input", modules.size)))
+        override fun input(inputSize: Int, id: String) {
+            lastDimension = inputSize
+            modules.add(Input(name = getDefaultName(id, "Input", modules.size)))
+        }
+
+        override fun flatten(id: String, content: FLATTEN<T, V>.() -> Unit) {
+            val impl = FlattenImpl<T, V>(
+                id = getDefaultName(id, "flatten", modules.size)
+            )
+            impl.content()
+            modules += impl.create()
+        }
+
+        override fun dense(outputDimension: Int, id: String, content: DENSE<T, V>.() -> Unit) {
+            val inputDimension = lastDimension
+            lastDimension = outputDimension
+            val impl = DenseImpl(
+                inputDimension = inputDimension,
+                _outputDimension = outputDimension,
+                id = getDefaultName(id, "linear", modules.size),
+                factory = factory
+            )
+            impl.content()
+            // dense layer consists of linear module and activation function module (2 modules)
+            modules += impl.create()
+        }
+
+        override fun dense(id: String, content: DENSE<T, V>.() -> Unit) {
+            // This version of dense requires units to be specified in the content block
+            val impl = DenseImpl(
+                inputDimension = lastDimension,
+                _outputDimension = 0, // Will be set in content block via units property
+                id = getDefaultName(id, "linear", modules.size),
+                factory = factory
+            )
+            impl.content()
+            // Update lastDimension based on the units set in the content block
+            lastDimension = impl.outputDimension
+            // dense layer consists of linear module and activation function module (2 modules)
+            modules += impl.create()
+        }
+
+        override fun activation(id: String, activation: (Tensor<T, V>) -> Tensor<T, V>) {
+            modules += ActivationsWrapperModule(activation, getDefaultName(id, "activation", modules.size))
+        }
+
+        override fun sequential(content: NeuralNetworkDsl<T, V>.() -> Unit) {
+            val sequentialImpl = NeuralNetworkDslImpl(factory)
+            sequentialImpl.lastDimension = lastDimension
+            sequentialImpl.content()
+            lastDimension = sequentialImpl.lastDimension
+            modules += sequentialImpl.create()
+        }
+
+        override fun stage(id: String, content: NeuralNetworkDsl<T, V>.() -> Unit) {
+            val stageImpl = StageImpl(id, factory)
+            stageImpl.lastDimension = lastDimension
+            stageImpl.content()
+            lastDimension = stageImpl.lastDimension
+            modules += stageImpl.create()
+        }
     }
 
-    override fun flatten(id: String, content: FLATTEN<T, V>.() -> Unit) {
-        val impl = FlattenImpl<T, V>(
-            id = getDefaultName(id, "flatten", modules.size)
-        )
-        impl.content()
-        modules += impl.create()
+    private class NeuralNetworkDslImpl<T : DType, V>(
+        private val factory: TensorFactory<T, V>
+    ) : NeuralNetworkDsl<T, V> {
+
+        val modules = mutableListOf<Module<T, V>>()
+        var lastDimension = 0
+
+        fun create(): Module<T, V> = NetworkBuilder<T, V>().add(*modules.toTypedArray()).build()
+
+        override fun input(inputSize: Int, id: String) {
+            lastDimension = inputSize
+            modules.add(Input(name = getDefaultName(id, "Input", modules.size)))
+        }
+
+        override fun flatten(id: String, content: FLATTEN<T, V>.() -> Unit) {
+            val impl = FlattenImpl<T, V>(
+                id = getDefaultName(id, "flatten", modules.size)
+            )
+            impl.content()
+            modules += impl.create()
+        }
+
+        override fun dense(outputDimension: Int, id: String, content: DENSE<T, V>.() -> Unit) {
+            val inputDimension = lastDimension
+            lastDimension = outputDimension
+            val impl = DenseImpl<T, V>(
+                inputDimension = inputDimension,
+                _outputDimension = outputDimension,
+                id = getDefaultName(id, "linear", modules.size),
+                factory = factory
+            )
+            impl.content()
+            // dense layer consists of linear module and activation function module (2 modules)
+            modules += impl.create()
+        }
+
+        override fun dense(id: String, content: DENSE<T, V>.() -> Unit) {
+            // This version of dense requires units to be specified in the content block
+            val impl = DenseImpl<T, V>(
+                inputDimension = lastDimension,
+                _outputDimension = 0, // Will be set in content block via units property
+                id = getDefaultName(id, "linear", modules.size),
+                factory = factory
+            )
+            impl.content()
+            // Update lastDimension based on the units set in the content block
+            lastDimension = impl.outputDimension
+            // dense layer consists of linear module and activation function module (2 modules)
+            modules += impl.create()
+        }
+
+        override fun activation(id: String, activation: (Tensor<T, V>) -> Tensor<T, V>) {
+            modules += ActivationsWrapperModule(activation, getDefaultName(id, "activation", modules.size))
+        }
+
+        override fun sequential(content: NeuralNetworkDsl<T, V>.() -> Unit) {
+            val sequentialImpl = NeuralNetworkDslImpl(factory)
+            sequentialImpl.lastDimension = lastDimension
+            sequentialImpl.content()
+            lastDimension = sequentialImpl.lastDimension
+            modules += sequentialImpl.create()
+        }
+
+        override fun stage(id: String, content: NeuralNetworkDsl<T, V>.() -> Unit) {
+            val stageImpl = StageImpl(id, factory)
+            stageImpl.lastDimension = lastDimension
+            stageImpl.content()
+            lastDimension = stageImpl.lastDimension
+            modules += stageImpl.create()
+        }
     }
 
-    override fun dense(outputDimension: Int, id: String, content: DENSE<T, V>.() -> Unit) {
-        val inputDimension = lastDimension
-        lastDimension = outputDimension
-        val impl = DenseImpl(
-            inputDimension = inputDimension,
-            _outputDimension = outputDimension,
-            id = getDefaultName(id, "linear", modules.size),
-            factory = factory
-        )
-        impl.content()
-        // dense layer consists of linear module and activation function module (2 modules)
-        modules += impl.create()
+
+    @NetworkDsl
+    public class NetworkBuilder<T : DType, V> {
+        private val modules = mutableListOf<Module<T, V>>()
+
+        public fun add(vararg modules: Module<T, V>): NetworkBuilder<T, V> {
+            this.modules += modules.toList()
+            return this
+        }
+
+        public fun build(): Module<T, V> = MLP(*modules.toTypedArray(), name = "MLP")
     }
-
-    override fun dense(id: String, content: DENSE<T, V>.() -> Unit) {
-        // This version of dense requires units to be specified in the content block
-        val impl = DenseImpl(
-            inputDimension = lastDimension,
-            _outputDimension = 0, // Will be set in content block via units property
-            id = getDefaultName(id, "linear", modules.size),
-            factory = factory
-        )
-        impl.content()
-        // Update lastDimension based on the units set in the content block
-        lastDimension = impl.outputDimension
-        // dense layer consists of linear module and activation function module (2 modules)
-        modules += impl.create()
-    }
-
-    override fun activation(id: String, activation: (Tensor<T, V>) -> Tensor<T, V>) {
-        modules += ActivationsWrapperModule(activation, getDefaultName(id, "activation", modules.size))
-    }
-
-    override fun sequential(content: NeuralNetworkDsl<T, V>.() -> Unit) {
-        val sequentialImpl = NeuralNetworkDslImpl(factory)
-        sequentialImpl.lastDimension = lastDimension
-        sequentialImpl.content()
-        lastDimension = sequentialImpl.lastDimension
-        modules += sequentialImpl.create()
-    }
-
-    override fun stage(id: String, content: NeuralNetworkDsl<T, V>.() -> Unit) {
-        val stageImpl = StageImpl(id, factory)
-        stageImpl.lastDimension = lastDimension
-        stageImpl.content()
-        lastDimension = stageImpl.lastDimension
-        modules += stageImpl.create()
-    }
-}
-
-private class NeuralNetworkDslImpl<T : DType, V>(
-    private val factory: TensorFactory<T, V>
-) : NeuralNetworkDsl<T, V> {
-
-    val modules = mutableListOf<Module<T, V>>()
-    var lastDimension = 0
-
-    fun create(): Module<T, V> = NetworkBuilder<T, V>().add(*modules.toTypedArray()).build()
-
-    override fun input(inputSize: Int, id: String) {
-        lastDimension = inputSize
-        modules.add(Input(name = getDefaultName(id, "Input", modules.size)))
-    }
-
-    override fun flatten(id: String, content: FLATTEN<T, V>.() -> Unit) {
-        val impl = FlattenImpl<T, V>(
-            id = getDefaultName(id, "flatten", modules.size)
-        )
-        impl.content()
-        modules += impl.create()
-    }
-
-    override fun dense(outputDimension: Int, id: String, content: DENSE<T, V>.() -> Unit) {
-        val inputDimension = lastDimension
-        lastDimension = outputDimension
-        val impl = DenseImpl<T, V>(
-            inputDimension = inputDimension,
-            _outputDimension = outputDimension,
-            id = getDefaultName(id, "linear", modules.size),
-            factory = factory
-        )
-        impl.content()
-        // dense layer consists of linear module and activation function module (2 modules)
-        modules += impl.create()
-    }
-
-    override fun dense(id: String, content: DENSE<T, V>.() -> Unit) {
-        // This version of dense requires units to be specified in the content block
-        val impl = DenseImpl<T, V>(
-            inputDimension = lastDimension,
-            _outputDimension = 0, // Will be set in content block via units property
-            id = getDefaultName(id, "linear", modules.size),
-            factory = factory
-        )
-        impl.content()
-        // Update lastDimension based on the units set in the content block
-        lastDimension = impl.outputDimension
-        // dense layer consists of linear module and activation function module (2 modules)
-        modules += impl.create()
-    }
-
-    override fun activation(id: String, activation: (Tensor<T, V>) -> Tensor<T, V>) {
-        modules += ActivationsWrapperModule(activation, getDefaultName(id, "activation", modules.size))
-    }
-
-    override fun sequential(content: NeuralNetworkDsl<T, V>.() -> Unit) {
-        val sequentialImpl = NeuralNetworkDslImpl(factory)
-        sequentialImpl.lastDimension = lastDimension
-        sequentialImpl.content()
-        lastDimension = sequentialImpl.lastDimension
-        modules += sequentialImpl.create()
-    }
-
-    override fun stage(id: String, content: NeuralNetworkDsl<T, V>.() -> Unit) {
-        val stageImpl = StageImpl(id, factory)
-        stageImpl.lastDimension = lastDimension
-        stageImpl.content()
-        lastDimension = stageImpl.lastDimension
-        modules += stageImpl.create()
-    }
-}
-
-
-@NetworkDsl
-public class NetworkBuilder<T : DType, V> {
-    private val modules = mutableListOf<Module<T, V>>()
-
-    public fun add(vararg modules: Module<T, V>): NetworkBuilder<T, V> {
-        this.modules += modules.toList()
-        return this
-    }
-
-    public fun build(): Module<T, V> = MLP(*modules.toTypedArray(), name = "MLP")
-}

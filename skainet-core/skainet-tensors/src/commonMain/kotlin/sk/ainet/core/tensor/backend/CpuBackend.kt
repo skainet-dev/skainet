@@ -2354,6 +2354,20 @@ public class CpuBackend : ComputeBackend<FP32, Float> {
         })
     }
 
+    override fun fromArray(
+        shape: Shape,
+        data: FloatArray
+    ): Tensor<FP32, Float> {
+        return CpuTensorFP32.fromArray(shape, data)
+    }
+
+    override fun fromArray(
+        shape: Shape,
+        data: IntArray
+    ): Tensor<FP32, Float> {
+        return CpuTensorFP32.fromArray(shape, FloatArray(data.size) { data[it].toFloat() })
+    }
+
     private fun generateNormalDistribution(random: kotlin.random.Random, mean: Double, std: Double): Double {
         // Box-Muller transform for generating normal distribution
         val u1 = random.nextDouble()
@@ -2566,6 +2580,20 @@ public class CpuBackendInt8 : ComputeBackend<Int8, Byte> {
             random.nextInt(min.toInt().coerceAtLeast(-128), max.toInt().coerceAtMost(127) + 1).toByte()
         })
 
+    override fun fromArray(
+        shape: Shape,
+        data: FloatArray
+    ): Tensor<Int8, Byte> {
+        return CpuTensorInt8.fromArray(shape, ByteArray(data.size) { data[it].toInt().coerceIn(-128, 127).toByte() })
+    }
+
+    override fun fromArray(
+        shape: Shape,
+        data: IntArray
+    ): Tensor<Int8, Byte> {
+        return CpuTensorInt8.fromArray(shape, ByteArray(data.size) { data[it].coerceIn(-128, 127).toByte() })
+    }
+
     private fun generateNormalDistributionInt8(random: kotlin.random.Random, mean: Double, std: Double): Byte {
         // Box-Muller transform for generating normal distribution
         val u1 = random.nextDouble()
@@ -2776,6 +2804,20 @@ public class CpuBackendInt32 : ComputeBackend<Int32, Int> {
         CpuTensorInt32.fromArray(shape, IntArray(shape.volume) { 
             random.nextInt(min.toInt(), max.toInt() + 1)
         })
+
+    override fun fromArray(
+        shape: Shape,
+        data: FloatArray
+    ): Tensor<Int32, Int> {
+        return CpuTensorInt32.fromArray(shape, IntArray(data.size) { data[it].toInt() })
+    }
+
+    override fun fromArray(
+        shape: Shape,
+        data: IntArray
+    ): Tensor<Int32, Int> {
+        return CpuTensorInt32.fromArray(shape, data)
+    }
 
     private fun generateNormalDistributionInt32(random: kotlin.random.Random, mean: Double, std: Double): Int {
         // Box-Muller transform for generating normal distribution
@@ -3532,6 +3574,20 @@ public class CpuBackendFP16 : ComputeBackend<FP16, Float> {
         CpuTensorFP16.fromArray(shape, FloatArray(shape.volume) { 
             (random.nextDouble() * (max - min) + min).toFloat()
         })
+
+    override fun fromArray(
+        shape: Shape,
+        data: FloatArray
+    ): Tensor<FP16, Float> {
+        return CpuTensorFP16.fromArray(shape, data)
+    }
+
+    override fun fromArray(
+        shape: Shape,
+        data: IntArray
+    ): Tensor<FP16, Float> {
+        return CpuTensorFP16.fromArray(shape, FloatArray(data.size) { data[it].toFloat() })
+    }
 
     private fun generateNormalDistributionFP16(random: kotlin.random.Random, mean: Double, std: Double): Float {
         // Box-Muller transform for generating normal distribution
