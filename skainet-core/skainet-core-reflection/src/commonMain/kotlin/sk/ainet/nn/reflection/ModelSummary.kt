@@ -2,11 +2,9 @@ package sk.ainet.nn.reflection
 
 import sk.ainet.core.tensor.DType
 import sk.ainet.core.tensor.Shape
-import sk.ainet.core.tensor.Tensor
 import sk.ainet.nn.Module
 import sk.ainet.nn.reflection.table.table
 import sk.ainet.nn.topology.ModuleParameters
-import sk.ainet.nn.topology.by
 
 
 public data class NodeSummary(val name: String, val input: Shape, val output: Shape, val params: Long)
@@ -45,6 +43,8 @@ public class Summary<T : DType, V> {
         // For leaf modules (modules with parameters), create a summary
         if (module is ModuleParameters<*, *> && module.params.isNotEmpty()) {
             // We'll use the current input shape as both input and output for now
+            // TODO: Fix this to use actual tensor forward pass instead of Shape
+            // val output = module.forward(currentInput)
             // In a real implementation, this would require actual forward pass
             val summary = nodeSummary(module, currentInput, currentInput)
             result.add(summary)

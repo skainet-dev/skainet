@@ -203,13 +203,14 @@ class ModelSummaryTest {
         val summary = Summary<FP32, Float>()
         val inputShape = Shape(intArrayOf(1, 10))
         val nodes = summary.summary(net, inputShape)
+
+        assertEquals(16, nodes[1].output.volume)
         val str = net.describe(inputShape)
         assertEquals(str, "")
 
 
         // Should find no parameterized modules
         assertEquals(3, nodes.size)
-
 
 
     }

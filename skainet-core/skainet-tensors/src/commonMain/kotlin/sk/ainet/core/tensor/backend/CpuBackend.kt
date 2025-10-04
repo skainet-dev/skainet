@@ -187,6 +187,8 @@ public class CpuTensorFP32(
     override fun Tensor<FP32, Float>.reshape(newShape: Shape): Tensor<FP32, Float> = with(backend) { this@reshape.reshape(newShape) }
     override fun Tensor<FP32, Float>.reshape(vararg dimensions: Int): Tensor<FP32, Float> = with(backend) { this@reshape.reshape(*dimensions) }
 
+    override fun toString(): String = "CpuTensorFP32(${shape})"
+
     public companion object {
         /**
          * Creates a tensor from an array with the given shape.
@@ -791,6 +793,8 @@ public class CpuTensorInt8(
             return CpuTensorInt8(shape, ByteArray(shape.volume) { value })
         }
     }
+
+    override fun toString(): String = "CpuTensorInt8(${shape})"
 }
 
 /**
@@ -1363,6 +1367,8 @@ public class CpuTensorInt32(
             return CpuTensorInt32(Shape(rows, cols), flatArray)
         }
     }
+
+    override fun toString(): String = "CpuTensorInt32(${shape})"
 }
 
 // Broadcasting utility functions
