@@ -1,4 +1,4 @@
-package sk.ai.net.lang.tensor
+package sk.ainet.lang.tensor
 
 public data class Shape(val dimensions: IntArray) {
     public companion object {

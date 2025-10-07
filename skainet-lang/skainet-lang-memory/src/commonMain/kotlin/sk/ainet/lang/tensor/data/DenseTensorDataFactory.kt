@@ -1,14 +1,13 @@
-package sk.ai.net.core.tensor.data
+package sk.ainet.lang.tensor.data
 
 import sk.ai.net.lang.tensor.Shape
-import sk.ai.net.lang.tensor.data.TensorData
 import sk.ai.net.lang.types.DType
-import sk.ai.net.lang.types.FP16
-import sk.ai.net.lang.types.FP32
-import sk.ai.net.lang.types.Int32
-import sk.ai.net.lang.types.Int4
-import sk.ai.net.lang.types.Int8
-import sk.ai.net.lang.types.Ternary
+import sk.ainet.lang.types.FP16
+import sk.ainet.lang.types.FP32
+import sk.ainet.lang.types.Int32
+import sk.ainet.lang.types.Int4
+import sk.ainet.lang.types.Int8
+import sk.ainet.lang.types.Ternary
 import kotlin.jvm.JvmName
 
 public class DenseTensorDataFactory {

@@ -1,4 +1,4 @@
-package sk.ai.net.lang.tensor
+package sk.ainet.lang.tensor
 
 import sk.ai.net.lang.types.DType
 

@@ -1,4 +1,4 @@
-package sk.ai.net.lang.types
+package sk.ainet.lang.types
 
 public object FP32 : DType {
     override val sizeInBits: Int = 32

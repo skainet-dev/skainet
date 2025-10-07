@@ -1,4 +1,4 @@
-package sk.ai.net.lang.tensor.ops
+package sk.ainet.lang.tensor.ops
 
 import sk.ai.net.lang.types.DType
 

@@ -1,4 +1,4 @@
-package sk.ai.net.lang.types
+package sk.ainet.lang.types
 
 import kotlin.test.Test
 import kotlin.test.assertTrue

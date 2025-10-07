@@ -3,6 +3,12 @@ package sk.ai.net.core.factory
 import sk.ai.net.core.tensor.data.DenseTensorDataFactory
 import sk.ai.net.lang.tensor.Shape
 import sk.ai.net.lang.types.*
+import sk.ainet.lang.types.FP16
+import sk.ainet.lang.types.FP32
+import sk.ainet.lang.types.Int32
+import sk.ainet.lang.types.Int4
+import sk.ainet.lang.types.Int8
+import sk.ainet.lang.types.Ternary
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

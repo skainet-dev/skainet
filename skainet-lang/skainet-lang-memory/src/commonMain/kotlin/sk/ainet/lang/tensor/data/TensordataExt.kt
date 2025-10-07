@@ -1,6 +1,6 @@
-package sk.ai.net.core.tensor.data
+package sk.ainet.lang.tensor.data
 
-import sk.ai.net.lang.tensor.Shape
+import sk.ainet.lang.tensor.Shape
 
 
 /**

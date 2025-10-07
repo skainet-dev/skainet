@@ -1,4 +1,4 @@
-package sk.ai.net.lang.types
+package sk.ainet.lang.types
 
 public object Int4 : DType {
     override val sizeInBits: Int = 4 // technically 4 bits, but minimum is 1 byte

@@ -1,4 +1,4 @@
-package sk.ai.net.lang.types
+package sk.ainet.lang.types
 
 /**
  * Custom data type holding 3 values -1,0,0 stored in 2 bits. Used e.g. with BitNet models

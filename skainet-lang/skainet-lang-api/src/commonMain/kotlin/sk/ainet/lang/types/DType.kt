@@ -1,4 +1,4 @@
-package sk.ai.net.lang.types
+package sk.ainet.lang.types
 
 // Base marker interface for all dtypes
 public sealed interface DType {

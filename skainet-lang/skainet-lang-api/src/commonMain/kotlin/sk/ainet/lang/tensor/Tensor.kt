@@ -1,7 +1,7 @@
-package sk.ai.net.lang.tensor
+package sk.ainet.lang.tensor
 
-import sk.ai.net.lang.tensor.data.TensorData
-import sk.ai.net.lang.tensor.ops.TensorOps
+import sk.ainet.lang.tensor.data.TensorData
+import sk.ainet.lang.tensor.ops.TensorOps
 import sk.ai.net.lang.types.DType
 
 /**

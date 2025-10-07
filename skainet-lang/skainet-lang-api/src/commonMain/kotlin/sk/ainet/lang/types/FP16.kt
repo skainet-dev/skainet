@@ -1,4 +1,4 @@
-package sk.ai.net.lang.types
+package sk.ainet.lang.types
 
 public object FP16 : DType {
     override val sizeInBits: Int = 16
