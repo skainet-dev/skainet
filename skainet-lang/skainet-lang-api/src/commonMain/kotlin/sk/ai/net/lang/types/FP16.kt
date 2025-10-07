@@ -1,0 +1,28 @@
+package sk.ai.net.lang.types
+
+public object FP16 : DType {
+    override val sizeInBits: Int = 16
+    override val name: String = "Float16"
+
+    override fun isCompatible(other: DType): Boolean {
+        return when (other) {
+            is Ternary -> true  // Ternary can promote to FP16
+            is Int4 -> true     // Int4 can promote to FP16
+            is Int8 -> true     // Int8 can promote to FP16
+            is FP16 -> true     // Same type compatibility
+            is FP32 -> true     // Can promote to FP32
+            is Int32 -> true
+        }
+    }
+
+    override fun promoteTo(other: DType): DType {
+        return when (other) {
+            is Ternary -> FP16  // FP16 + Ternary → FP16
+            is Int4 -> FP16     // FP16 + Int4 → FP16
+            is Int8 -> FP16     // FP16 + Int8 → FP16
+            is Int32 -> FP16    // FP16 + Int32 → FP16
+            is FP16 -> FP16     // FP16 + FP16 → FP16
+            is FP32 -> FP32     // FP16 + FP32 → FP32
+        }
+    }
+}
