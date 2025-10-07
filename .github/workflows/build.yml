@@ -1,4 +1,4 @@
-name: Build Feature Branch Apk
+name: Feature Branch Libraries build
 
 on: [ push, pull_request ]
 

@@ -1,7 +1,0 @@
-name: skainet
-title: Skainet Deep Learning Framework
-version: '1.0'
-nav:
-- modules/getting-started/nav.adoc
-- modules/ROOT/nav.adoc
-- modules/arc42/nav.adoc
