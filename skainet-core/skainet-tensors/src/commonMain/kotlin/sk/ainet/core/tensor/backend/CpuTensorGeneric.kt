@@ -20,6 +20,7 @@ public class CpuTensor<T : DType, V>(
     // Implement composition pattern properties
     override val data: TensorData<T, V> = tensorData
     override val ops: TensorOps<T, V, Tensor<T, V>> = backend
+    override val shape: Shape get() = data.shape
 
     init {
         require(data.shape.rank in 1..4) {

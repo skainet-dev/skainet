@@ -5,16 +5,16 @@ package sk.ainet.core.tensor
  * This implementation provides fast-path optimizations for operations
  * on densely packed tensor data.
  */
-public class ContiguousTensorData<T : DType, V>(
+public class ContiguousTensorData<T : DType>(
     override val shape: Shape,
     private val data: Array<V>,
     override val offset: Int = 0
-) : TensorData<T, V> {
+) : TensorData<T> {
 
     override val strides: IntArray = shape.computeStrides()
     override val isContiguous: Boolean = true
 
-    override operator fun get(vararg indices: Int): V {
+    override operator fun <V> get(vararg indices: Int): V {
         require(indices.size == shape.dimensions.size) {
             "Number of indices (${indices.size}) must match tensor dimensions (${shape.dimensions.size})"
         }
@@ -27,7 +27,8 @@ public class ContiguousTensorData<T : DType, V>(
             flatIndex += indices[i] * strides[i]
         }
         
-        return data[flatIndex]
+        val internalValue =  data[flatIndex] as T.kotlinClass
+        return
     }
 
     override fun copyTo(dest: Array<V>, destOffset: Int) {
@@ -40,7 +41,7 @@ public class ContiguousTensorData<T : DType, V>(
         }
     }
 
-    override fun slice(ranges: IntArray): TensorData<T, V> {
+    override fun slice(ranges: IntArray): TensorData<T> {
         require(ranges.size == shape.dimensions.size * 2) {
             "Ranges array must contain start,end pairs for each dimension. Expected ${shape.dimensions.size * 2}, got ${ranges.size}"
         }
@@ -74,8 +75,6 @@ public class ContiguousTensorData<T : DType, V>(
         }
     }
 
-    override fun materialize(): TensorData<T, V> {
-        // Already materialized (contiguous)
-        return this
-    }
+    override fun <V> materialize(): TensorData<T> = this
+
 }

@@ -5,174 +5,32 @@ import sk.ainet.core.tensor.Int32
 import sk.ainet.core.tensor.Shape
 import sk.ainet.core.tensor.Tensor
 import sk.ainet.core.tensor.TensorData
+import sk.ainet.core.tensor.TensorFactory
+import sk.ainet.core.tensor.TensorOps
+import sk.ainet.core.tensor.backend.MockTensorFP32
+import sk.ainet.core.tensor.backend.MockTensorInt32
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-// Mock tensor implementation for testing
-class MockTensor<T : DType, V>(
-    override val shape: Shape,
-    private val data: Array<V>
-) : Tensor<T, V> {
-    
-    // TensorData implementation
-    override val strides: IntArray = shape.computeStrides()
-    override val offset: Int = 0
-    override val isContiguous: Boolean = true
-    
-    override fun get(vararg indices: Int): V {
-        val index = shape.index(indices)
-        return data[index]
-    }
-    
-    override fun copyTo(dest: Array<V>, destOffset: Int) {
-        for (i in data.indices) {
-            dest[destOffset + i] = data[i]
-        }
-    }
-    
-    override fun slice(ranges: IntArray): TensorData<T, V> {
-        require(ranges.size == shape.rank * 2) {
-            "Ranges array must have size ${shape.rank * 2} (start,end pairs), got ${ranges.size}"
-        }
-        
-        // Parse ranges and validate
-        val sliceRanges = mutableListOf<Pair<Int, Int>>()
-        for (i in 0 until shape.rank) {
-            val start = ranges[i * 2]
-            val end = ranges[i * 2 + 1]
-            val dimSize = shape.dimensions[i]
-            
-            require(start >= 0 && start < dimSize) {
-                "Start index $start out of bounds for dimension $i (size $dimSize)"
-            }
-            require(end > start && end <= dimSize) {
-                "End index $end must be > start ($start) and <= dimension size ($dimSize)"
-            }
-            
-            sliceRanges.add(start to end)
-        }
-        
-        // Calculate new shape
-        val newDimensions = sliceRanges.map { (start, end) -> end - start }.toIntArray()
-        val newShape = Shape(newDimensions)
-        
-        // Create new data array for sliced tensor
-        val newData = Array<Any?>(newShape.volume) { null }
-        var destIndex = 0
-        
-        // Copy sliced data based on tensor rank
-        when (shape.rank) {
-            1 -> {
-                val (start0, end0) = sliceRanges[0]
-                for (i in start0 until end0) {
-                    newData[destIndex++] = data[i]
-                }
-            }
-            2 -> {
-                val (start0, end0) = sliceRanges[0]
-                val (start1, end1) = sliceRanges[1]
-                for (i in start0 until end0) {
-                    for (j in start1 until end1) {
-                        val srcIndex = i * shape.dimensions[1] + j
-                        newData[destIndex++] = data[srcIndex]
-                    }
-                }
-            }
-            3 -> {
-                val (start0, end0) = sliceRanges[0]
-                val (start1, end1) = sliceRanges[1]
-                val (start2, end2) = sliceRanges[2]
-                for (i in start0 until end0) {
-                    for (j in start1 until end1) {
-                        for (k in start2 until end2) {
-                            val srcIndex = i * shape.dimensions[1] * shape.dimensions[2] +
-                                         j * shape.dimensions[2] + k
-                            newData[destIndex++] = data[srcIndex]
-                        }
-                    }
-                }
-            }
-            else -> throw UnsupportedOperationException("MockTensor slicing only supports up to 3D tensors")
-        }
-        
-        return MockTensor(newShape, newData as Array<V>)
-    }
-    
-    override fun materialize(): TensorData<T, V> = this
-    
-    private fun Shape.computeStrides(): IntArray {
-        if (dimensions.isEmpty()) return intArrayOf()
-        val strides = IntArray(dimensions.size)
-        strides[dimensions.size - 1] = 1
-        for (i in dimensions.size - 2 downTo 0) {
-            strides[i] = strides[i + 1] * dimensions[i + 1]
-        }
-        return strides
-    }
-
-    // TensorOps implementations - minimal for testing slice functionality
-    override fun matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = this
-    override fun matmul4d(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = this
-    override fun scale(a: Tensor<T, V>, scalar: Double): Tensor<T, V> = this
-    override fun dot(a: Tensor<T, V>, b: Tensor<T, V>): Double = 0.0
-    
-    // Tensor-Tensor operations
-    override fun Tensor<T, V>.plus(other: Tensor<T, V>): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.minus(other: Tensor<T, V>): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.times(other: Tensor<T, V>): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.div(other: Tensor<T, V>): Tensor<T, V> = this@MockTensor
-    
-    // Tensor-Scalar operations
-    override fun Tensor<T, V>.plus(scalar: Int): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.minus(scalar: Int): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.times(scalar: Int): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.div(scalar: Int): Tensor<T, V> = this@MockTensor
-    
-    override fun Tensor<T, V>.plus(scalar: Float): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.minus(scalar: Float): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.times(scalar: Float): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.div(scalar: Float): Tensor<T, V> = this@MockTensor
-    
-    override fun Tensor<T, V>.plus(scalar: Double): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.minus(scalar: Double): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.times(scalar: Double): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.div(scalar: Double): Tensor<T, V> = this@MockTensor
-    
-    // Scalar-Tensor operations
-    override fun Double.plus(t: Tensor<T, V>): Tensor<T, V> = this@MockTensor
-    override fun Double.minus(t: Tensor<T, V>): Tensor<T, V> = this@MockTensor
-    override fun Double.times(t: Tensor<T, V>): Tensor<T, V> = this@MockTensor
-    override fun Double.div(t: Tensor<T, V>): Tensor<T, V> = this@MockTensor
-    
-    // Activation functions
-    override fun Tensor<T, V>.t(): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.relu(): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.softmax(dimension: Int): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.sigmoid(): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.tanh(): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.flatten(startDim: Int, endDim: Int): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.reshape(newShape: Shape): Tensor<T, V> = this@MockTensor
-    override fun Tensor<T, V>.reshape(vararg dimensions: Int): Tensor<T, V> = this@MockTensor
-}
 
 class TensorsRangeBuilderTest {
 
-    private fun createMockTensor1D(size: Int): MockTensor<Int32, Int> {
+    private fun createMockTensor1D(size: Int): Tensor<Int32, Int> {
         val shape = Shape(intArrayOf(size))
         val data = Array(size) { it }
-        return MockTensor(shape, data)
+        return MockTensorInt32(shape, data.toIntArray())
     }
 
-    private fun createMockTensor2D(rows: Int, cols: Int): MockTensor<Int32, Int> {
+    private fun createMockTensor2D(rows: Int, cols: Int): Tensor<Int32, Int> {
         val shape = Shape(intArrayOf(rows, cols))
         val data = Array(rows * cols) { it }
-        return MockTensor(shape, data)
+        return MockTensorInt32(shape, data.toIntArray())
     }
 
-    private fun createMockTensor3D(dim1: Int, dim2: Int, dim3: Int): MockTensor<Int32, Int> {
+    private fun createMockTensor3D(dim1: Int, dim2: Int, dim3: Int): Tensor<Int32, Int> {
         val shape = Shape(intArrayOf(dim1, dim2, dim3))
         val data = Array(dim1 * dim2 * dim3) { it }
-        return MockTensor(shape, data)
+        return MockTensorInt32(shape, data.toIntArray())
     }
 
     @Test
@@ -355,12 +213,12 @@ class TensorsRangeBuilderTest {
         }
 
         assertEquals(2, slices.size)
-        
+
         val firstSlice = slices[0]
         assertEquals(0, firstSlice.dimensionIndex)
         assertEquals(0, firstSlice.startIndex)
         assertEquals(4, firstSlice.endIndex)
-        
+
         val secondSlice = slices[1]
         assertEquals(1, secondSlice.dimensionIndex)
         assertEquals(2, secondSlice.startIndex)
@@ -383,12 +241,12 @@ class TensorsRangeBuilderTest {
         }
 
         assertEquals(2, slices.size)
-        
+
         val firstSlice = slices[0]
         assertEquals(0, firstSlice.dimensionIndex)
         assertEquals(0, firstSlice.startIndex)
         assertEquals(4, firstSlice.endIndex)
-        
+
         val secondSlice = slices[1]
         assertEquals(1, secondSlice.dimensionIndex)
         assertEquals(1, secondSlice.startIndex)
@@ -457,17 +315,17 @@ class TensorsRangeBuilderTest {
         }
 
         assertEquals(3, slices.size)
-        
+
         val firstSlice = slices[0]
         assertEquals(0, firstSlice.dimensionIndex)
         assertEquals(1, firstSlice.startIndex)
         assertEquals(1, firstSlice.endIndex)
-        
+
         val secondSlice = slices[1]
         assertEquals(1, secondSlice.dimensionIndex)
         assertEquals(1, secondSlice.startIndex)
         assertEquals(2, secondSlice.endIndex)
-        
+
         val thirdSlice = slices[2]
         assertEquals(2, thirdSlice.dimensionIndex)
         assertEquals(3, thirdSlice.startIndex) // 5 - 2 = 3

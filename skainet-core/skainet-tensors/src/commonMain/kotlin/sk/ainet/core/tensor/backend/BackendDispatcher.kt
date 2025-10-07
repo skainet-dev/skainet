@@ -65,12 +65,7 @@ public object BackendDispatcher {
         val backend = getBackend<T, V>(dtype)
             ?: throw IllegalArgumentException("No backend registered for DType: ${dtype::class.simpleName}")
             
-        return if (backend is CpuBackendGeneric<T, V>) {
-            backend.zeros(shape)
-        } else {
-            // Fallback for non-generic backends
-            CpuTensor.zeros(shape, backend, defaultValue)
-        }
+        return CpuTensor.zeros(shape, backend, defaultValue)
     }
     
     /**
@@ -84,12 +79,8 @@ public object BackendDispatcher {
         val backend = getBackend<T, V>(dtype)
             ?: throw IllegalArgumentException("No backend registered for DType: ${dtype::class.simpleName}")
             
-        return if (backend is CpuBackendGeneric<T, V>) {
-            backend.ones(shape)
-        } else {
-            // Fallback for non-generic backends - create tensor with one value
-            CpuTensor.zeros(shape, backend, oneValue)
-        }
+        // Create tensor filled with one value
+        return CpuTensor.zeros(shape, backend, oneValue)
     }
     
     /**
@@ -124,9 +115,7 @@ public object BackendDispatcher {
         // registerBackend(FP32::class, CpuBackendFP32())
         // registerBackend(Int32::class, CpuBackendInt32()) 
         // registerBackend(Int8::class, CpuBackendInt8())
-        // registerBackend(FP16::class, CpuBackendFP16())
         // registerBackend(Int4::class, CpuBackendInt4())
-        // registerBackend(Ternary::class, CpuBackendTernary())
     }
     
     /**

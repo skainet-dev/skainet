@@ -5,10 +5,10 @@ package sk.ainet.core.tensor
  * This provides a zero-copy transpose by reordering dimensions
  * and adjusting strides accordingly.
  */
-public class TransposeTensorData<T : DType, V>(
-    private val sourceData: TensorData<T, V>,
+public class TransposeTensorData<T : DType>(
+    private val sourceData: TensorData<T>,
     private val permutation: IntArray
-) : TensorData<T, V> {
+) : TensorData<T> {
 
     override val shape: Shape = computeTransposeShape()
     override val strides: IntArray = computeTransposeStrides()
@@ -29,7 +29,7 @@ public class TransposeTensorData<T : DType, V>(
         }
     }
 
-    override operator fun get(vararg indices: Int): V {
+    override operator fun <V> get(vararg indices: Int): V {
         require(indices.size == shape.dimensions.size) {
             "Number of indices (${indices.size}) must match tensor dimensions (${shape.dimensions.size})"
         }
@@ -43,7 +43,7 @@ public class TransposeTensorData<T : DType, V>(
         return sourceData.get(*sourceIndices)
     }
 
-    override fun copyTo(dest: Array<V>, destOffset: Int) {
+    override fun <V> copyTo(dest: Array<V>, destOffset: Int) {
         if (isContiguous) {
             // Fast path for contiguous transpose
             sourceData.copyTo(dest, destOffset)
@@ -56,7 +56,7 @@ public class TransposeTensorData<T : DType, V>(
         }
     }
 
-    override fun slice(ranges: IntArray): TensorData<T, V> {
+    override fun slice(ranges: IntArray): TensorData<T> {
         require(ranges.size == shape.dimensions.size * 2) {
             "Ranges array must contain start,end pairs for each dimension. Expected ${shape.dimensions.size * 2}, got ${ranges.size}"
         }
@@ -83,14 +83,12 @@ public class TransposeTensorData<T : DType, V>(
         return TransposeTensorData(slicedSource, permutation)
     }
 
-    override fun materialize(): TensorData<T, V> {
-        // Create a materialized version by copying all transposed data
-        @Suppress("UNCHECKED_CAST")
-        val materializedData = arrayOfNulls<Any>(shape.volume) as Array<V>
+    public override fun <V> materialize(): TensorData<T> {
+        val materializedData = arrayOfNulls<V>(shape.volume)
         copyTo(materializedData, 0)
-        
-        return DenseTensorData(shape, materializedData)
+        return this.sourceData // TensorData(materializedData.requireNoNulls(), shape)
     }
+
 
     /**
      * Computes the shape after transpose operation.
@@ -157,7 +155,7 @@ public class TransposeTensorData<T : DType, V>(
         /**
          * Creates a transpose that swaps the last two dimensions (common matrix transpose).
          */
-        public fun <T : DType, V> matrixTranspose(sourceData: TensorData<T, V>): TransposeTensorData<T, V> {
+        public fun <T : DType> matrixTranspose(sourceData: TensorData<T>): TransposeTensorData<T> {
             require(sourceData.shape.dimensions.size >= 2) {
                 "Matrix transpose requires at least 2 dimensions"
             }
@@ -176,7 +174,7 @@ public class TransposeTensorData<T : DType, V>(
         /**
          * Creates a full transpose that reverses all dimensions.
          */
-        public fun <T : DType, V> fullTranspose(sourceData: TensorData<T, V>): TransposeTensorData<T, V> {
+        public fun <T : DType> fullTranspose(sourceData: TensorData<T>): TransposeTensorData<T> {
             val dims = sourceData.shape.dimensions.size
             val permutation = IntArray(dims) { dims - 1 - it }
             

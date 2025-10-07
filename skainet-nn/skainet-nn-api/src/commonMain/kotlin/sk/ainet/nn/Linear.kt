@@ -38,11 +38,9 @@ public class Linear<T : DType, V>(
         val weight = params.weights().value
         val bias = params.bias().value
 
-        // Use TensorOps context operations
-        with(input) {
-            val weightTransposed = weight.t()
-            val matmulResult = matmul(input, weightTransposed)
-            return matmulResult + bias
-        }
+        // Use tensor ops for operations
+        val weightTransposed = weight.ops.run { weight.t() }
+        val matmulResult = input.ops.matmul(input, weightTransposed)
+        return input.ops.run { matmulResult + bias }
     }
 }

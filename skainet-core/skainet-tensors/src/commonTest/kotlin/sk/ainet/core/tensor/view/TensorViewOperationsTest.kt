@@ -1,7 +1,12 @@
 package sk.ainet.core.tensor.view
 
 import sk.ainet.core.tensor.*
+import sk.ainet.core.tensor.backend.BackendDispatcher
+import sk.ainet.core.tensor.backend.BackendDispatcher.ones
 import sk.ainet.core.tensor.backend.CpuBackend
+import sk.ainet.core.tensor.backend.CpuBackendFP32
+import sk.ainet.core.tensor.backend.CpuBackendInt32
+import sk.ainet.core.tensor.backend.CpuBackendInt8
 import kotlin.test.*
 
 /**
@@ -10,13 +15,21 @@ import kotlin.test.*
  * Updated to use unified Tensor architecture instead of TensorView interface.
  */
 class TensorViewOperationsTest {
-    
+
+    init {
+        // Register backends before tests run
+        BackendDispatcher.registerBackend(FP32::class, CpuBackendFP32())
+        BackendDispatcher.registerBackend(Int32::class, CpuBackendInt32())
+        BackendDispatcher.registerBackend(Int8::class, CpuBackendInt8())
+    }
+
+
     private val backend = CpuBackend()
     
     @Test
     fun testTensorViewExtendsTensor() {
         // Task 36: Ensure all TensorOps methods work with tensor views (unified architecture)
-        val tensor = backend.ones(Shape(4, 4))
+        val tensor = ones<FP32,Float>(FP32, Shape(4, 4), 1.0f)
         val view = sliceTensor(tensor) {
             segment { range(0, 2) }
             segment { range(0, 2) }
@@ -30,9 +43,9 @@ class TensorViewOperationsTest {
     @Test
     fun testMatrixOperationsWithViews() {
         // Task 37: Test matrix operations (matmul, dot) with views
-        val tensorA = backend.ones(Shape(3, 3))
-        val tensorB = backend.ones(Shape(3, 3))
-        
+        val tensorA = ones<FP32,Float>(FP32, Shape(3, 3), 1.0f)
+        val tensorB = ones<FP32,Float>(FP32, Shape(3, 3), 1.0f)
+
         val viewA = sliceTensor(tensorA) {
             segment { range(0, 2) }
             segment { range(0, 2) }
@@ -58,7 +71,8 @@ class TensorViewOperationsTest {
     @Test
     fun testElementWiseOperationsWithViews() {
         // Task 38: Verify element-wise operations (+, -, *, /) on views
-        val tensor = backend.ones(Shape(4, 4))
+        val tensor = ones<FP32,Float>(FP32, Shape(4, 4), 1.0f)
+
         val view1 = sliceTensor(tensor) {
             segment { range(0, 2) }
             segment { range(0, 2) }
@@ -88,7 +102,8 @@ class TensorViewOperationsTest {
     @Test
     fun testActivationFunctionsWithViews() {
         // Task 39: Test activation functions (relu, softmax, sigmoid) with views
-        val tensor = backend.ones(Shape(3, 3))
+        val tensor = ones<FP32,Float>(FP32, Shape(3, 3), 1.0f)
+
         val view = sliceTensor(tensor) {
             segment { range(0, 2) }
             segment { range(0, 2) }
@@ -114,7 +129,7 @@ class TensorViewOperationsTest {
     @Test
     fun testPerformanceBenchmarkViewsVsDense() {
         // Task 40: Add performance benchmarks for operations on views vs dense tensors
-        val largeTensor = backend.ones(Shape(10, 10))
+        val largeTensor = ones<FP32,Float>(FP32, Shape(10, 10), 1.0f)
         val view = sliceTensor(largeTensor) {
             segment { range(2, 8) }
             segment { range(2, 8) }
@@ -123,7 +138,7 @@ class TensorViewOperationsTest {
         with(backend) {
             // Test that view operations work without performance timing for now
             val viewResult = view.relu()
-            val denseTensor = ones(Shape(6, 6))
+            val denseTensor = ones<FP32,Float>(FP32, Shape(6, 6), 1.0f)
             val denseResult = denseTensor.relu()
             
             // Results should be equivalent
@@ -140,7 +155,7 @@ class TensorViewOperationsTest {
     @Test
     fun testDifferentDataTypesWithViews() {
         // Task 43: Test view operations with different data types (Float32, Int32, etc.)
-        val floatTensor = backend.ones(Shape(4, 4))
+        val floatTensor = ones<FP32,Float>(FP32, Shape(4, 4), 1.0f)
         val floatView = sliceTensor(floatTensor) {
             segment { range(0, 2) }
             segment { range(0, 2) }
@@ -149,7 +164,7 @@ class TensorViewOperationsTest {
         with(backend) {
             val result = floatView + floatView
             assertEquals(Shape(2, 2), result.shape)
-            assertEquals(2.0f, result.get(0, 0))
+            assertEquals(2.0f, result[0, 0])
         }
     }
 }

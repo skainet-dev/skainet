@@ -35,6 +35,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":skainet-core:skainet-tensor-data"))
+            implementation(project(":skainet-core:skainet-tensor-ops"))
             implementation(project(":skainet-core:skainet-tensors-api"))
             implementation(project(":skainet-core:skainet-tensors"))
         }

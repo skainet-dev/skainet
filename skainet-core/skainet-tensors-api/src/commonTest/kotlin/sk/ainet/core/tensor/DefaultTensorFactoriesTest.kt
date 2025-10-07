@@ -3,6 +3,7 @@ package sk.ainet.core.tensor
 import sk.ainet.core.tensor.backend.CpuBackend
 import sk.ainet.core.tensor.backend.CpuBackendInt8
 import sk.ainet.core.tensor.backend.CpuBackendInt32
+import sk.ainet.core.tensor.factory.DefaultTensorFactoryInitializer
 import kotlin.test.*
 
 /**
@@ -11,10 +12,16 @@ import kotlin.test.*
  */
 class DefaultTensorFactoriesTest {
 
+    @BeforeTest
+    fun setUp() {
+        // Initialize the default factories before each test
+        DefaultTensorFactoryInitializer.initializeDefaultFactories()
+    }
+
     @Test
     fun testFP32FactoryInitialization() {
         try {
-            DefaultTensorFactories.setFP32Factory(CpuBackend())
+            //DefaultTensorFactories.setFP32Factory()
             val factory = DefaultTensorFactories.getFP32Factory()
             val tensor = factory.zeros(Shape(2, 3))
             assertNotNull(tensor)

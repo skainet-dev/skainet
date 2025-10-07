@@ -10,138 +10,113 @@ package sk.ainet.core.tensor
  * This interface uses composition instead of inheritance to separate data storage
  * and mathematical operations, allowing for better modularity and testability.
  */
-public interface Tensor<T : DType, V> {
+public interface Tensor<T : DType> {
     /**
      * The data storage component of this tensor.
      * Provides access to the underlying tensor data and storage operations.
      */
-    public val data: TensorData<T, V>
-    
+    public val data: TensorData<T>
+
     /**
      * The operations component of this tensor.
      * Provides mathematical operations that can be performed on tensors.
      */
-    public val ops: TensorOps<T, V, Tensor<T, V>>
-    
-    // Delegated TensorData properties and methods
-    /**
-     * The shape of the tensor, delegated to the underlying data.
-     */
-    public val shape: Shape get() = data.shape
-    
-    /**
-     * Stride information for each dimension, delegated to the underlying data.
-     */
-    public val strides: IntArray get() = data.strides
-    
-    /**
-     * Offset in the underlying data array, delegated to the underlying data.
-     */
-    public val offset: Int get() = data.offset
-    
-    /**
-     * Whether this tensor data represents contiguous data in memory, delegated to the underlying data.
-     */
-    public val isContiguous: Boolean get() = data.isContiguous
-    
-    /**
-     * Retrieves the value at the specified indices, delegated to the underlying data.
-     */
-    public operator fun get(vararg indices: Int): V = data.get(*indices)
-    
+    public val ops: TensorOps<T>
+
     /**
      * Copies the tensor data to the destination array, delegated to the underlying data.
      */
-    public fun copyTo(dest: Array<V>, destOffset: Int = 0): Unit = data.copyTo(dest, destOffset)
-    
+    public fun <V> copyTo(dest: Array<V>, destOffset: Int = 0): Unit = data.copyTo(dest, destOffset)
+
     /**
      * Creates a slice view of this tensor data, delegated to the underlying data.
      */
-    public fun slice(ranges: IntArray): TensorData<T, V> = data.slice(ranges)
-    
+    public fun slice(ranges: IntArray): TensorData<T> = data.slice(ranges)
+
     /**
      * Materializes this tensor data into a contiguous representation, delegated to the underlying data.
      */
-    public fun materialize(): TensorData<T, V> = data.materialize()
-    
+    public fun materialize(): TensorData<T> = data.materialize()
+
     // Delegated TensorOps methods
     /**
      * Adds another tensor element-wise, delegated to the operations component.
      */
-    public operator fun plus(other: Tensor<T, V>): Tensor<T, V> = ops.run { this@Tensor.plus(other) }
-    
+    public operator fun plus(other: Tensor<T>): Tensor<T> = ops.run { plus(other) }
+
     /**
      * Subtracts another tensor element-wise, delegated to the operations component.
      */
-    public operator fun minus(other: Tensor<T, V>): Tensor<T, V> = ops.run { this@Tensor.minus(other) }
-    
+    public operator fun minus(other: Tensor<T>): Tensor<T> = ops.run { minus(other) }
+
     /**
      * Multiplies with another tensor element-wise, delegated to the operations component.
      */
-    public operator fun times(other: Tensor<T, V>): Tensor<T, V> = ops.run { this@Tensor.times(other) }
-    
+    public operator fun times(other: Tensor<T>): Tensor<T> = ops.run { times(other) }
+
     /**
      * Divides by another tensor element-wise, delegated to the operations component.
      */
-    public operator fun div(other: Tensor<T, V>): Tensor<T, V> = ops.run { this@Tensor.div(other) }
-    
+    public operator fun div(other: Tensor<T>): Tensor<T> = ops.run { div(other) }
+
     // Scalar operations - Int
-    public operator fun plus(scalar: Int): Tensor<T, V> = ops.run { this@Tensor.plus(scalar) }
-    public operator fun minus(scalar: Int): Tensor<T, V> = ops.run { this@Tensor.minus(scalar) }
-    public operator fun times(scalar: Int): Tensor<T, V> = ops.run { this@Tensor.times(scalar) }
-    public operator fun div(scalar: Int): Tensor<T, V> = ops.run { this@Tensor.div(scalar) }
-    
+    public operator fun plus(scalar: Int): Tensor<T> = ops.run { plus(scalar) }
+    public operator fun minus(scalar: Int): Tensor<T> = ops.run { minus(scalar) }
+    public operator fun times(scalar: Int): Tensor<T> = ops.run { times(scalar) }
+    public operator fun div(scalar: Int): Tensor<T> = ops.run { div(scalar) }
+
     // Scalar operations - Float
-    public operator fun plus(scalar: Float): Tensor<T, V> = ops.run { this@Tensor.plus(scalar) }
-    public operator fun minus(scalar: Float): Tensor<T, V> = ops.run { this@Tensor.minus(scalar) }
-    public operator fun times(scalar: Float): Tensor<T, V> = ops.run { this@Tensor.times(scalar) }
-    public operator fun div(scalar: Float): Tensor<T, V> = ops.run { this@Tensor.div(scalar) }
-    
+    public operator fun plus(scalar: Float): Tensor<T> = ops.run { plus(scalar) }
+    public operator fun minus(scalar: Float): Tensor<T> = ops.run { minus(scalar) }
+    public operator fun times(scalar: Float): Tensor<T> = ops.run { times(scalar) }
+    public operator fun div(scalar: Float): Tensor<T> = ops.run { div(scalar) }
+
     // Scalar operations - Double
-    public operator fun plus(scalar: Double): Tensor<T, V> = ops.run { this@Tensor.plus(scalar) }
-    public operator fun minus(scalar: Double): Tensor<T, V> = ops.run { this@Tensor.minus(scalar) }
-    public operator fun times(scalar: Double): Tensor<T, V> = ops.run { this@Tensor.times(scalar) }
-    public operator fun div(scalar: Double): Tensor<T, V> = ops.run { this@Tensor.div(scalar) }
-    
+    public operator fun plus(scalar: Double): Tensor<T> = ops.run { plus(scalar) }
+    public operator fun minus(scalar: Double): Tensor<T> = ops.run { minus(scalar) }
+    public operator fun times(scalar: Double): Tensor<T> = ops.run { times(scalar) }
+    public operator fun div(scalar: Double): Tensor<T> = ops.run { div(scalar) }
+
     // Mathematical functions
     /**
      * Transpose operation, delegated to the operations component.
      */
-    public fun t(): Tensor<T, V> = ops.run { this@Tensor.t() }
-    
+    public fun t(): Tensor<T> = ops.run { t() }
+
     /**
      * ReLU activation function, delegated to the operations component.
      */
-    public fun relu(): Tensor<T, V> = ops.run { this@Tensor.relu() }
-    
+    public fun relu(): Tensor<T> = ops.run { relu() }
+
     /**
      * Sigmoid activation function, delegated to the operations component.
      */
-    public fun sigmoid(): Tensor<T, V> = ops.run { this@Tensor.sigmoid() }
-    
+    public fun sigmoid(): Tensor<T> = ops.run { sigmoid() }
+
     /**
      * Tanh activation function, delegated to the operations component.
      */
-    public fun tanh(): Tensor<T, V> = ops.run { this@Tensor.tanh() }
-    
+    public fun tanh(): Tensor<T> = ops.run { tanh() }
+
     /**
      * Softmax function along specified dimension, delegated to the operations component.
      */
-    public fun softmax(dimension: Int): Tensor<T, V> = ops.run { this@Tensor.softmax(dimension) }
-    
+    public fun softmax(dimension: Int): Tensor<T> = ops.run { softmax(dimension) }
+
     /**
      * Flatten operation, delegated to the operations component.
      */
-    public fun flatten(startDim: Int = 1, endDim: Int = -1): Tensor<T, V> = ops.run { this@Tensor.flatten(startDim, endDim) }
-    
+    public fun flatten(startDim: Int = 1, endDim: Int = -1): Tensor<T> =
+        ops.run { flatten(startDim, endDim) }
+
     /**
      * Reshape operation with Shape, delegated to the operations component.
      */
-    public fun reshape(newShape: Shape): Tensor<T, V> = ops.run { this@Tensor.reshape(newShape) }
-    
+    public fun reshape(newShape: Shape): Tensor<T> = ops.run { reshape(newShape) }
+
     /**
      * Reshape operation with dimensions, delegated to the operations component.
      */
-    public fun reshape(vararg dimensions: Int): Tensor<T, V> = ops.run { this@Tensor.reshape(*dimensions) }
+    public fun reshape(vararg dimensions: Int): Tensor<T> = ops.run { reshape(*dimensions) }
 }
 

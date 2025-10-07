@@ -1,5 +1,7 @@
 package sk.ainet.core.tensor
 
+import kotlin.reflect.KClass
+
 // Base marker interface for all dtypes
 public sealed interface DType {
     public val sizeInBits: Int
@@ -35,4 +37,12 @@ public object FP16 : DType {
 public object FP32 : DType{
     override val sizeInBits: Int = 32
     override val name: String = "Float32"
+}
+
+public fun DType.kotlinClass(): KClass<*> = when (this) {
+    FP32 -> Float::class
+    Int8 -> Byte::class
+    Int4 -> Byte::class // best you can do, no 4-bit type
+    Ternary -> Boolean::class // or custom
+    else -> error("Unknown dtype")
 }

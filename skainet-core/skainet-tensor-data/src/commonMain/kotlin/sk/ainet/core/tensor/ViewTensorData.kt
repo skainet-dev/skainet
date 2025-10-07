@@ -5,13 +5,12 @@ package sk.ainet.core.tensor
  * This represents a view into existing tensor data without copying memory.
  * Views can represent slices, transposes, or other transformations of the parent data.
  */
-public class ViewTensorData<T : DType, V>(
-    private val parentData: Array<V>,
+public class ViewTensorData<T : DType>(
+    private val parentData: TensorData<T>,
     override val shape: Shape,
     override val strides: IntArray,
     override val offset: Int,
-    private val parentShape: Shape
-) : TensorData<T, V> {
+) : TensorData<T> {
 
     override val isContiguous: Boolean by lazy {
         // Check if this view represents contiguous memory
@@ -21,7 +20,7 @@ public class ViewTensorData<T : DType, V>(
         strides.contentEquals(expectedStrides)
     }
 
-    override operator fun get(vararg indices: Int): V {
+    override operator fun <V> get(vararg indices: Int): V {
         require(indices.size == shape.dimensions.size) {
             "Number of indices (${indices.size}) must match tensor dimensions (${shape.dimensions.size})"
         }
@@ -34,8 +33,8 @@ public class ViewTensorData<T : DType, V>(
             flatIndex += indices[i] * strides[i]
         }
         
-        require(flatIndex >= 0 && flatIndex < parentData.size) {
-            "Computed index $flatIndex is out of bounds for parent data of size ${parentData.size}"
+        require(flatIndex >= 0 && flatIndex < parentData.shape.volume) {
+            "Computed index $flatIndex is out of bounds for parent data of size ${parentData.shape.volume}"
         }
         
         return parentData[flatIndex]

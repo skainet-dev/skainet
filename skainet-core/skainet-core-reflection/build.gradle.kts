@@ -39,6 +39,9 @@ kotlin {
                 implementation(project(":skainet-core:skainet-tensors-api"))
                 implementation(project(":skainet-core:skainet-tensors"))
                 implementation(project(":skainet-nn:skainet-nn-api"))
+                implementation(project(":skainet-core:skainet-tensor-data"))
+                implementation(project(":skainet-core:skainet-tensor-ops"))
+
 
             }
         }

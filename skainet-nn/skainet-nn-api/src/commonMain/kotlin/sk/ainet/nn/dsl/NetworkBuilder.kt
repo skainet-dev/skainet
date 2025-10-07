@@ -10,8 +10,6 @@ import sk.ainet.core.tensor.Int8
 import sk.ainet.core.tensor.Int32
 import sk.ainet.core.tensor.TensorFactory
 import sk.ainet.core.tensor.DefaultTensorFactories
-import sk.ainet.core.tensor.TensorData
-import sk.ainet.core.tensor.backend.CpuBackend
 import sk.ainet.nn.Flatten
 import sk.ainet.nn.Input
 import sk.ainet.nn.Linear
@@ -23,34 +21,6 @@ import sk.ainet.nn.topology.MLP
 @DslMarker
 public annotation class NetworkDsl
 
-/**
- * Generic network builder function that creates a neural network with specified data type and value type.
- *
- * @param T The data type (DType) - must extend DType (e.g., FP32, FP16, Int8, Int32, Ternary, Int4)
- * @param V The value type - must match the DType's native type:
- *   - FP32 → Float
- *   - FP16 → Float (promoted)
- *   - Int32 → Int
- *   - Int8 → Byte
- *   - Int4 → Byte (promoted)
- *   - Ternary → Byte (special case)
- * @param content The DSL content block that defines the network structure
- * @return A Module<T, V> representing the complete neural network
- *
- * Example usage:
- * ```kotlin
- * val fpNetwork = network<FP32, Float> {
- *     input(784)
- *     dense(128) { weights { shape -> CpuTensorFP32.random(shape) } }
- *     dense(10) { weights { shape -> CpuTensorFP32.random(shape) } }
- * }
- *
- * val intNetwork = network<Int8, Byte> {
- *     input(28)
- *     dense(16) { weights { shape -> CpuTensorInt8.ones(shape) } }
- * }
- * ```
- */
 @NetworkDsl
 public fun <T : DType, V> network(
     factory: TensorFactory<T, V>,
@@ -65,7 +35,6 @@ public fun <T : DType, V> network(
 public inline fun <reified T : DType, reified V> network(
     noinline content: NeuralNetworkDsl<T, V>.() -> Unit
 ): Module<T, V> {
-    CpuBackend()
     val factory = when {
         T::class == FP32::class && V::class == Float::class -> {
             @Suppress("UNCHECKED_CAST")

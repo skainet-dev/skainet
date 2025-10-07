@@ -25,7 +25,7 @@ class NestedListTensorFactoryTest {
         
         // Verify data is stored in row-major order
         val expectedData = intArrayOf(2, 1, 4, 3, 1, 2, 3, 4, 4, 3, 2, 1)
-        assertContentEquals(expectedData, tensor.data, "Tensor data should match expected row-major order")
+        assertContentEquals(expectedData, tensor.intArrayData, "Tensor data should match expected row-major order")
     }
     
     @Test
@@ -42,7 +42,7 @@ class NestedListTensorFactoryTest {
         
         // Verify data is stored in row-major order
         val expectedData = floatArrayOf(2.5f, 1.0f, 4.2f, 1.5f, 2.8f, 3.1f)
-        assertContentEquals(expectedData, tensor.data, "Tensor data should match expected row-major order")
+        assertContentEquals(expectedData, tensor.floatArrayData, "Tensor data should match expected row-major order")
     }
     
     @Test
@@ -52,7 +52,7 @@ class NestedListTensorFactoryTest {
         val tensor = CpuTensorInt32.fromNestedList(data)
         
         assertEquals(Shape(1, 5), tensor.shape, "Single row tensor should have shape (1, 5)")
-        assertContentEquals(intArrayOf(1, 2, 3, 4, 5), tensor.data)
+        assertContentEquals(intArrayOf(1, 2, 3, 4, 5), tensor.intArrayData)
     }
     
     @Test
@@ -66,7 +66,7 @@ class NestedListTensorFactoryTest {
         val tensor = CpuTensorInt32.fromNestedList(data)
         
         assertEquals(Shape(3, 1), tensor.shape, "Single column tensor should have shape (3, 1)")
-        assertContentEquals(intArrayOf(1, 2, 3), tensor.data)
+        assertContentEquals(intArrayOf(1, 2, 3), tensor.intArrayData)
     }
     
     @Test
@@ -76,7 +76,7 @@ class NestedListTensorFactoryTest {
         val tensor = CpuTensorInt32.fromNestedList(data)
         
         assertEquals(Shape(1, 1), tensor.shape, "Single element tensor should have shape (1, 1)")
-        assertContentEquals(intArrayOf(42), tensor.data)
+        assertContentEquals(intArrayOf(42), tensor.intArrayData)
     }
     
     @Test
@@ -89,12 +89,12 @@ class NestedListTensorFactoryTest {
         val tensor = CpuTensorInt32.fromNestedList(data)
         
         assertEquals(Shape(5, 6), tensor.shape, "Large tensor should have shape (5, 6)")
-        assertEquals(30, tensor.data.size, "Tensor should have 30 elements")
+        assertEquals(30, tensor.intArrayData.size, "Tensor should have 30 elements")
         
         // Verify first few elements
-        assertEquals(11, tensor.data[0])  // Row 1, Col 1
-        assertEquals(16, tensor.data[5])  // Row 1, Col 6
-        assertEquals(21, tensor.data[6])  // Row 2, Col 1
+        assertEquals(11, tensor.intArrayData[0])  // Row 1, Col 1
+        assertEquals(16, tensor.intArrayData[5])  // Row 1, Col 6
+        assertEquals(21, tensor.intArrayData[6])  // Row 2, Col 1
     }
     
     @Test
@@ -176,7 +176,7 @@ class NestedListTensorFactoryTest {
         val tensor = CpuTensorInt32.fromNestedList(dataWithNegatives)
         
         assertEquals(Shape(2, 3), tensor.shape)
-        assertContentEquals(intArrayOf(-1, -2, 3, 4, -5, -6), tensor.data)
+        assertContentEquals(intArrayOf(-1, -2, 3, 4, -5, -6), tensor.intArrayData)
     }
     
     @Test
@@ -190,9 +190,9 @@ class NestedListTensorFactoryTest {
         val tensor = CpuTensorFP32.fromNestedList(precisionData)
         
         assertEquals(Shape(2, 2), tensor.shape)
-        assertEquals(1.123456f, tensor.data[0], 0.000001f, "First element precision should be preserved")
-        assertEquals(2.987654f, tensor.data[1], 0.000001f, "Second element precision should be preserved")
-        assertEquals(3.14159f, tensor.data[2], 0.000001f, "Third element precision should be preserved")
-        assertEquals(2.71828f, tensor.data[3], 0.000001f, "Fourth element precision should be preserved")
+        assertEquals(1.123456f, tensor.floatArrayData[0], 0.000001f, "First element precision should be preserved")
+        assertEquals(2.987654f, tensor.floatArrayData[1], 0.000001f, "Second element precision should be preserved")
+        assertEquals(3.14159f, tensor.floatArrayData[2], 0.000001f, "Third element precision should be preserved")
+        assertEquals(2.71828f, tensor.floatArrayData[3], 0.000001f, "Fourth element precision should be preserved")
     }
 }

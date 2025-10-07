@@ -107,7 +107,7 @@ class BroadcastingTest {
         val a = CpuTensorInt32.fromArray(Shape(2, 2), intArrayOf(1, 2, 3, 4))
         val b = CpuTensorInt32.fromArray(Shape(2), intArrayOf(5, 6))
         
-        val result = with(backend) { a.times(b) }
+        val result = a.times(b) //}
         assertEquals(Shape(2, 2), result.shape)
         
         val expectedData = intArrayOf(5, 12, 15, 24)

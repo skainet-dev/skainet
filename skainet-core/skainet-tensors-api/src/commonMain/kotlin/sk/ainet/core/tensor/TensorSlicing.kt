@@ -15,7 +15,7 @@ import sk.ainet.core.tensor.dsl.*
  * @param descriptors List of slice descriptors defining the slice
  * @return A Tensor instance using ViewTensorData for the sliced view
  */
-public fun <T : DType, V> Tensor<T, V>.sliceView(descriptors: List<SliceDescriptor>): Tensor<T, V> {
+public fun <T : DType, V> Tensor<T>.sliceView(descriptors: List<SliceDescriptor>): Tensor<T> {
     // Compute view parameters
     val viewShape = computeViewShape(this.shape, descriptors)
     val viewStrides = computeViewStrides(this.shape, descriptors)

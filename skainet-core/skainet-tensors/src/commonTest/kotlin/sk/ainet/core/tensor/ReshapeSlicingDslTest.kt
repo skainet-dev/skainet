@@ -6,14 +6,11 @@ import sk.ainet.core.tensor.backend.CpuTensorInt32
 import sk.ainet.core.tensor.backend.CpuBackend
 import sk.ainet.core.tensor.backend.CpuBackendInt8
 import sk.ainet.core.tensor.backend.CpuBackendInt32
-import sk.ainet.core.tensor.backend.CpuTensorFP16
-import sk.ainet.core.tensor.backend.CpuBackendFP16
 import kotlin.test.*
 
 class ReshapeSlicingDslTest {
 
     private val backendFP32 = CpuBackend()
-    private val backendFP16 = CpuBackendFP16()
     private val backendInt8 = CpuBackendInt8()
     private val backendInt32 = CpuBackendInt32()
 
@@ -483,33 +480,5 @@ class ReshapeSlicingDslTest {
         assertEquals(12f, reshaped[2, 3])
     }
 
-    @Test
-    fun testReshapeFP16WithMinusOneInferenceUsingSlicing() {
-        // Test reshaping 1D tensor [12] to 2D tensor [3, -1] -> [3, 4] using slicing DSL
-        val original = CpuTensorFP16.fromArray(
-            Shape(12),
-            floatArrayOf(1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f, 9f, 10f, 11f, 12f)
-        )
-
-        val reshaped = with(backendFP16) {
-            sliceTensor(original) {
-                segment { all() }
-            }.let { view ->
-                original.reshape(3, -1)
-            }
-        }
-
-        assertEquals(Shape(3, 4), reshaped.shape)
-        assertEquals(12, reshaped.shape.volume)
-        assertEquals(2, reshaped.shape.rank)
-
-        // Verify data integrity
-        assertEquals(1f, reshaped[0, 0])
-        assertEquals(2f, reshaped[0, 1])
-        assertEquals(3f, reshaped[0, 2])
-        assertEquals(4f, reshaped[0, 3])
-        assertEquals(5f, reshaped[1, 0])
-        assertEquals(12f, reshaped[2, 3])
-    }
 
 }
