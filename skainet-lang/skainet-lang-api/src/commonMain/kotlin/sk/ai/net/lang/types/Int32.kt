@@ -11,7 +11,7 @@ public object Int32 : DType {
             is Int8 -> true     // Int8 can promote to Int32
             is Int32 -> true    // Same type compatibility
             is FP32 -> true     // Can promote to FP32
-            else -> false
+            is FP16 -> true     // Can promote to FP16
         }
     }
 
@@ -23,9 +23,6 @@ public object Int32 : DType {
             is Int32 -> Int32   // Int32 + Int32 → Int32
             is FP32 -> FP32     // Int32 + FP32 → FP32
             is FP16 -> FP16     // Int32 + FP16 → FP16
-            else -> throw IllegalArgumentException(
-                "Cannot promote Int32 with incompatible type: ${other.name}"
-            )
         }
     }
 }

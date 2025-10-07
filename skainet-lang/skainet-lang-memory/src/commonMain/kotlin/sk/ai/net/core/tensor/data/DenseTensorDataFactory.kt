@@ -60,22 +60,22 @@ public class DenseTensorDataFactory {
     ): TensorData<T, V> {
         return when (dtype) {
             is FP32 -> {
-                class FP32FloatTensorData(private val data: FloatArray) : TensorData<FP32, Float> {
+                class FP32FloatTensorData() : TensorData<FP32, Float> {
                     override val shape: Shape
                         get() = Shape.Companion(data.size)
 
                     override fun get(vararg indices: Int): Float = data[indices[0]]
                 }
-                FP32FloatTensorData(data) as TensorData<T, V>
+                FP32FloatTensorData() as TensorData<T, V>
             }
             is FP16 -> {
-                class FP16FloatTensorData(private val data: FloatArray) : TensorData<FP16, Float> {
+                class FP16FloatTensorData() : TensorData<FP16, Float> {
                     override val shape: Shape
                         get() = Shape.Companion(data.size)
 
                     override fun get(vararg indices: Int): Float = data[indices[0]]
                 }
-                FP16FloatTensorData(data) as TensorData<T, V>
+                FP16FloatTensorData() as TensorData<T, V>
             }
             else -> throw IllegalArgumentException("Unsupported dtype for FloatArray: ${dtype.name}")
         }
@@ -88,13 +88,13 @@ public class DenseTensorDataFactory {
     ): TensorData<T, V> {
         return when (dtype) {
             is Int32 -> {
-                class Int32IntTensorData(private val data: IntArray) : TensorData<Int32, Int> {
+                class Int32IntTensorData() : TensorData<Int32, Int> {
                     override val shape: Shape
                         get() = Shape.Companion(data.size)
 
                     override fun get(vararg indices: Int): Int = data[indices[0]]
                 }
-                Int32IntTensorData(data) as TensorData<T, V>
+                Int32IntTensorData() as TensorData<T, V>
             }
             else -> throw IllegalArgumentException("Unsupported dtype for IntArray: ${dtype.name}")
         }
