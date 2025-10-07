@@ -1,6 +1,6 @@
 package sk.ainet.lang.tensor
 
-import sk.ai.net.lang.types.DType
+import sk.ainet.lang.types.DType
 
 public fun <T : DType, V> Tensor<T, V>.isScalar(): Boolean = this.shape.rank == 0
 public fun <T : DType, V> Tensor<T, V>.isVector(): Boolean = this.shape.rank == 1

@@ -1,7 +1,7 @@
 package sk.ainet.lang.tensor.data
 
-import sk.ai.net.lang.tensor.Shape
-import sk.ai.net.lang.types.DType
+import sk.ainet.lang.tensor.Shape
+import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP16
 import sk.ainet.lang.types.FP32
 import sk.ainet.lang.types.Int32

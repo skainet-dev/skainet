@@ -2,7 +2,7 @@ package sk.ainet.lang.tensor
 
 import sk.ainet.lang.tensor.data.TensorData
 import sk.ainet.lang.tensor.ops.TensorOps
-import sk.ai.net.lang.types.DType
+import sk.ainet.lang.types.DType
 
 /**
  * The core tensor abstraction in the SKaiNET framework, representing a fundamental

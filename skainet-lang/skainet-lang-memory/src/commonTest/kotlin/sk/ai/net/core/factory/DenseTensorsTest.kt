@@ -1,8 +1,7 @@
 package sk.ai.net.core.factory
 
-import sk.ai.net.core.tensor.data.DenseTensorDataFactory
-import sk.ai.net.lang.tensor.Shape
-import sk.ai.net.lang.types.*
+import sk.ainet.lang.tensor.data.DenseTensorDataFactory
+import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.types.FP16
 import sk.ainet.lang.types.FP32
 import sk.ainet.lang.types.Int32

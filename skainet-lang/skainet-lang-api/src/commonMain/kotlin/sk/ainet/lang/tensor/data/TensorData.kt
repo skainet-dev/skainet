@@ -1,7 +1,7 @@
 package sk.ainet.lang.tensor.data
 
-import sk.ai.net.lang.tensor.Shape
-import sk.ai.net.lang.types.DType
+import sk.ainet.lang.tensor.Shape
+import sk.ainet.lang.types.DType
 
 /**
  * A fundamental data structure interface that provides indexed access to elements.
