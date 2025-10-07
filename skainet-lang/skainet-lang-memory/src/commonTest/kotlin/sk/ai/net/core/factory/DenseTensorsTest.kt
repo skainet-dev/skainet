@@ -1,18 +1,10 @@
 package sk.ai.net.core.factory
 
-import sk.ai.net.core.tensor.Shape
-import sk.ai.net.core.types.FP32
-import sk.ai.net.core.types.FP16
-import sk.ai.net.core.types.Int32
-import sk.ai.net.core.types.Int8
-import sk.ai.net.core.types.Int4
-import sk.ai.net.core.types.Ternary
+import sk.ai.net.core.tensor.data.DenseTensorDataFactory
+import sk.ai.net.lang.tensor.Shape
+import sk.ai.net.lang.types.*
 import kotlin.test.Test
-import kotlin.test.assertTrue
-import kotlin.test.assertFalse
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertFailsWith
 
 class DenseTensorsTest {
@@ -59,9 +51,9 @@ class DenseTensorsTest {
             // Test FP32 fromByteArray with 1.0f in IEEE 754 little-endian
             val floatBytes = byteArrayOf(0x00, 0x00, 0x80.toByte(), 0x3F.toByte())
             val fp32TensorData = fromByteArray<FP32, Float>(floatBytes, FP32)
-            
+
             assertEquals(Shape(1), fp32TensorData.shape)
-            assertEquals(1.0f, fp32TensorData.get(0))
+            assertEquals(1.0f, fp32TensorData[0])
         }
     }
 
@@ -71,7 +63,7 @@ class DenseTensorsTest {
             // Test Int8 fromByteArray
             val int8Bytes = byteArrayOf(42, -10, 100)
             val int8TensorData = fromByteArray<Int8, Byte>(int8Bytes, Int8)
-            
+
             assertEquals(Shape(3), int8TensorData.shape)
             assertEquals(42.toByte(), int8TensorData[0])
             assertEquals((-10).toByte(), int8TensorData[1])
@@ -85,10 +77,10 @@ class DenseTensorsTest {
             // Test Int4 fromByteArray - 0x5A = 0101 1010 -> lower nibble 10 (0xA), upper nibble 5
             val int4Bytes = byteArrayOf(0x5A.toByte())
             val int4TensorData = fromByteArray<Int4, Byte>(int4Bytes, Int4)
-            
+
             assertEquals(Shape(2), int4TensorData.shape)
-            assertEquals(10.toByte(), int4TensorData.get(0)) // Lower nibble: 0xA = 10
-            assertEquals(5.toByte(), int4TensorData.get(1))  // Upper nibble: 0x5 = 5
+            assertEquals(10.toByte(), int4TensorData[0]) // Lower nibble: 0xA = 10
+            assertEquals(5.toByte(), int4TensorData[1])  // Upper nibble: 0x5 = 5
         }
     }
 
@@ -98,12 +90,12 @@ class DenseTensorsTest {
             // Test Ternary fromByteArray - 0x1B = 00011011 -> bits read as: 11 10 01 00 -> 0, 1, 0, -1
             val ternaryBytes = byteArrayOf(0x1B.toByte())
             val ternaryTensorData = fromByteArray<Ternary, Byte>(ternaryBytes, Ternary)
-            
+
             assertEquals(Shape(4), ternaryTensorData.shape)
-            assertEquals(0.toByte(), ternaryTensorData.get(0))    // bits 11 -> 0 (fallback)
-            assertEquals(1.toByte(), ternaryTensorData.get(1))    // bits 10 -> 1
-            assertEquals(0.toByte(), ternaryTensorData.get(2))    // bits 01 -> 0
-            assertEquals((-1).toByte(), ternaryTensorData.get(3)) // bits 00 -> -1
+            assertEquals(0.toByte(), ternaryTensorData[0])    // bits 11 -> 0 (fallback)
+            assertEquals(1.toByte(), ternaryTensorData[1])    // bits 10 -> 1
+            assertEquals(0.toByte(), ternaryTensorData[2])    // bits 01 -> 0
+            assertEquals((-1).toByte(), ternaryTensorData[3]) // bits 00 -> -1
         }
     }
 
@@ -113,7 +105,7 @@ class DenseTensorsTest {
             // Test FP32 fromFloatArray
             val floatData = floatArrayOf(1.5f, 2.5f, 3.5f)
             val fp32TensorData = fromFloatArray<FP32, Float>(floatData, FP32)
-            
+
             assertEquals(Shape(3), fp32TensorData.shape)
             assertEquals(1.5f, fp32TensorData[0])
             assertEquals(2.5f, fp32TensorData[1])
@@ -127,7 +119,7 @@ class DenseTensorsTest {
             // Test FP16 fromFloatArray
             val floatData = floatArrayOf(0.5f, -1.0f, 10.0f)
             val fp16TensorData = fromFloatArray<FP16, Float>(floatData, FP16)
-            
+
             assertEquals(Shape(3), fp16TensorData.shape)
             assertEquals(0.5f, fp16TensorData[0])
             assertEquals(-1.0f, fp16TensorData[1])
@@ -141,7 +133,7 @@ class DenseTensorsTest {
             // Test Int32 fromIntArray
             val intData = intArrayOf(42, -100, 1000)
             val int32TensorData = fromIntArray<Int32, Int>(intData, Int32)
-            
+
             assertEquals(Shape(3), int32TensorData.shape)
             assertEquals(42, int32TensorData[0])
             assertEquals(-100, int32TensorData[1])
@@ -168,5 +160,4 @@ class DenseTensorsTest {
             }
         }
     }
-
 }

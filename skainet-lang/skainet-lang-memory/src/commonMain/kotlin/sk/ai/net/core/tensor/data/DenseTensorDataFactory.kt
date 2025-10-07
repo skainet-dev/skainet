@@ -1,46 +1,41 @@
-package sk.ai.net.core.factory
+package sk.ai.net.core.tensor.data
 
-import sk.ai.net.core.tensor.Shape
-import sk.ai.net.core.tensor.data.TensorData
-import sk.ai.net.core.types.DType
-import sk.ai.net.core.types.FP32
-import sk.ai.net.core.types.FP16
-import sk.ai.net.core.types.Int32
-import sk.ai.net.core.types.Int8
-import sk.ai.net.core.types.Int4
-import sk.ai.net.core.types.Ternary
+import sk.ai.net.lang.tensor.Shape
+import sk.ai.net.lang.tensor.data.TensorData
+import sk.ai.net.lang.types.DType
+import sk.ai.net.lang.types.FP16
+import sk.ai.net.lang.types.FP32
+import sk.ai.net.lang.types.Int32
+import sk.ai.net.lang.types.Int4
+import sk.ai.net.lang.types.Int8
+import sk.ai.net.lang.types.Ternary
 import kotlin.jvm.JvmName
 
-class DenseTensorDataFactory {
-    fun from(value: Int): TensorData<Int32, Int> {
+public class DenseTensorDataFactory {
+    public fun from(value: Int): TensorData<
+            Int32, Int> {
         return object : TensorData<Int32, Int> {
             override val shape: Shape
-                get() = Shape(1)
-
-            override fun materialize(): TensorData<Int32, Int> = this
+                get() = Shape.Companion(1)
 
             override fun get(vararg indices: Int): Int = value
         }
     }
 
-    fun from(value: Float): TensorData<FP32, Float> {
+    public fun from(value: Float): TensorData<FP32, Float> {
         return object : TensorData<FP32, Float> {
             override val shape: Shape
-                get() = Shape(1)
-
-            override fun materialize(): TensorData<FP32, Float> = this
+                get() = Shape.Companion(1)
 
             override fun get(vararg indices: Int): Float = value
         }
     }
 
     @JvmName("vectorFromInt")
-    fun fromArray(arrayOf: Array<Int>): TensorData<Int32, Int> {
+    public fun fromArray(arrayOf: Array<Int>): TensorData<Int32, Int> {
         class IntTensorData(private val data: IntArray) : TensorData<Int32, Int> {
             override val shape: Shape
-                get() = Shape(data.size)
-
-            override fun materialize(): TensorData<Int32, Int> = this
+                get() = Shape.Companion(data.size)
 
             override fun get(vararg indices: Int): Int = data[indices[0]]
         }
@@ -48,12 +43,10 @@ class DenseTensorDataFactory {
     }
 
     @JvmName("vectorFromFloat")
-    fun fromArray(arrayOf: Array<Float>): TensorData<FP32, Float> {
+    public fun fromArray(arrayOf: Array<Float>): TensorData<FP32, Float> {
         class FloatTensorData(private val data: FloatArray) : TensorData<FP32, Float> {
             override val shape: Shape
-                get() = Shape(data.size)
-
-            override fun materialize(): TensorData<FP32, Float> = this
+                get() = Shape.Companion(data.size)
 
             override fun get(vararg indices: Int): Float = data[indices[0]]
         }
@@ -61,7 +54,7 @@ class DenseTensorDataFactory {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : DType, V> fromFloatArray(
+    public fun <T : DType, V> fromFloatArray(
         data: FloatArray,
         dtype: T
     ): TensorData<T, V> {
@@ -69,9 +62,7 @@ class DenseTensorDataFactory {
             is FP32 -> {
                 class FP32FloatTensorData(private val data: FloatArray) : TensorData<FP32, Float> {
                     override val shape: Shape
-                        get() = Shape(data.size)
-
-                    override fun materialize(): TensorData<FP32, Float> = this
+                        get() = Shape.Companion(data.size)
 
                     override fun get(vararg indices: Int): Float = data[indices[0]]
                 }
@@ -80,9 +71,7 @@ class DenseTensorDataFactory {
             is FP16 -> {
                 class FP16FloatTensorData(private val data: FloatArray) : TensorData<FP16, Float> {
                     override val shape: Shape
-                        get() = Shape(data.size)
-
-                    override fun materialize(): TensorData<FP16, Float> = this
+                        get() = Shape.Companion(data.size)
 
                     override fun get(vararg indices: Int): Float = data[indices[0]]
                 }
@@ -93,7 +82,7 @@ class DenseTensorDataFactory {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : DType, V> fromIntArray(
+    public fun <T : DType, V> fromIntArray(
         data: IntArray,
         dtype: T
     ): TensorData<T, V> {
@@ -101,9 +90,7 @@ class DenseTensorDataFactory {
             is Int32 -> {
                 class Int32IntTensorData(private val data: IntArray) : TensorData<Int32, Int> {
                     override val shape: Shape
-                        get() = Shape(data.size)
-
-                    override fun materialize(): TensorData<Int32, Int> = this
+                        get() = Shape.Companion(data.size)
 
                     override fun get(vararg indices: Int): Int = data[indices[0]]
                 }
@@ -114,17 +101,15 @@ class DenseTensorDataFactory {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : DType, V> fromByteArray(
-        bytes: ByteArray, 
+    public fun <T : DType, V> fromByteArray(
+        bytes: ByteArray,
         dtype: T
     ): TensorData<T, V> {
         return when (dtype) {
             is FP32 -> {
                 class FP32ByteTensorData(private val data: ByteArray) : TensorData<FP32, Float> {
                     override val shape: Shape
-                        get() = Shape(data.size / 4) // 4 bytes per float
-
-                    override fun materialize(): TensorData<FP32, Float> = this
+                        get() = Shape.Companion(data.size / 4) // 4 bytes per float
 
                     override fun get(vararg indices: Int): Float {
                         val index = indices[0] * 4
@@ -141,9 +126,7 @@ class DenseTensorDataFactory {
             is Int8 -> {
                 class Int8ByteTensorData(private val data: ByteArray) : TensorData<Int8, Byte> {
                     override val shape: Shape
-                        get() = Shape(data.size)
-
-                    override fun materialize(): TensorData<Int8, Byte> = this
+                        get() = Shape.Companion(data.size)
 
                     override fun get(vararg indices: Int): Byte = data[indices[0]]
                 }
@@ -152,9 +135,7 @@ class DenseTensorDataFactory {
             is Int4 -> {
                 class Int4ByteTensorData(private val data: ByteArray) : TensorData<Int4, Byte> {
                     override val shape: Shape
-                        get() = Shape(data.size * 2) // 2 int4 values per byte
-
-                    override fun materialize(): TensorData<Int4, Byte> = this
+                        get() = Shape.Companion(data.size * 2) // 2 int4 values per byte
 
                     override fun get(vararg indices: Int): Byte {
                         val byteIndex = indices[0] / 2
@@ -172,9 +153,7 @@ class DenseTensorDataFactory {
             is Ternary -> {
                 class TernaryByteTensorData(private val data: ByteArray) : TensorData<Ternary, Byte> {
                     override val shape: Shape
-                        get() = Shape(data.size * 4) // 4 ternary values per byte (2 bits each)
-
-                    override fun materialize(): TensorData<Ternary, Byte> = this
+                        get() = Shape.Companion(data.size * 4) // 4 ternary values per byte (2 bits each)
 
                     override fun get(vararg indices: Int): Byte {
                         val byteIndex = indices[0] / 4
