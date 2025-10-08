@@ -1,6 +1,7 @@
 package sk.ainet.lang.tensor.dsl
 
 import sk.ainet.lang.tensor.Shape
+import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.data.TensorData
 import sk.ainet.lang.types.DType
@@ -65,7 +66,7 @@ public class DenseTensorDataFactoryAdapter<T : DType, V> : TensorDataFactory<T, 
                 val data = IntArray(shape.volume) { 
                     (random.nextFloat() * (max - min) + min).toInt() 
                 }
-                denseFactory.fromIntArray<T, V>(data, dtype)
+                denseFactory.fromIntArray<T, V>(data, dtype) as TensorData<T, V>
             }
             is Int8 -> {
                 val data = ByteArray(shape.volume) { 
@@ -102,14 +103,14 @@ public class DenseTensorDataFactoryAdapter<T : DType, V> : TensorDataFactory<T, 
                     val indices = computeIndicesFromFlat(index, shape)
                     (generator(indices) as Int)
                 }
-                denseFactory.fromIntArray(data, dtype) as TensorData<T, V>
+                denseFactory.fromIntArray<T, V>(data, dtype) as TensorData<T, V>
             }
             is Int8 -> {
                 val data = ByteArray(shape.volume) { index ->
                     val indices = computeIndicesFromFlat(index, shape)
                     (generator(indices) as Byte)
                 }
-                denseFactory.fromByteArray(data, dtype) as TensorData<T, V>
+                denseFactory.fromByteArray<T, V>(data, dtype) as TensorData<T, V>
             }
             else -> {
                 val data = FloatArray(shape.volume) { index ->
@@ -140,13 +141,13 @@ public class DenseTensorDataFactoryAdapter<T : DType, V> : TensorDataFactory<T, 
                 val data = IntArray(shape.volume) { 
                     generator(random) as Int
                 }
-                denseFactory.fromIntArray(data, dtype) as TensorData<T, V>
+                denseFactory.fromIntArray<T, V>(data, dtype) as TensorData<T, V>
             }
             is Int8 -> {
                 val data = ByteArray(shape.volume) { 
                     generator(random) as Byte
                 }
-                denseFactory.fromByteArray(data, dtype) as TensorData<T, V>
+                denseFactory.fromByteArray<T, V>(data, dtype) as TensorData<T, V>
             }
             else -> {
                 val data = FloatArray(shape.volume) { 
@@ -182,5 +183,5 @@ public fun <T : DType, V> denseTensorFactory(): TensorDataFactory<T, V> =
 /**
  * Extension function to build tensor with default dense factory
  */
-public fun <T : DType, V> TensorInitializer<T, V>.buildDense() = 
+public fun <T : DType, V> TensorInitializer<T, V>.buildDense(): Tensor<T, V> = 
     build(denseTensorFactory<T, V>())
