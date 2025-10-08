@@ -23,6 +23,31 @@ import kotlin.random.Random
  */
 public fun <T : DType, V> tensor(dtype: T): TensorBuilder<T, V> = TensorBuilder(dtype)
 
+/**
+ * Modern DSL entry point for FP32 tensor creation within a factory context.
+ * 
+ * Usage:
+ * ```kotlin
+ * with(factory) {
+ *     val matrix = tensor<FP32, Float>(2, 2) { shape ->
+ *         randomInit { random -> 
+ *             if (random.nextBoolean()) 1.0f else -1.0f 
+ *         }
+ *     }
+ * }
+ * ```
+ */
+public fun TensorDataFactory<FP32, Float>.tensor(
+    vararg shape: Int, 
+    init: ShapeBuilder<FP32, Float>.(Shape) -> TensorInitializer<FP32, Float>
+): Tensor<FP32, Float> {
+    val tensorShape = Shape(*shape)
+    val shapeBuilder = ShapeBuilder<FP32, Float>(FP32, tensorShape)
+    val initializer = shapeBuilder.init(tensorShape)
+    return initializer.build(this)
+}
+
+
 
 /**
  * Builder class for constructing tensors with various initialization strategies
