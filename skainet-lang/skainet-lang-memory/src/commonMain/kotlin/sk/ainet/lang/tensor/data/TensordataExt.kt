@@ -1,10 +1,13 @@
 package sk.ainet.lang.tensor.data
 
 import sk.ainet.lang.tensor.Shape
+import sk.ainet.lang.types.DType
 
 
 /**
  * Computes standard row-major strides for the given shape.
+ *
+ * https://en.wikipedia.org/wiki/Row-_and_column-major_order
  */
 internal fun Shape.computeStrides(): IntArray {
     if (dimensions.isEmpty()) return intArrayOf()
@@ -17,5 +20,25 @@ internal fun Shape.computeStrides(): IntArray {
     }
 
     return strides
+}
+
+/**
+ * Extension property to provide TensorData factory methods within DenseTensorDataFactory context
+ */
+@Suppress("UNCHECKED_CAST")
+public val DenseTensorDataFactory.TensorData: TensorDataFactory get() = TensorDataFactory(this)
+
+public class TensorDataFactory(public val factory: DenseTensorDataFactory) {
+    public fun <T : DType, V> scalar(value: V): TensorData<T, V> {
+        return factory.scalar<T, V>(value)
+    }
+    
+    public fun <T : DType, V> vector(values: Array<V>): TensorData<T, V> {
+        return factory.vector<T, V>(values)
+    }
+    
+    public fun <T : DType, V> matrix(vararg rows: Array<V>): TensorData<T, V> {
+        return factory.matrix<T, V>(*rows)
+    }
 }
 

@@ -7,14 +7,14 @@ import sk.ainet.lang.types.DType
  * A fundamental data structure interface that provides indexed access to elements.
  * 
  * This interface serves as the base for all data structures that need to provide
- * element access through multi-dimensional indexing. It is designed to support
+ * element access through multidimensional indexing. It is designed to support
  * efficient access patterns commonly used in neural network computations.
  * 
  * @param T the type of elements that can be accessed
  */
 public interface ItemsAccessor<T> {
     /**
-     * Retrieves an element at the specified multi-dimensional indices.
+     * Retrieves an element at the specified multidimensional indices.
      * 
      * This operator function allows accessing elements using bracket notation
      * with variable number of indices, supporting tensors of any dimensionality.
@@ -24,6 +24,12 @@ public interface ItemsAccessor<T> {
      * @throws IndexOutOfBoundsException if any index is out of bounds
      */
     public operator fun get(vararg indices: Int): T
+
+
+    /**
+     * Setter
+     */
+    public operator fun set(vararg indices: Int, value: T)
 }
 
 /**
@@ -61,4 +67,6 @@ public interface TensorData<T : DType, V> : ItemsAccessor<V> {
      * @return the Shape object describing this tensor's dimensional structure
      */
     public val shape: Shape
+
+    public companion object
 }

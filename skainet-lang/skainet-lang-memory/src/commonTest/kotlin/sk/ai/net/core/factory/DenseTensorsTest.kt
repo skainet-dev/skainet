@@ -2,6 +2,7 @@ package sk.ai.net.core.factory
 
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.Shape
+import sk.ainet.lang.tensor.data.TensorData
 import sk.ainet.lang.types.FP16
 import sk.ainet.lang.types.FP32
 import sk.ainet.lang.types.Int32
@@ -18,17 +19,27 @@ class DenseTensorsTest {
     fun createdIntTensorHasProperShape() {
         with(DenseTensorDataFactory()) {
             // scalar
-            val scalar = from(1)
+            val scalar = TensorData.scalar<Int8, Int>(1)
             assertEquals(scalar.shape, Shape(1))
             assertEquals(scalar.shape.volume, 1)
             assertEquals(scalar[0], 1)
 
             // vector
-            val vector = fromArray(arrayOf(1, 2, 3))
+            val vector = TensorData.vector<Int8, Int>(arrayOf(1, 2, 3))
             assertEquals(vector.shape, Shape(3))
             assertEquals(vector[0], 1)
             assertEquals(vector[1], 2)
             assertEquals(vector[2], 3)
+
+            // matrix
+            val matrix = TensorData.matrix<Int8, Int>(arrayOf(1, 2, 3), arrayOf(4, 5, 6))
+            assertEquals(matrix.shape, Shape(2, 3))
+            assertEquals(matrix[0, 0], 1)
+            assertEquals(matrix[0, 1], 2)
+            assertEquals(matrix[0, 2], 3)
+            assertEquals(matrix[1, 0], 4)
+            assertEquals(matrix[1, 1], 5)
+            assertEquals(matrix[1, 2], 6)
         }
     }
 
@@ -36,17 +47,28 @@ class DenseTensorsTest {
     fun createdFloatTensorHasProperShape() {
         with(DenseTensorDataFactory()) {
             // scalar
-            val scalar = from(1.0f)
+            val scalar = TensorData.scalar<FP32, Float>(1.0f)
             assertEquals(scalar.shape, Shape(1))
             assertEquals(scalar.shape.volume, 1)
             assertEquals(scalar[0], 1.0f)
 
             // vector
-            val vector = fromArray(arrayOf(1.0f, 2.0f, 3.0f))
+            val vector = TensorData.vector<FP32, Float>(arrayOf(1.0f, 2.0f, 3.0f))
             assertEquals(vector.shape, Shape(3))
             assertEquals(vector[0], 1.0f)
             assertEquals(vector[1], 2.0f)
             assertEquals(vector[2], 3.0f)
+
+            // matrix
+            val matrix = TensorData.matrix<FP32, Float>(arrayOf(1.0f, 2.0f, 3.0f), arrayOf(4.0f, 5.0f, 6.0f))
+            assertEquals(matrix.shape, Shape(2, 3))
+            assertEquals(matrix[0, 0], 1.0f)
+            assertEquals(matrix[0, 1], 2.0f)
+            assertEquals(matrix[0, 2], 3.0f)
+            assertEquals(matrix[1, 0], 4.0f)
+            assertEquals(matrix[1, 1], 5.0f)
+            assertEquals(matrix[1, 2], 6.0f)
+
         }
     }
 
