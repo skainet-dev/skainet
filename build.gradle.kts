@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinJvm) apply false
     alias(libs.plugins.vanniktech.mavenPublish) apply false
     alias(libs.plugins.kover)
+    alias(libs.plugins.binary.compatibility.validator) apply false
 }
 
 allprojects {
