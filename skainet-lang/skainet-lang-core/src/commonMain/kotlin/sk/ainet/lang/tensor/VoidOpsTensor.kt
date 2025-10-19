@@ -1,0 +1,18 @@
+package sk.ainet.lang.tensor
+
+import sk.ainet.lang.tensor.data.TensorData
+import sk.ainet.lang.tensor.ops.TensorOps
+import sk.ainet.lang.tensor.ops.VoidTensorOps
+import sk.ainet.lang.types.DType
+import kotlin.reflect.KClass
+
+/**
+ * Simple tensor implementation with void Ops as default for the DSL
+ */
+public class VoidOpsTensor<T : DType, V>(
+    override val data: TensorData<T, V>,
+    override val dtype: KClass<T>
+) : Tensor<T, V> {
+    override val ops: TensorOps<V>
+        get() = VoidTensorOps()
+}
