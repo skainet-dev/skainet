@@ -15,5 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "SKaiNET"
 
-include("skainet-lang:skainet-lang-api")
-include("skainet-lang:skainet-lang-memory")
+include("skainet-lang:skainet-lang-core")
+include("skainet-lang:skainet-lang-models")
