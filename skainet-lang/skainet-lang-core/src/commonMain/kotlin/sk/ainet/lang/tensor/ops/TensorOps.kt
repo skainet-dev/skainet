@@ -27,6 +27,14 @@ public interface TensorOps<V> {
         groups: Int = 1
     ): Tensor<T, V>
     
+    // Pooling operations
+    public fun <T : DType> maxPool2d(
+        input: Tensor<T, V>,
+        kernelSize: Pair<Int, Int>,
+        stride: Pair<Int, Int> = kernelSize,
+        padding: Pair<Int, Int> = 0 to 0
+    ): Tensor<T, V>
+    
     // Shape operations
     public fun <T : DType> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V>
     public fun <T : DType> flatten(tensor: Tensor<T, V>, startDim: Int = 0, endDim: Int = -1): Tensor<T, V>

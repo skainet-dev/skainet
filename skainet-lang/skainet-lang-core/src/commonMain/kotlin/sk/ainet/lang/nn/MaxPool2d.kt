@@ -1,9 +1,6 @@
 package sk.ainet.lang.nn
 
 import sk.ainet.lang.tensor.Tensor
-import sk.ainet.lang.tensor.Shape
-import sk.ainet.lang.tensor.VoidOpsTensor
-import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.types.DType
 
 /**
@@ -34,24 +31,12 @@ public class MaxPool2d<T : DType, V>(
         get() = emptyList()
 
     override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        // For model summary generation, we only need to calculate the correct output shape
-        // The actual max pooling computation is not needed for shape inference
-        
-        val inputShape = input.shape
-        require(inputShape.rank == 4) { "MaxPool2d expects 4D input tensor (batch, channels, height, width)" }
-        
-        val batch = inputShape.dimensions[0]
-        val channels = inputShape.dimensions[1] 
-        val inputHeight = inputShape.dimensions[2]
-        val inputWidth = inputShape.dimensions[3]
-        
-        val (outputHeight, outputWidth) = outputSize(inputHeight to inputWidth)
-        val outputShape = Shape(batch, channels, outputHeight, outputWidth)
-        
-        // Create a VoidOpsTensor with the correct output shape
-        val dataFactory = DenseTensorDataFactory()
-        val outputData = dataFactory.zeros<T, V>(outputShape, input.dtype)
-        return VoidOpsTensor(outputData, input.dtype)
+        return input.ops.maxPool2d(
+            input = input,
+            kernelSize = kernelSize,
+            stride = stride,
+            padding = padding
+        )
     }
 
     /**
