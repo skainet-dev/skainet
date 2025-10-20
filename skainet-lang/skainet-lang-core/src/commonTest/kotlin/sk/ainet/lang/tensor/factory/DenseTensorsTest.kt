@@ -21,20 +21,20 @@ class DenseTensorsTest {
     fun createdIntTensorHasProperShape() {
         with(DenseTensorDataFactory()) {
             // scalar
-            val scalar = TensorData.scalar<Int8, Int>(1)
+            val scalar = scalar<Int8, Int>(1)
             assertEquals(scalar.shape, Shape(1))
             assertEquals(scalar.shape.volume, 1)
             assertEquals(scalar[0], 1)
 
             // vector
-            val vector = TensorData.vector<Int8, Int>(arrayOf(1, 2, 3))
+            val vector = vector<Int8, Int>(arrayOf(1, 2, 3))
             assertEquals(vector.shape, Shape(3))
             assertEquals(vector[0], 1)
             assertEquals(vector[1], 2)
             assertEquals(vector[2], 3)
 
             // matrix
-            val matrix = TensorData.matrix<Int8, Int>(arrayOf(1, 2, 3), arrayOf(4, 5, 6))
+            val matrix = matrix<Int8, Int>(arrayOf(1, 2, 3), arrayOf(4, 5, 6))
             assertEquals(matrix.shape, Shape(2, 3))
             assertEquals(matrix[0, 0], 1)
             assertEquals(matrix[0, 1], 2)
@@ -49,20 +49,20 @@ class DenseTensorsTest {
     fun createdFloatTensorHasProperShape() {
         with(DenseTensorDataFactory()) {
             // scalar
-            val scalar = TensorData.scalar<FP32, Float>(1.0f)
+            val scalar = scalar<FP32, Float>(1.0f)
             assertEquals(scalar.shape, Shape(1))
             assertEquals(scalar.shape.volume, 1)
             assertEquals(scalar[0], 1.0f)
 
             // vector
-            val vector = TensorData.vector<FP32, Float>(arrayOf(1.0f, 2.0f, 3.0f))
+            val vector = vector<FP32, Float>(arrayOf(1.0f, 2.0f, 3.0f))
             assertEquals(vector.shape, Shape(3))
             assertEquals(vector[0], 1.0f)
             assertEquals(vector[1], 2.0f)
             assertEquals(vector[2], 3.0f)
 
             // matrix
-            val matrix = TensorData.matrix<FP32, Float>(arrayOf(1.0f, 2.0f, 3.0f), arrayOf(4.0f, 5.0f, 6.0f))
+            val matrix = matrix<FP32, Float>(arrayOf(1.0f, 2.0f, 3.0f), arrayOf(4.0f, 5.0f, 6.0f))
             assertEquals(matrix.shape, Shape(2, 3))
             assertEquals(matrix[0, 0], 1.0f)
             assertEquals(matrix[0, 1], 2.0f)

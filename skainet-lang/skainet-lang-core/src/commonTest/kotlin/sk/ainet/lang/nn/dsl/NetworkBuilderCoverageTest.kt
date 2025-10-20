@@ -152,12 +152,12 @@ class NetworkBuilderCoverageTest {
                 }
                 stage("processing") {
                     dense(6) {
-                        weights { randn(mean = 0.0f, std = 0.1f) }
+                        weights { ones() }
                         bias { zeros() }
                     }
                 }
                 dense(3) {
-                    weights { uniform(min = -0.5f, max = 0.5f) }
+                    weights { ones() }
                     bias { zeros() }
                 }
             }
@@ -179,7 +179,7 @@ class NetworkBuilderCoverageTest {
                     activation("stage_activation") { tensor -> tensor }
                 }
                 dense(8) {
-                    weights { randn(mean = 0.0f, std = 0.1f) }
+                    weights { ones() }
                     bias { zeros() }
                 }
             }

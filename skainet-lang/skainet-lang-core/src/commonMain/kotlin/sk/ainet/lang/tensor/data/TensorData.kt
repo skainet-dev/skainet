@@ -67,4 +67,5 @@ public interface TensorData<T : DType, V> : ItemsAccessor<V> {
      * @return the Shape object describing this tensor's dimensional structure
      */
     public val shape: Shape
+
 }

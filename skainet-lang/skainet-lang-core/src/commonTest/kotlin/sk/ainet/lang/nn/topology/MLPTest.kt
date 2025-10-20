@@ -40,7 +40,7 @@ class MLPTest {
         }
         
         // Create the MLP with 2 hidden layers of 16 neurons each and 1 output
-        val mlp = MLP<FP32, Float>(
+        val mlp = MLP(
             Linear(1, 16, "layer1", weights1, bias1),
             ReLU("relu1"),
             Linear(16, 16, "layer2", weights2, bias2), 

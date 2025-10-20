@@ -2,6 +2,7 @@ package sk.ainet.lang.tensor.dsl
 
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.data.TensorData
+import sk.ainet.lang.tensor.testFactory
 import sk.ainet.lang.types.FP32
 import kotlin.random.Random
 import kotlin.test.Test
@@ -25,20 +26,18 @@ class TensorDSLTest {
         val dtype = FP32
 
         // Test basic tensor creation with zeros
-        val zerosTensor = tensor<FP32, Float>()
-            .shape(3, 4)
-            .zeros()
-            .build(testFactory)
+        val zerosTensor = with<FP32, Float>(testFactory) {
+            tensor(3, 4) { zeros() }
+        }
 
         assertNotNull(zerosTensor)
         assertEquals(Shape(3, 4), zerosTensor.shape)
         assertEquals(0.0f, zerosTensor.data[0, 0])
 
         // Test basic tensor creation with ones
-        val onesTensor = tensor<FP32, Float>(dtype)
-            .shape(2, 3)
-            .ones()
-            .build(testFactory)
+        val onesTensor = with<FP32, Float>(testFactory) {
+            tensor(2, 3) { ones() }
+        }
 
         assertNotNull(onesTensor)
         assertEquals(Shape(2, 3), onesTensor.shape)
@@ -50,28 +49,31 @@ class TensorDSLTest {
         val dtype = FP32
 
         // Test Xavier initialization for MLP weights
-        val xavierWeights = tensor<FP32, Float>(dtype)
-            .weights()
-            .xavier(inputSize = 128, outputSize = 64)
-            .build(testFactory)
+        val xavierWeights = with<FP32, Float>(testFactory) {
+            tensor(64, 128) { 
+                val limit = kotlin.math.sqrt(6.0f / (128 + 64))
+                uniform(-limit, limit) 
+            }
+        }
 
         assertNotNull(xavierWeights)
         assertEquals(Shape(64, 128), xavierWeights.shape)
 
         // Test He initialization for ReLU networks
-        val heWeights = tensor<FP32, Float>(dtype)
-            .weights()
-            .he(inputSize = 256, outputSize = 128)
-            .build(testFactory)
+        val heWeights = with<FP32, Float>(testFactory) {
+            tensor(128, 256) { 
+                val std = kotlin.math.sqrt(2.0f / 256)
+                randn(mean = 0.0f, std = std) 
+            }
+        }
 
         assertNotNull(heWeights)
         assertEquals(Shape(128, 256), heWeights.shape)
 
         // Test normal weight initialization
-        val normalWeights = tensor<FP32, Float>(dtype)
-            .weights()
-            .normal(inputSize = 100, outputSize = 50, mean = 0.0f, std = 0.02f)
-            .build(testFactory)
+        val normalWeights = with<FP32, Float>(testFactory) {
+            tensor(50, 100) { randn(mean = 0.0f, std = 0.02f) }
+        }
 
         assertNotNull(normalWeights)
         assertEquals(Shape(50, 100), normalWeights.shape)
@@ -82,20 +84,18 @@ class TensorDSLTest {
         val dtype = FP32
 
         // Test zero bias initialization (most common)
-        val zeroBias = tensor<FP32, Float>(dtype)
-            .bias()
-            .zeros(64)
-            .build(testFactory)
+        val zeroBias = with<FP32, Float>(testFactory) {
+            tensor(64) { zeros() }
+        }
 
         assertNotNull(zeroBias)
         assertEquals(Shape(64), zeroBias.shape)
         assertEquals(0.0f, zeroBias.data[0])
 
         // Test constant bias initialization
-        val constantBias = tensor<FP32, Float>(dtype)
-            .bias()
-            .constant(32, 0.1f)
-            .build(testFactory)
+        val constantBias = with<FP32, Float>(testFactory) {
+            tensor(32) { full(0.1f) }
+        }
 
         assertNotNull(constantBias)
         assertEquals(Shape(32), constantBias.shape)
@@ -106,31 +106,25 @@ class TensorDSLTest {
         val dtype = FP32
 
         // Test BCHW format for image batches
-        val imageBatch = tensor<FP32, Float>(dtype)
-            .image()
-            .bchw(batchSize = 8, channels = 3, height = 224, width = 224)
-            .zeros()
-            .build(testFactory)
+        val imageBatch = with<FP32, Float>(testFactory) {
+            tensor(8, 3, 224, 224) { zeros() }
+        }
 
         assertNotNull(imageBatch)
         assertEquals(Shape(8, 3, 224, 224), imageBatch.shape)
 
         // Test single RGB image
-        val rgbImage = tensor<FP32, Float>(dtype)
-            .image()
-            .rgb(height = 64, width = 64)
-            .uniform(0.0f, 1.0f)
-            .build(testFactory)
+        val rgbImage = with<FP32, Float>(testFactory) {
+            tensor(3, 64, 64) { uniform(0.0f, 1.0f) }
+        }
 
         assertNotNull(rgbImage)
         assertEquals(Shape(3, 64, 64), rgbImage.shape)
 
         // Test grayscale image
-        val grayscaleImage = tensor<FP32, Float>(dtype)
-            .image()
-            .grayscale(height = 128, width = 128)
-            .zeros()
-            .build(testFactory)
+        val grayscaleImage = with<FP32, Float>(testFactory) {
+            tensor(1, 128, 128) { zeros() }
+        }
 
         assertNotNull(grayscaleImage)
         assertEquals(Shape(1, 128, 128), grayscaleImage.shape)
@@ -141,24 +135,23 @@ class TensorDSLTest {
         val dtype = FP32
 
         // Test 3x3 convolution kernel
-        val conv3x3 = tensor<FP32, Float>()
-            .kernel()
-            .conv3x3(outputChannels = 64, inputChannels = 32)
-            .randn(mean = 0.0f, std = 0.1f)
-            .build(testFactory)
+        val conv3x3 = with<FP32, Float>(testFactory) {
+            tensor(64, 32, 3, 3) { randn(mean = 0.0f, std = 0.1f) }
+        }
 
         assertNotNull(conv3x3)
         assertEquals(Shape(64, 32, 3, 3), conv3x3.shape)
 
         // Test pointwise (1x1) convolution
-        val pointwise = tensor<FP32, Float>(dtype)
-            .kernel()
-            .pointwise(outputChannels = 128, inputChannels = 64)
-        //.xavier(64, 128)
-        //.build(testFactory)
+        val pointwise = with<FP32, Float>(testFactory) {
+            tensor(128, 64, 1, 1) { 
+                val limit = kotlin.math.sqrt(6.0f / (64 + 128))
+                uniform(-limit, limit) 
+            }
+        }
 
         assertNotNull(pointwise)
-        //assertEquals(Shape(128, 64, 1, 1), pointwise.shape)
+        assertEquals(Shape(128, 64, 1, 1), pointwise.shape)
     }
 
     @Test
@@ -166,12 +159,13 @@ class TensorDSLTest {
         val dtype = FP32
 
         // Test custom initialization with index-based function
-        val customTensor = tensor<FP32, Float>(dtype)
-            .shape(3, 3)
-            .init { indices ->
-                (indices[0] + indices[1]).toFloat() // Sum of row and column indices
+        val customTensor = with<FP32, Float>(testFactory) {
+            tensor(3, 3) { 
+                init { indices ->
+                    (indices[0] + indices[1]).toFloat() // Sum of row and column indices
+                }
             }
-            .build(testFactory)
+        }
 
         assertNotNull(customTensor)
         assertEquals(Shape(3, 3), customTensor.shape)
@@ -179,20 +173,18 @@ class TensorDSLTest {
         assertEquals(2.0f, customTensor.data[1, 1]) // 1 + 1
 
         // Test custom random initialization
-        val customRandom = tensor<FP32, Float>(dtype)
-            .shape(2, 2)
-        /*
-        .randomInit { random ->
-            if (random.nextBoolean()) 1.0f else -1.0f // Random sign
+        val customRandom = with<FP32, Float>(testFactory) {
+            tensor(2, 2) { 
+                randomInit({ random ->
+                    if (random.nextBoolean()) 1.0f else -1.0f // Random sign
+                })
+            }
         }
 
-        .build(testFactory)
-    */
-
         assertNotNull(customRandom)
-        //assertEquals(Shape(2, 2), customRandom.shape)
+        assertEquals(Shape(2, 2), customRandom.shape)
         // Values should be either 1.0f or -1.0f
-        //assertTrue(customRandom.data[0, 0] == 1.0f || customRandom.data[0, 0] == -1.0f)
+        assertTrue(customRandom.data[0, 0] == 1.0f || customRandom.data[0, 0] == -1.0f)
     }
 
     @Test
@@ -200,19 +192,17 @@ class TensorDSLTest {
         val dtype = FP32
 
         // Test normal distribution
-        val normalTensor = tensor<FP32, Float>(dtype)
-            .shape(100)
-            .randn(mean = 5.0f, std = 2.0f)
-            .build(testFactory)
+        val normalTensor = with<FP32, Float>(testFactory) {
+            tensor(100) { randn(mean = 5.0f, std = 2.0f) }
+        }
 
         assertNotNull(normalTensor)
         assertEquals(Shape(100), normalTensor.shape)
 
         // Test uniform distribution
-        val uniformTensor = tensor<FP32, Float>(dtype)
-            .shape(50)
-            .uniform(min = -1.0f, max = 1.0f)
-            .build(testFactory)
+        val uniformTensor = with<FP32, Float>(testFactory) {
+            tensor(50) { uniform(min = -1.0f, max = 1.0f) }
+        }
 
         assertNotNull(uniformTensor)
         assertEquals(Shape(50), uniformTensor.shape)
@@ -223,23 +213,17 @@ class TensorDSLTest {
         val dtype = FP32
 
         // Test normalized pixel initialization
-        val normalizedImage = tensor<FP32, Float>(dtype)
-            .image()
-            .rgb(32, 32)
-            .imageInit()
-            .normalizedPixels()
-            .build(testFactory)
+        val normalizedImage = with<FP32, Float>(testFactory) {
+            tensor(3, 32, 32) { uniform(0.0f, 1.0f) }
+        }
 
         assertNotNull(normalizedImage)
         assertEquals(Shape(3, 32, 32), normalizedImage.shape)
 
         // Test black image
-        val blackImage = tensor<FP32, Float>(dtype)
-            .image()
-            .grayscale(64, 64)
-            .imageInit()
-            .black()
-            .build(testFactory)
+        val blackImage = with<FP32, Float>(testFactory) {
+            tensor(1, 64, 64) { zeros() }
+        }
 
         assertNotNull(blackImage)
         assertEquals(Shape(1, 64, 64), blackImage.shape)

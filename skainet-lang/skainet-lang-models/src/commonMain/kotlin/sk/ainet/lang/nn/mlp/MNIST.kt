@@ -1,4 +1,4 @@
-package sk.ainet.lang.nn.cnn
+package sk.ainet.lang.nn.mlp
 
 import sk.ainet.lang.nn.Model
 import sk.ainet.lang.nn.Module
@@ -48,7 +48,7 @@ import sk.ainet.lang.types.FP32
  *
  * @return A [Module] representing the constructed CNN model
  */
-public class MnistCnn() : Model {
+public class MnistMpl() : Model {
 
     public override fun <T : DType, V> model(): Module<FP32, Float> = model
     override fun modelCard(): String {
@@ -59,35 +59,25 @@ public class MnistCnn() : Model {
     private val model = context<FP32, Float> {
         network {
             sequential {
-                // Stage: "conv1"
-                stage("conv1") {
-                    conv2d(outChannels = 16, kernelSize = 5 to 5, stride = 1 to 1, padding = 2 to 2)
-                    activation(id = "relu1") { tensor -> tensor.relu() }
-                    maxPool2d(kernelSize = 2 to 2, stride = 2 to 2)
+                // Note: CNN layers (conv2d, maxPool2d) are not yet implemented in the DSL
+                // This is a simplified MLP version for MNIST classification
+                stage("input") {
+                    flatten() // Flatten 28x28 input to 784
                 }
-                
-                // Stage: "conv2"  
-                stage("conv2") {
-                    conv2d(outChannels = 32, kernelSize = 5 to 5, stride = 1 to 1, padding = 2 to 2)
-                    activation(id = "relu2") { tensor -> tensor.relu() }
-                    maxPool2d(kernelSize = 2 to 2, stride = 2 to 2)
+                stage("hidden1") {
+                    dense(128) {
+                        activation = { tensor -> with(tensor) { relu() } }
+                    }
                 }
-                
-                // Stage: "flatten"
-                stage("flatten") {
-                    flatten()
+                stage("hidden2") {
+                    dense(64) {
+                        activation = { tensor -> with(tensor) { relu() } }
+                    }
                 }
-                
-                // Stage: "dense"
-                stage("dense") {
-                    dense(outputDimension = 128)
-                    activation(id = "relu3") { tensor -> tensor.relu() }
-                }
-                
-                // Stage: "output"
                 stage("output") {
-                    dense(outputDimension = 10)
-                    activation(id = "softmax") { tensor -> tensor.softmax(dim = 1) }
+                    dense(10) {
+                        activation = { tensor -> with(tensor) { softmax(1) } }
+                    }
                 }
             }
         }

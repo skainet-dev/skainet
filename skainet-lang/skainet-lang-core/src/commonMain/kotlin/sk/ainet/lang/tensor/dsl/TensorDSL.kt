@@ -26,7 +26,7 @@ public interface TensorCreationScope<T : DType, V> {
     public val factory: TensorDataFactory
     public val shape: Shape
     public val dtype: KClass<T>
-    
+
     /**
      * Create tensor filled with zeros
      */
@@ -34,7 +34,7 @@ public interface TensorCreationScope<T : DType, V> {
         val data = factory.zeros<T, V>(shape, dtype)
         return VoidOpsTensor(data, dtype)
     }
-    
+
     /**
      * Create tensor filled with ones
      */
@@ -42,7 +42,7 @@ public interface TensorCreationScope<T : DType, V> {
         val data = factory.ones<T, V>(shape, dtype)
         return VoidOpsTensor(data, dtype)
     }
-    
+
     /**
      * Create tensor filled with a constant value
      */
@@ -50,7 +50,7 @@ public interface TensorCreationScope<T : DType, V> {
         val data = factory.full<T, V>(shape, dtype, value)
         return VoidOpsTensor(data, dtype)
     }
-    
+
     /**
      * Create tensor with normal distribution
      */
@@ -58,7 +58,7 @@ public interface TensorCreationScope<T : DType, V> {
         val data = factory.randn<T, V>(shape, dtype, mean, std, random)
         return VoidOpsTensor(data, dtype)
     }
-    
+
     /**
      * Create tensor with uniform distribution
      */
@@ -66,7 +66,7 @@ public interface TensorCreationScope<T : DType, V> {
         val data = factory.uniform<T, V>(shape, dtype, min, max, random)
         return VoidOpsTensor(data, dtype)
     }
-    
+
     /**
      * Create tensor with custom initialization function
      */
@@ -74,7 +74,7 @@ public interface TensorCreationScope<T : DType, V> {
         val data = factory.init<T, V>(shape, dtype, generator)
         return VoidOpsTensor(data, dtype)
     }
-    
+
     /**
      * Create tensor with custom random initialization
      */
@@ -106,7 +106,7 @@ public class TensorFactoryContext<T : DType, V>(
     public fun tensor(vararg dimensions: Int, init: TensorCreationScope<T, V>.(Shape) -> Tensor<T, V>): Tensor<T, V> {
         return tensor(Shape(*dimensions), init)
     }
-    
+
     /**
      * Create tensor with specified shape and initialization strategy
      */
@@ -119,16 +119,13 @@ public class TensorFactoryContext<T : DType, V>(
 /**
  * Entry point for context-aware tensor DSL
  */
-public inline fun <reified T : DType, V> with(factory: TensorDataFactory, content: TensorFactoryContext<T, V>.() -> Tensor<T, V>): Tensor<T, V> {
+public inline fun <reified T : DType, V> with(
+    factory: TensorDataFactory,
+    content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
+) : Tensor<T, V> {
     val context = TensorFactoryContext<T, V>(factory, T::class)
     return context.content()
 }
-
-/**
- * Entry point for tensor DSL - creates a tensor builder (legacy API)
- */
-@Deprecated("Use the new context-aware DSL with 'with(factory) { tensor(...) }' instead")
-public inline fun <reified T : DType, V> tensor(): TensorBuilder<T, V> = TensorBuilder(T::class)
 
 
 
@@ -218,10 +215,29 @@ public class TensorInitializer<T : DType, V>(
             is InitializationType.Zeros -> factory.zeros<T, V>(shape, dtype)
             is InitializationType.Ones -> factory.ones<T, V>(shape, dtype)
             is InitializationType.Fill -> factory.full<T, V>(shape, dtype, initType.value)
-            is InitializationType.Normal -> factory.randn<T, V>(shape, dtype, initType.mean, initType.std, initType.random)
-            is InitializationType.Uniform -> factory.uniform<T, V>(shape, dtype, initType.min, initType.max, initType.random)
+            is InitializationType.Normal -> factory.randn<T, V>(
+                shape,
+                dtype,
+                initType.mean,
+                initType.std,
+                initType.random
+            )
+
+            is InitializationType.Uniform -> factory.uniform<T, V>(
+                shape,
+                dtype,
+                initType.min,
+                initType.max,
+                initType.random
+            )
+
             is InitializationType.Custom -> factory.init<T, V>(shape, dtype, initType.generator)
-            is InitializationType.RandomCustom -> factory.randomInit<T, V>(shape, dtype, initType.generator, initType.random)
+            is InitializationType.RandomCustom -> factory.randomInit<T, V>(
+                shape,
+                dtype,
+                initType.generator,
+                initType.random
+            )
         }
 
         return VoidOpsTensor(data, dtype)

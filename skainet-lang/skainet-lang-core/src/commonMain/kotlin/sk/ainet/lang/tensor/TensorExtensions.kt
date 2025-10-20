@@ -18,8 +18,12 @@ public operator fun <T : DType, V> Tensor<T, V>.div(other: Tensor<T, V>): Tensor
 public fun <T : DType, V> Tensor<T, V>.reshape(newShape: Shape): Tensor<T, V> = ops.reshape(this, newShape)
 public fun <T : DType, V> Tensor<T, V>.relu(): Tensor<T, V> = ops.relu(this)
 public fun <T : DType, V> Tensor<T, V>.sigmoid(): Tensor<T, V> = ops.sigmoid(this)
+public fun <T : DType, V> Tensor<T, V>.silu(): Tensor<T, V> = ops.silu(this)
+public fun <T : DType, V> Tensor<T, V>.gelu(): Tensor<T, V> = ops.gelu(this)
 public fun <T : DType, V> Tensor<T, V>.softmax(dim: Int = -1): Tensor<T, V> = ops.softmax(this, dim)
 public fun <T : DType, V> Tensor<T, V>.sum(dim: Int? = null): Tensor<T, V> = ops.sum(this, dim)
 public fun <T : DType, V> Tensor<T, V>.mean(dim: Int? = null): Tensor<T, V> = ops.mean(this, dim)
+public fun <T : DType, V> Tensor<T, V>.variance(dim: Int? = null): Tensor<T, V> = ops.variance(this, dim)
+public fun <T : DType, V> Tensor<T, V>.sqrt(): Tensor<T, V> = ops.sqrt(this)
 
 // Global matmul function for the Linear layer usage pattern (removed due to duplicate with extension function)

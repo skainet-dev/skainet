@@ -4,12 +4,17 @@ import sk.ainet.lang.nn.Model
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.dsl.context
 import sk.ainet.lang.nn.dsl.network
+import sk.ainet.lang.nn.reflection.describe
+import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.relu
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP32
 
 public class SinusApproximator() : Model {
-    public override fun <T : DType, V> model(): Module<FP32, Float> = context<FP32, Float> {
+    public override fun <T : DType, V> model(): Module<FP32, Float> = model
+
+
+    private val model = context<FP32, Float> {
         network {
             input(1)  // Single input for x value
 
@@ -330,7 +335,6 @@ public class SinusApproximator() : Model {
     }
 
     override fun modelCard(): String {
-        TODO("Not yet implemented")
+        return model.describe(Shape(1), FP32::class )
     }
-
 }
