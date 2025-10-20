@@ -8,7 +8,7 @@ kotlinxSerializationJson = "1.9.0"
 ktorClientCore = "3.3.1"
 ktorClientPlugins = "3.1.1"
 logbackClassic = "1.5.20"
-kover = "0.9.2"
+kover = "0.9.3"
 binaryCompatibilityValidator = "0.18.1"
 
 
