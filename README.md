@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Maven Central](https://img.shields.io/maven-central/v/sk.ainet.core/skainet-lang-api.svg)](https://central.sonatype.com/artifact/sk.ainet.core/skainet-lang-api)
+[![Maven Central](https://img.shields.io/maven-central/v/sk.ainet.core/skainet-lang-core.svg)](https://central.sonatype.com/artifact/sk.ainet.core/skainet-lang-core)
 
 # SKaiNET
 
