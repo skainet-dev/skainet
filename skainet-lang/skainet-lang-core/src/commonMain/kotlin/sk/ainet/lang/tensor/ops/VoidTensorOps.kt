@@ -128,6 +128,17 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, input.dtype)
     }
 
+    override fun <T : DType> maxPool2d(
+        input: Tensor<T, V>,
+        kernelSize: Pair<Int, Int>,
+        stride: Pair<Int, Int>,
+        padding: Pair<Int, Int>
+    ): Tensor<T, V> {
+        val resultShape = calculateMaxPool2dShape(input.shape, kernelSize, stride, padding)
+        val resultData = dataFactory.zeros<T, V>(resultShape, input.dtype)
+        return VoidOpsTensor(resultData, input.dtype)
+    }
+
     override fun <T : DType> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> {
         validateReshape(tensor.shape, newShape)
         val resultData = dataFactory.zeros<T, V>(newShape, tensor.dtype)
@@ -403,5 +414,35 @@ public class VoidTensorOps<V> : TensorOps<V> {
         val outputWidth = ((inputWidth + 2 * padW - dilationW * (kernelWidth - 1) - 1) / strideW) + 1
         
         return Shape(batch, outChannels, outputHeight, outputWidth)
+    }
+
+    /**
+     * Calculates the result shape for maxPool2d operation.
+     * Input shape: (batch, channels, height, width)
+     * Output shape: (batch, channels, out_height, out_width)
+     */
+    private fun calculateMaxPool2dShape(
+        inputShape: Shape,
+        kernelSize: Pair<Int, Int>,
+        stride: Pair<Int, Int>,
+        padding: Pair<Int, Int>
+    ): Shape {
+        if (inputShape.rank != 4) {
+            throw IllegalArgumentException("MaxPool2d input must be 4D tensor (batch, channels, height, width)")
+        }
+        
+        val batch = inputShape.dimensions[0]
+        val channels = inputShape.dimensions[1]
+        val inputHeight = inputShape.dimensions[2]
+        val inputWidth = inputShape.dimensions[3]
+        
+        val (kernelH, kernelW) = kernelSize
+        val (strideH, strideW) = stride
+        val (padH, padW) = padding
+        
+        val outputHeight = ((inputHeight + 2 * padH - kernelH) / strideH) + 1
+        val outputWidth = ((inputWidth + 2 * padW - kernelW) / strideW) + 1
+        
+        return Shape(batch, channels, outputHeight, outputWidth)
     }
 }
