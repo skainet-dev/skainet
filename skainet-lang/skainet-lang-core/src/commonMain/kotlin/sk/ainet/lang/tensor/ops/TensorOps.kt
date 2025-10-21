@@ -38,6 +38,10 @@ public interface TensorOps<V> {
     // Shape operations
     public fun <T : DType> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V>
     public fun <T : DType> flatten(tensor: Tensor<T, V>, startDim: Int = 0, endDim: Int = -1): Tensor<T, V>
+    public fun <T : DType> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V>
+    public fun <T : DType> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>>
+    public fun <T : DType> squeeze(tensor: Tensor<T, V>, dim: Int? = null): Tensor<T, V>
+    public fun <T : DType> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V>
     
     // Activation functions
     public fun <T : DType> relu(tensor: Tensor<T, V>): Tensor<T, V>

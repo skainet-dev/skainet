@@ -154,6 +154,32 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
+    override fun <T : DType> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> {
+        val resultShape = calculateConcatShape(tensors.map { it.shape }, dim)
+        val resultData = dataFactory.zeros<T, V>(resultShape, tensors.first().dtype)
+        return VoidOpsTensor(resultData, tensors.first().dtype)
+    }
+
+    override fun <T : DType> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> {
+        val resultShapes = calculateSplitShapes(tensor.shape, splitSize, dim)
+        return resultShapes.map { shape ->
+            val resultData = dataFactory.zeros<T, V>(shape, tensor.dtype)
+            VoidOpsTensor(resultData, tensor.dtype)
+        }
+    }
+
+    override fun <T : DType> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+        val resultShape = calculateSqueezeShape(tensor.shape, dim)
+        val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
+        return VoidOpsTensor(resultData, tensor.dtype)
+    }
+
+    override fun <T : DType> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
+        val resultShape = calculateUnsqueezeShape(tensor.shape, dim)
+        val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
+        return VoidOpsTensor(resultData, tensor.dtype)
+    }
+
     override fun <T : DType> relu(tensor: Tensor<T, V>): Tensor<T, V> {
         // Activation functions preserve shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
@@ -447,5 +473,131 @@ public class VoidTensorOps<V> : TensorOps<V> {
         val outputWidth = ((inputWidth + 2 * padW - kernelW) / strideW) + 1
         
         return Shape(batch, channels, outputHeight, outputWidth)
+    }
+
+    /**
+     * Calculates the result shape for concat operation
+     */
+    private fun calculateConcatShape(shapes: List<Shape>, dim: Int): Shape {
+        if (shapes.isEmpty()) {
+            throw IllegalArgumentException("Cannot concatenate empty list of tensors")
+        }
+        
+        val firstShape = shapes.first()
+        val actualDim = if (dim < 0) firstShape.rank + dim else dim
+        
+        if (actualDim < 0 || actualDim >= firstShape.rank) {
+            throw IllegalArgumentException("Concatenation dimension $dim is out of bounds for tensor with ${firstShape.rank} dimensions")
+        }
+        
+        // Validate all shapes are compatible (same except in concat dimension)
+        for (shape in shapes.drop(1)) {
+            if (shape.rank != firstShape.rank) {
+                throw IllegalArgumentException("All tensors must have the same number of dimensions for concatenation")
+            }
+            for (i in shape.dimensions.indices) {
+                if (i != actualDim && shape.dimensions[i] != firstShape.dimensions[i]) {
+                    throw IllegalArgumentException(
+                        "All tensors must have the same shape except in the concatenation dimension. " +
+                        "Dimension $i: ${firstShape.dimensions[i]} vs ${shape.dimensions[i]}"
+                    )
+                }
+            }
+        }
+        
+        // Calculate result shape
+        val resultDims = firstShape.dimensions.copyOf()
+        resultDims[actualDim] = shapes.sumOf { it.dimensions[actualDim] }
+        
+        return Shape(resultDims)
+    }
+
+    /**
+     * Calculates the result shapes for split operation
+     */
+    private fun calculateSplitShapes(shape: Shape, splitSize: Int, dim: Int): List<Shape> {
+        val actualDim = if (dim < 0) shape.rank + dim else dim
+        
+        if (actualDim < 0 || actualDim >= shape.rank) {
+            throw IllegalArgumentException("Split dimension $dim is out of bounds for tensor with ${shape.rank} dimensions")
+        }
+        
+        if (splitSize <= 0) {
+            throw IllegalArgumentException("Split size must be positive, got $splitSize")
+        }
+        
+        val dimSize = shape.dimensions[actualDim]
+        if (dimSize % splitSize != 0) {
+            throw IllegalArgumentException(
+                "Tensor dimension $dimSize is not divisible by split size $splitSize"
+            )
+        }
+        
+        val numSplits = dimSize / splitSize
+        val resultDims = shape.dimensions.copyOf()
+        resultDims[actualDim] = splitSize
+        
+        return List(numSplits) { Shape(resultDims) }
+    }
+
+    /**
+     * Calculates the result shape for squeeze operation
+     */
+    private fun calculateSqueezeShape(shape: Shape, dim: Int?): Shape {
+        return if (dim == null) {
+            // Remove all dimensions of size 1
+            val resultDims = shape.dimensions.filter { it != 1 }.toIntArray()
+            if (resultDims.isEmpty()) {
+                Shape(1) // If all dimensions were 1, result is scalar
+            } else {
+                Shape(resultDims)
+            }
+        } else {
+            val actualDim = if (dim < 0) shape.rank + dim else dim
+            
+            if (actualDim < 0 || actualDim >= shape.rank) {
+                throw IllegalArgumentException("Squeeze dimension $dim is out of bounds for tensor with ${shape.rank} dimensions")
+            }
+            
+            if (shape.dimensions[actualDim] != 1) {
+                throw IllegalArgumentException(
+                    "Cannot squeeze dimension $actualDim with size ${shape.dimensions[actualDim]}. Only dimensions of size 1 can be squeezed."
+                )
+            }
+            
+            // Remove the specified dimension
+            val resultDims = shape.dimensions.filterIndexed { index, _ -> index != actualDim }.toIntArray()
+            if (resultDims.isEmpty()) {
+                Shape(1) // Result is scalar if all dimensions are removed
+            } else {
+                Shape(resultDims)
+            }
+        }
+    }
+
+    /**
+     * Calculates the result shape for unsqueeze operation
+     */
+    private fun calculateUnsqueezeShape(shape: Shape, dim: Int): Shape {
+        val newRank = shape.rank + 1
+        val actualDim = if (dim < 0) newRank + dim else dim
+        
+        if (actualDim < 0 || actualDim >= newRank) {
+            throw IllegalArgumentException("Unsqueeze dimension $dim is out of bounds for new tensor with $newRank dimensions")
+        }
+        
+        val resultDims = IntArray(newRank)
+        var originalIndex = 0
+        
+        for (i in 0 until newRank) {
+            if (i == actualDim) {
+                resultDims[i] = 1
+            } else {
+                resultDims[i] = shape.dimensions[originalIndex]
+                originalIndex++
+            }
+        }
+        
+        return Shape(resultDims)
     }
 }
