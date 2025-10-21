@@ -31,11 +31,42 @@ public class GraphTensorOps<V>(
         )
     }
 
+    private fun <T : DType> ensureInputNode(tensor: Tensor<T, V>, inputName: String): GraphNode {
+        // Check if a node for this tensor already exists
+        val existingNode = graph.nodes.find { 
+            it.operation.type == "input" && it.outputs.any { spec -> spec.name == inputName }
+        }
+        
+        if (existingNode != null) {
+            return existingNode
+        }
+        
+        // Create new input node
+        val inputOperation = InputOperation<T, V>()
+        val inputNodeId = generateNodeId("input")
+        val tensorSpec = createTensorSpec(tensor, inputName)
+        
+        val inputNode = GraphNode(
+            id = inputNodeId,
+            operation = inputOperation,
+            inputs = emptyList(),
+            outputs = listOf(tensorSpec)
+        )
+        
+        graph.addNode(inputNode)
+        return inputNode
+    }
+
     // Basic mathematical operations
     override fun <T : DType> add(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.add(a, b)
         
         if (executionContext.isRecording) {
+            // Ensure input nodes exist for both tensors
+            val inputNodeA = ensureInputNode(a, "tensor_a")
+            val inputNodeB = ensureInputNode(b, "tensor_b")
+            
+            // Create the addition operation node
             val operation = AddOperation<T, V>()
             val nodeId = generateNodeId("add")
             val inputs = listOf(
@@ -44,8 +75,12 @@ public class GraphTensorOps<V>(
             )
             val outputs = listOf(createTensorSpec(result, "output_0"))
             
-            val node = GraphNode(nodeId, operation, inputs, outputs)
-            graph.addNode(node)
+            val addNode = GraphNode(nodeId, operation, inputs, outputs)
+            graph.addNode(addNode)
+            
+            // Add edges from input nodes to the addition node
+            graph.addEdge(GraphEdge("edge_a_to_add", inputNodeA, addNode, 0, 0, inputNodeA.outputs.first()))
+            graph.addEdge(GraphEdge("edge_b_to_add", inputNodeB, addNode, 0, 1, inputNodeB.outputs.first()))
         }
         
         return result

@@ -44,7 +44,14 @@ public fun drawDot(graph: ComputeGraph, rankdir: String = "LR"): DotGraph {
         
         val labelContent = "${node.operationName} | ${node.id}"
         
-        dotContent.appendLine("    $nodeId [label=\"$labelContent\", shape=record];")
+        // Assign shape based on operation type
+        val shapeAttributes = when (node.operation.type) {
+            "input" -> "shape=record, style=filled, fillcolor=lightblue"
+            "math" -> "shape=circle"
+            else -> "shape=record" // values and other operations use rectangle
+        }
+        
+        dotContent.appendLine("    $nodeId [label=\"$labelContent\", $shapeAttributes];")
         
         // Add operation node if operation has parameters
         if (node.operation.parameters.isNotEmpty()) {
@@ -103,7 +110,14 @@ public fun drawDot(graph: ComputeGraph, outputNodes: List<GraphNode>, rankdir: S
         
         val labelContent = "${node.operationName} | ${node.id}"
         
-        dotContent.appendLine("    $nodeId [label=\"$labelContent\", shape=record];")
+        // Assign shape based on operation type
+        val shapeAttributes = when (node.operation.type) {
+            "input" -> "shape=record, style=filled, fillcolor=lightblue"
+            "math" -> "shape=circle"
+            else -> "shape=record" // values and other operations use rectangle
+        }
+        
+        dotContent.appendLine("    $nodeId [label=\"$labelContent\", $shapeAttributes];")
         
         // Add operation node if operation has parameters
         if (node.operation.parameters.isNotEmpty()) {

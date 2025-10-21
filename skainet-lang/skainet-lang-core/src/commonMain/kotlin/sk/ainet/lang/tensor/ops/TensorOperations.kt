@@ -5,6 +5,34 @@ import sk.ainet.lang.types.DType
 import sk.ainet.lang.graph.*
 
 /**
+ * Input tensor operation for graph representation
+ */
+public class InputOperation<T : DType, V>(
+    parameters: Map<String, Any> = emptyMap()
+) : BaseOperation("input", "input", parameters) {
+    
+    override fun <T2 : DType, V2> execute(inputs: List<Tensor<T2, V2>>): List<Tensor<T2, V2>> {
+        require(inputs.isEmpty()) { "Input operation should not have inputs" }
+        throw UnsupportedOperationException("Input operations don't execute - they represent tensor values")
+    }
+    
+    override fun validateInputs(inputs: List<TensorSpec>): ValidationResult {
+        if (inputs.isNotEmpty()) {
+            return ValidationResult.Invalid(listOf("Input operation should not have inputs, got ${inputs.size}"))
+        }
+        return ValidationResult.Valid
+    }
+    
+    override fun inferOutputs(inputs: List<TensorSpec>): List<TensorSpec> {
+        require(inputs.isEmpty()) { "Input operation should not have inputs" }
+        // This will be set by the caller with the actual tensor spec
+        return emptyList()
+    }
+    
+    override fun clone(newParameters: Map<String, Any>): Operation = InputOperation<T, V>(newParameters)
+}
+
+/**
  * Basic math operations for graph-based execution
  */
 public class AddOperation<T : DType, V>(
