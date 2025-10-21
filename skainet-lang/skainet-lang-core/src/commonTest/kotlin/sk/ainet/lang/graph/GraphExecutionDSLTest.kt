@@ -1,7 +1,6 @@
 package sk.ainet.lang.graph
 
 import sk.ainet.lang.tensor.dsl.tensor
-import sk.ainet.lang.tensor.dsl.Shape1
 import sk.ainet.lang.tensor.ops.plus
 import sk.ainet.lang.tensor.ops.minus
 import sk.ainet.lang.tensor.ops.times
@@ -39,11 +38,11 @@ class GraphExecutionDSLTest {
     fun testExactUsagePatternFromIssue() {
         // Create tensors exactly as specified in the issue
         val a = tensor<FP32, Float> {
-            shape(Shape1(1)) { ones() }
+            shape(1) { ones() }
         }
         
         val b = tensor<FP32, Float> {
-            shape(Shape1(1)) { ones() }
+            shape(1) { ones() }
         }
         
         // Execute graph operation exactly as specified
@@ -71,15 +70,15 @@ class GraphExecutionDSLTest {
     @Test
     fun testMultipleOperationsInExecBlock() {
         val a = tensor<FP32, Float> {
-            shape(Shape1(2)) { ones() }
+            shape(2) { ones() }
         }
         
         val b = tensor<FP32, Float> {
-            shape(Shape1(2)) { ones() }
+            shape(2) { ones() }
         }
         
         val c = tensor<FP32, Float> {
-            shape(Shape1(2)) { ones() }
+            shape(2) { ones() }
         }
         
         val result = exec<FP32, Float, Tensor<FP32, Float>> {
@@ -98,11 +97,11 @@ class GraphExecutionDSLTest {
     @Test
     fun testOperationsOutsideExecBlockFail() {
         val a = tensor<FP32, Float> {
-            shape(Shape1(1)) { ones() }
+            shape(1) { ones() }
         }
         
         val b = tensor<FP32, Float> {
-            shape(Shape1(1)) { ones() }
+            shape(1) { ones() }
         }
         
         try {
@@ -123,11 +122,11 @@ class GraphExecutionDSLTest {
     @Test
     fun testAdditionalTensorOperations() {
         val a = tensor<FP32, Float> {
-            shape(Shape1(3)) { ones() }
+            shape(3) { ones() }
         }
         
         val b = tensor<FP32, Float> {
-            shape(Shape1(3)) { ones() }
+            shape(3) { ones() }
         }
         
         val result = exec<FP32, Float, Tensor<FP32, Float>> {
