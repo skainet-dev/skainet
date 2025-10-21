@@ -145,7 +145,7 @@ public class DefaultComputeGraph : ComputeGraph {
         // Check for cycles by attempting topological sort
         try {
             getTopologicalOrder()
-        } catch (e: IllegalStateException) {
+        } catch (_: IllegalStateException) {
             errors.add("Graph contains cycles")
         }
         
