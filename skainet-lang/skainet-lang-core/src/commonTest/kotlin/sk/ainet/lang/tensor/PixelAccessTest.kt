@@ -17,8 +17,8 @@ class PixelAccessTest {
         println("[DEBUG_LOG] Testing pixel-by-pixel access for 4D tensor")
 
         // Create a sample 4D tensor for computer vision: [Batch=2, Channels=3, Height=4, Width=4]
-        val imageTensor = with<FP32, Float>(testFactory) {
-            tensor(2, 3, 4, 4) { _ ->
+        val imageTensor = tensor<FP32, Float>(testFactory) {
+            shape(2, 3, 4, 4) { _ ->
                 init { indices ->
                     // Initialize with meaningful pattern: batch*1000 + channel*100 + height*10 + width
                     (indices[0] * 1000 + indices[1] * 100 + indices[2] * 10 + indices[3]).toFloat()
@@ -54,8 +54,8 @@ class PixelAccessTest {
         println("[DEBUG_LOG] Testing specific pixel access patterns")
 
         // Create a 4D tensor with a different pattern
-        val tensor = with<FP32, Float>(testFactory) {
-            tensor(2, 3, 4, 4) { _ ->
+        val tensor = tensor<FP32, Float>(testFactory) {
+            shape(2, 3, 4, 4) { _ ->
                 init { indices ->
                     // Pattern: sum of all indices
                     (indices[0] + indices[1] + indices[2] + indices[3]).toFloat()
@@ -82,8 +82,8 @@ class PixelAccessTest {
     fun testFirstBatchFirstChannelPixels() {
         println("[DEBUG_LOG] Testing comprehensive access to first batch, first channel")
 
-        val imageTensor = with<FP32, Float>(testFactory) {
-            tensor(2, 3, 4, 4) { _ ->
+        val imageTensor = tensor<FP32, Float>(testFactory) {
+            shape(2, 3, 4, 4) { _ ->
                 init { indices ->
                     // Initialize with meaningful pattern: batch*1000 + channel*100 + height*10 + width
                     (indices[0] * 1000 + indices[1] * 100 + indices[2] * 10 + indices[3]).toFloat()
@@ -127,8 +127,8 @@ class PixelAccessTest {
     fun testAllChannelsFromFirstBatch() {
         println("[DEBUG_LOG] Testing access to all channels from first batch")
 
-        val imageTensor = with<FP32, Float>(testFactory) {
-            tensor(2, 3, 4, 4) { _ ->
+        val imageTensor = tensor<FP32, Float>(testFactory) {
+            shape(2, 3, 4, 4) { _ ->
                 init { indices ->
                     // Initialize with meaningful pattern: batch*1000 + channel*100 + height*10 + width
                     (indices[0] * 1000 + indices[1] * 100 + indices[2] * 10 + indices[3]).toFloat()
@@ -163,8 +163,8 @@ class PixelAccessTest {
     fun testBatchSeparation() {
         println("[DEBUG_LOG] Testing pixel access across different batches")
 
-        val imageTensor = with<FP32, Float>(testFactory) {
-            tensor(2, 3, 4, 4) { _ ->
+        val imageTensor = tensor<FP32, Float>(testFactory) {
+            shape(2, 3, 4, 4) { _ ->
                 init { indices ->
                     // Initialize with meaningful pattern: batch*1000 + channel*100 + height*10 + width
                     (indices[0] * 1000 + indices[1] * 100 + indices[2] * 10 + indices[3]).toFloat()
@@ -199,8 +199,8 @@ class PixelAccessTest {
     fun testEdgeAndCornerPixels() {
         println("[DEBUG_LOG] Testing edge and corner pixel access")
 
-        val imageTensor = with<FP32, Float>(testFactory) {
-            tensor(2, 3, 4, 4) { _ ->
+        val imageTensor = tensor<FP32, Float>(testFactory) {
+            shape(2, 3, 4, 4) { _ ->
                 init { indices ->
                     // Simple pattern: just the sum of indices
                     (indices[0] + indices[1] + indices[2] + indices[3]).toFloat()

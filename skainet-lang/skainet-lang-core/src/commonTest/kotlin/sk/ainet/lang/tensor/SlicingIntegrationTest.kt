@@ -20,9 +20,9 @@ class SlicingIntegrationTest {
     fun testCompatibilityWithExistingTensorOperations() {
         println("[DEBUG_LOG] Testing compatibility with existing tensor operations")
 
-        with(testFactory) {
+        tensor(testFactory) {
             // Create base tensor
-            val tensor = tensor(4, 3, 2) { shape ->
+            val tensor = shape(4, 3, 2) { shape ->
                 init { indices ->
                     var flatIndex = 0
                     var stride = 1
@@ -68,8 +68,8 @@ class SlicingIntegrationTest {
     fun testSliceViewVsSliceCopyBehavioralDifferences() {
         println("[DEBUG_LOG] Testing sliceView() vs sliceCopy() behavioral differences")
 
-        with(testFactory) {
-            val tensor = tensor(4, 3, 2) { shape ->
+        tensor(testFactory) {
+            val tensor = shape(4, 3, 2) { shape ->
                 init { indices ->
                     var flatIndex = 0
                     var stride = 1
@@ -110,8 +110,8 @@ class SlicingIntegrationTest {
     fun testErrorHandlingAndValidationInDSL() {
         println("[DEBUG_LOG] Testing error handling and validation in DSL")
 
-        with<FP32, Float>(testFactory) {
-            val tensor = tensor(4, 3, 2) { shape ->
+        tensor<FP32, Float>(testFactory) {
+            val tensor = shape(4, 3, 2) { shape ->
                 zeros()
             }
 
@@ -169,18 +169,18 @@ class SlicingIntegrationTest {
     fun testBackwardCompatibilityWithExistingTensorCreationPatterns() {
         println("[DEBUG_LOG] Testing backward compatibility with existing tensor creation patterns")
 
-        with<FP32, Float>(testFactory) {
+        tensor<FP32, Float>(testFactory) {
             // Test with various tensor creation patterns
             val testCases = listOf(
-                "zeros" to { shape: Shape -> tensor(shape) { zeros() } },
-                "ones" to { shape: Shape -> tensor(shape) { ones() } },
-                "full" to { shape: Shape -> tensor(shape) { full(5.0f) } },
-                "uniform" to { shape: Shape -> tensor(shape) { uniform(0.0f, 1.0f, Random(42)) } }
+                "zeros" to { shape: Shape -> shape(shape) { zeros() } },
+                "ones" to { shape: Shape -> shape(shape) { ones() } },
+                "full" to { shape: Shape -> shape(shape) { full(5.0f) } },
+                "uniform" to { shape: Shape -> shape(shape) { uniform(0.0f, 1.0f, Random(42)) } }
             )
 
             for ((name, factory) in testCases) {
                 val tensorData = factory(Shape(4, 3, 2))
-                val tensor = tensor(4, 3, 2) {
+                val tensor = shape(4, 3, 2) {
                     // Create tensor using the factory data
                     init { indices ->
                         tensorData.data.get(*indices)
@@ -210,9 +210,9 @@ class SlicingIntegrationTest {
     fun testBatchProcessingScenarios() {
         println("[DEBUG_LOG] Testing batch processing scenarios")
 
-        with(testFactory) {
+        tensor(testFactory) {
             // Create dataset tensor: (batch_size=32, features=128)
-            val dataset = tensor(32, 128) {
+            val dataset = shape(32, 128) {
                 init { indices ->
                     // Create synthetic data with batch index as primary component
                     indices[0].toFloat() * 1000 + indices[1].toFloat()
@@ -243,7 +243,7 @@ class SlicingIntegrationTest {
 
             assertEquals(4, batches.size)
             println("[DEBUG_LOG] Mini-batch extraction verified with ${batches.size} batches of size $batchSize")
-            tensor(4, 3, 2) {
+            shape(4, 3, 2) {
                 zeros()
             }
         }
@@ -254,9 +254,9 @@ class SlicingIntegrationTest {
     fun testFeatureExtractionUseCases() {
         println("[DEBUG_LOG] Testing feature extraction use cases")
 
-        with(testFactory) {
+        tensor(testFactory) {
             // Create NCHW image tensor: (batch=4, channels=3, height=32, width=32)
-            val images = tensor(4, 3, 32, 32) { shape ->
+            val images = shape(4, 3, 32, 32) { shape ->
                 init { indices ->
                     // Create synthetic image data
                     val batch = indices[0]
@@ -312,9 +312,9 @@ class SlicingIntegrationTest {
     fun testSequenceProcessingWithSlidingWindows() {
         println("[DEBUG_LOG] Testing sequence processing with sliding windows")
 
-        with(testFactory) {
+        tensor(testFactory) {
             // Create sequence tensor: (batch=2, sequence_length=100, features=64)
-            val sequences = tensor(2, 100, 64) { shape ->
+            val sequences = shape(2, 100, 64) { shape ->
                 init { indices ->
                     // Create synthetic sequence data
                     val batch = indices[0]
@@ -362,9 +362,9 @@ class SlicingIntegrationTest {
     fun testMultiHeadAttentionAndModelLayerOutputPatterns() {
         println("[DEBUG_LOG] Testing multi-head attention and model layer output patterns")
 
-        with(testFactory) {
+        tensor(testFactory) {
             // Create attention tensor: (batch=4, heads=8, seq_length=64, head_dim=32)
-            val attention = tensor(4, 8, 64, 32) { shape ->
+            val attention = shape(4, 8, 64, 32) { shape ->
                 init { indices ->
                     // Create synthetic attention data
                     val batch = indices[0]

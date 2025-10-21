@@ -453,3 +453,93 @@ public class SigmoidOperation<T : DType, V>(
     
     override fun clone(newParameters: Map<String, Any>): Operation = SigmoidOperation<T, V>(newParameters)
 }
+
+/**
+ * Additional shape operations
+ */
+public class SqueezeOperation<T : DType, V>(
+    parameters: Map<String, Any> = emptyMap()
+) : BaseOperation("squeeze", "shape", parameters) {
+    
+    override fun <T2 : DType, V2> execute(inputs: List<Tensor<T2, V2>>): List<Tensor<T2, V2>> {
+        require(inputs.size == 1) { "Squeeze operation requires exactly 1 input" }
+        throw UnsupportedOperationException("Direct execution not supported in graph mode")
+    }
+    
+    override fun validateInputs(inputs: List<TensorSpec>): ValidationResult {
+        if (inputs.size != 1) {
+            return ValidationResult.Invalid(listOf("Squeeze operation requires exactly 1 input, got ${inputs.size}"))
+        }
+        return ValidationResult.Valid
+    }
+    
+    override fun inferOutputs(inputs: List<TensorSpec>): List<TensorSpec> {
+        require(inputs.size == 1) { "Squeeze operation requires exactly 1 input" }
+        val inputShape = inputs[0].shape
+        val dimParam = parameters["dim"] as? Int
+        val dim = if (dimParam == -1) null else dimParam
+        val outputShape = if (inputShape != null) {
+            if (dim != null) {
+                // Remove specific dimension if it has size 1
+                inputShape.toMutableList().apply {
+                    if (dim >= 0 && dim < size && this[dim] == 1) {
+                        removeAt(dim)
+                    }
+                }
+            } else {
+                // Remove all dimensions with size 1
+                inputShape.filter { it != 1 }
+            }
+        } else null
+        
+        return listOf(
+            TensorSpec(
+                name = "squeeze_output",
+                shape = outputShape,
+                dtype = inputs[0].dtype,
+                requiresGrad = inputs[0].requiresGrad
+            )
+        )
+    }
+    
+    override fun clone(newParameters: Map<String, Any>): Operation = SqueezeOperation<T, V>(newParameters)
+}
+
+public class UnsqueezeOperation<T : DType, V>(
+    parameters: Map<String, Any> = emptyMap()
+) : BaseOperation("unsqueeze", "shape", parameters) {
+    
+    override fun <T2 : DType, V2> execute(inputs: List<Tensor<T2, V2>>): List<Tensor<T2, V2>> {
+        require(inputs.size == 1) { "Unsqueeze operation requires exactly 1 input" }
+        throw UnsupportedOperationException("Direct execution not supported in graph mode")
+    }
+    
+    override fun validateInputs(inputs: List<TensorSpec>): ValidationResult {
+        if (inputs.size != 1) {
+            return ValidationResult.Invalid(listOf("Unsqueeze operation requires exactly 1 input, got ${inputs.size}"))
+        }
+        return ValidationResult.Valid
+    }
+    
+    override fun inferOutputs(inputs: List<TensorSpec>): List<TensorSpec> {
+        require(inputs.size == 1) { "Unsqueeze operation requires exactly 1 input" }
+        val inputShape = inputs[0].shape
+        val dim = parameters["dim"] as? Int ?: 0
+        val outputShape = if (inputShape != null) {
+            inputShape.toMutableList().apply {
+                add(if (dim >= 0) dim else size + dim + 1, 1)
+            }
+        } else null
+        
+        return listOf(
+            TensorSpec(
+                name = "unsqueeze_output",
+                shape = outputShape,
+                dtype = inputs[0].dtype,
+                requiresGrad = inputs[0].requiresGrad
+            )
+        )
+    }
+    
+    override fun clone(newParameters: Map<String, Any>): Operation = UnsqueezeOperation<T, V>(newParameters)
+}

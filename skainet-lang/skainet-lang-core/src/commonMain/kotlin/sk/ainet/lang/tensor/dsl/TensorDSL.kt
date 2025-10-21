@@ -3,6 +3,7 @@ package sk.ainet.lang.tensor.dsl
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.VoidOpsTensor
+import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.types.DType
 import kotlin.random.Random
@@ -103,14 +104,14 @@ public class TensorFactoryContext<T : DType, V>(
     /**
      * Create tensor with specified shape and initialization strategy
      */
-    public fun tensor(vararg dimensions: Int, init: TensorCreationScope<T, V>.(Shape) -> Tensor<T, V>): Tensor<T, V> {
-        return tensor(Shape(*dimensions), init)
+    public fun shape(vararg dimensions: Int, init: TensorCreationScope<T, V>.(Shape) -> Tensor<T, V>): Tensor<T, V> {
+        return shape(Shape(*dimensions), init)
     }
 
     /**
      * Create tensor with specified shape and initialization strategy
      */
-    public fun tensor(shape: Shape, init: TensorCreationScope<T, V>.(Shape) -> Tensor<T, V>): Tensor<T, V> {
+    public fun shape(shape: Shape, init: TensorCreationScope<T, V>.(Shape) -> Tensor<T, V>): Tensor<T, V> {
         val scope = TensorCreationScopeImpl<T, V>(factory, shape, dtype)
         return scope.init(shape)
     }
@@ -119,14 +120,20 @@ public class TensorFactoryContext<T : DType, V>(
 /**
  * Entry point for context-aware tensor DSL
  */
-public inline fun <reified T : DType, V> with(
+public inline fun <reified T : DType, V> tensor(
     factory: TensorDataFactory,
     content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
-) : Tensor<T, V> {
+): Tensor<T, V> {
     val context = TensorFactoryContext<T, V>(factory, T::class)
     return context.content()
 }
 
+/**
+ * Entry point for context-aware tensor DSL
+ */
+public inline fun <reified T : DType, V> tensor(
+    content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
+): Tensor<T, V> = tensor(DenseTensorDataFactory(), content)
 
 
 /**

@@ -17,8 +17,8 @@ class SlicingTest {
     fun testIndexMappingCorrectness() {
         println("[DEBUG_LOG] Testing index mapping correctness for all slice types")
 
-        val tensor = with<FP32, Float>(testFactory) {
-            tensor(4, 3, 2) { shape ->
+        val tensor = tensor<FP32, Float>(testFactory) {
+            shape(4, 3, 2) { shape ->
                 init { indices ->
                     var flatIndex = 0
                     var stride = 1
@@ -67,8 +67,8 @@ class SlicingTest {
     fun testEdgeCases() {
         println("[DEBUG_LOG] Testing edge cases for slicing")
 
-        val tensor = with<FP32, Float>(testFactory) {
-            tensor(4, 3, 2) { shape ->
+        val tensor = tensor<FP32, Float>(testFactory) {
+            shape(4, 3, 2) { shape ->
                 init { indices ->
                     var flatIndex = 0
                     var stride = 1
@@ -119,8 +119,8 @@ class SlicingTest {
     fun testSliceCompositionAndViewChaining() {
         println("[DEBUG_LOG] Testing slice composition and view chaining")
 
-        val tensor = with<FP32, Float>(testFactory) {
-            tensor(8, 6, 4) { shape ->
+        val tensor = tensor<FP32, Float>(testFactory) {
+            shape(8, 6, 4) { shape ->
                 init { indices ->
                     var flatIndex = 0
                     var stride = 1
@@ -167,9 +167,9 @@ class SlicingTest {
     fun testShapeCalculationForSlicedViews() {
         println("[DEBUG_LOG] Testing shape calculation for sliced views")
 
-        val tensor = with<FP32, Float>(testFactory) {
+        val tensor = tensor<FP32, Float>(testFactory) {
 
-            tensor(10, 8, 6, 4) { shape ->
+            shape(10, 8, 6, 4) { shape ->
                 init { indices ->
                     var flatIndex = 0
                     var stride = 1
@@ -227,9 +227,9 @@ class SlicingTest {
     fun testZeroCopyBehavior() {
         println("[DEBUG_LOG] Testing zero-copy behavior")
 
-        val tensor = with<FP32, Float>(testFactory) {
+        val tensor = tensor<FP32, Float>(testFactory) {
 
-            tensor(1000, 1000) { shape ->
+            shape(1000, 1000) { shape ->
                 init { indices ->
                     var flatIndex = 0
                     var stride = 1
@@ -274,9 +274,9 @@ class SlicingTest {
 
         // Create views and let them go out of scope
         fun createViews(): List<TensorView<FP32, Float>> {
-            val tensor = with<FP32, Float>(testFactory) {
+            val tensor = tensor<FP32, Float>(testFactory) {
 
-                tensor(100, 100) { shape ->
+                shape(100, 100) { shape ->
                     init { indices ->
                         var flatIndex = 0
                         var stride = 1
@@ -314,9 +314,9 @@ class SlicingTest {
     fun testPerformanceAccessPatterns() {
         println("[DEBUG_LOG] Testing performance for different access patterns")
 
-        val tensor = with<FP32, Float>(testFactory) {
+        val tensor = tensor<FP32, Float>(testFactory) {
 
-            tensor(100, 100, 50) { shape ->
+            shape(100, 100, 50) { shape ->
                 init { indices ->
                     var flatIndex = 0
                     var stride = 1
@@ -378,10 +378,10 @@ class SlicingTest {
     fun testNCHWLayoutOptimizations() {
         println("[DEBUG_LOG] Testing NCHW layout optimizations")
 
-        val tensor = with<FP32, Float>(testFactory) {
+        val tensor = tensor<FP32, Float>(testFactory) {
 
             // Create NCHW tensor: (batch=4, channels=3, height=32, width=32)
-            tensor(4, 3, 32, 32) { shape ->
+            shape(4, 3, 32, 32) { shape ->
                 init { indices ->
                     var flatIndex = 0
                     var stride = 1

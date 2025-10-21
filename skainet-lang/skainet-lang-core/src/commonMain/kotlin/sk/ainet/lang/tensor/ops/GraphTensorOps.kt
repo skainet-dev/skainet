@@ -297,11 +297,44 @@ public class GraphTensorOps<V>(
         return result
     }
 
+    // Enhanced shape operations with graph recording
+    override fun <T : DType> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+        val result = baseOps.squeeze(tensor, dim)
+        
+        if (executionContext.isRecording) {
+            val parameters = mapOf<String, Any>("dim" to (dim ?: -1))
+            val operation = SqueezeOperation<T, V>(parameters)
+            val nodeId = generateNodeId("squeeze")
+            val inputs = listOf(createTensorSpec(tensor, "input_0"))
+            val outputs = listOf(createTensorSpec(result, "output_0"))
+            
+            val node = GraphNode(nodeId, operation, inputs, outputs)
+            graph.addNode(node)
+        }
+        
+        return result
+    }
+
+    override fun <T : DType> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
+        val result = baseOps.unsqueeze(tensor, dim)
+        
+        if (executionContext.isRecording) {
+            val parameters = mapOf("dim" to dim)
+            val operation = UnsqueezeOperation<T, V>(parameters)
+            val nodeId = generateNodeId("unsqueeze")
+            val inputs = listOf(createTensorSpec(tensor, "input_0"))
+            val outputs = listOf(createTensorSpec(result, "output_0"))
+            
+            val node = GraphNode(nodeId, operation, inputs, outputs)
+            graph.addNode(node)
+        }
+        
+        return result
+    }
+
     // Delegate remaining operations to base implementation
     override fun <T : DType> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> = baseOps.concat(tensors, dim)
     override fun <T : DType> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> = baseOps.split(tensor, splitSize, dim)
-    override fun <T : DType> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.squeeze(tensor, dim)
-    override fun <T : DType> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> = baseOps.unsqueeze(tensor, dim)
     override fun <T : DType> silu(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.silu(tensor)
     override fun <T : DType> gelu(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.gelu(tensor)
     override fun <T : DType> sum(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.sum(tensor, dim)

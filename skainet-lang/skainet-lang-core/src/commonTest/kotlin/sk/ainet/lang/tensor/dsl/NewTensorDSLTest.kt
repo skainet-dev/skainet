@@ -14,8 +14,8 @@ class NewTensorDSLTest {
 
     @Test
     fun testTensorDSLSyntaxWithOnes() {
-        val vector = with<FP32, Float>(DenseTensorDataFactory()) {
-            tensor(5) { shape ->
+        val vector = tensor<FP32, Float>(DenseTensorDataFactory()) {
+            shape(5) { shape ->
                 ones()
             }
         }
@@ -28,8 +28,8 @@ class NewTensorDSLTest {
     
     @Test
     fun testTensorDSLSyntaxWithZeros() {
-        val matrix = with<FP32, Float>(DenseTensorDataFactory()) {
-            tensor(3, 4) { shape ->
+        val matrix = tensor<FP32, Float>(DenseTensorDataFactory()) {
+            shape(3, 4) { shape ->
                 zeros()
             }
         }
@@ -40,8 +40,8 @@ class NewTensorDSLTest {
     
     @Test
     fun testTensorDSLSyntaxWithFull() {
-        val vector = with<FP32, Float>(DenseTensorDataFactory()) {
-            tensor(5) { shape ->
+        val vector = tensor<FP32, Float>(DenseTensorDataFactory()) {
+            shape(5) { shape ->
                 full(2.5f)
             }
         }
@@ -52,8 +52,8 @@ class NewTensorDSLTest {
     
     @Test
     fun testTensorDSLSyntaxWithRandn() {
-        val matrix = with<FP32, Float>(DenseTensorDataFactory()) {
-            tensor(2, 3) { shape ->
+        val matrix = tensor<FP32, Float>(DenseTensorDataFactory()) {
+            shape(2, 3) { shape ->
                 randn(mean = 0.0f, std = 1.0f)
             }
         }
@@ -64,8 +64,8 @@ class NewTensorDSLTest {
     
     @Test
     fun testTensorDSLSyntaxWithUniform() {
-        val vector = with<FP32, Float>(DenseTensorDataFactory()) {
-            tensor(10) { shape ->
+        val vector = tensor<FP32, Float>(DenseTensorDataFactory()) {
+            shape(10) { shape ->
                 uniform(min = -1.0f, max = 1.0f)
             }
         }
@@ -76,8 +76,8 @@ class NewTensorDSLTest {
     
     @Test
     fun testTensorDSLSyntaxWithCustomInit() {
-        val vector = with<FP32, Float>(DenseTensorDataFactory()) {
-            tensor(5) { shape ->
+        val vector = tensor<FP32, Float>(DenseTensorDataFactory()) {
+            shape(5) { shape ->
                 init { indices -> indices[0].toFloat() }
             }
         }

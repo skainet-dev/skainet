@@ -17,9 +17,9 @@ class SlicingStressTest {
     fun testBehaviorUnderMemoryPressureConditions() {
         println("[DEBUG_LOG] Testing behavior under memory pressure conditions")
         
-        with(testFactory) {
+        tensor(testFactory) {
             // Create large tensor to simulate memory pressure
-            val largeTensor = tensor(500, 500, 10) { shape ->
+            val largeTensor = shape(500, 500, 10) { shape ->
                 init { indices ->
                     // Simple pattern to avoid expensive computations
                     (indices[0] + indices[1] + indices[2]).toFloat()
@@ -58,9 +58,9 @@ class SlicingStressTest {
     fun testPerformanceWithLargeTensorSlicingScenarios() {
         println("[DEBUG_LOG] Testing performance with large tensor slicing scenarios")
         
-        with(testFactory) {
+        tensor(testFactory) {
             // Create very large tensor
-            val largeTensor = tensor(1000, 1000, 5) { shape ->
+            val largeTensor = shape(1000, 1000, 5) { shape ->
                 init { indices ->
                     // Use modular arithmetic to keep values reasonable
                     ((indices[0] * 1000 + indices[1]) % 100000 + indices[2]).toFloat()
@@ -111,8 +111,8 @@ class SlicingStressTest {
     fun testViewCreationDestructionPatternsForMemoryStability() {
         println("[DEBUG_LOG] Testing view creation/destruction patterns for memory stability")
         
-        with(testFactory) {
-            val baseTensor = tensor(200, 200, 5) { shape ->
+        tensor(testFactory) {
+            val baseTensor = shape(200, 200, 5) { shape ->
                 init { indices ->
                     (indices[0] * 1000 + indices[1] + indices[2]).toFloat()
                 }
@@ -168,8 +168,8 @@ class SlicingStressTest {
     fun testFallbackMechanismsUnderVariousConditions() {
         println("[DEBUG_LOG] Testing fallback mechanisms under various conditions")
         
-        with(testFactory) {
-            val tensor = tensor(50, 50, 10) { shape ->
+        tensor(testFactory) {
+            val tensor = shape(50, 50, 10) { shape ->
                 init { indices ->
                     (indices[0] * 100 + indices[1] + indices[2]).toFloat()
                 }
@@ -228,9 +228,9 @@ class SlicingStressTest {
     fun testMultiplatformTargetCompatibility() {
         println("[DEBUG_LOG] Testing multiplatform target compatibility")
         
-        with(testFactory) {
+        tensor(testFactory) {
             // This test runs on all platforms defined in build.gradle.kts
-            val tensor = tensor(20, 20, 5) { shape ->
+            val tensor = shape(20, 20, 5) { shape ->
                 init { indices ->
                     (indices[0] * 100 + indices[1] * 5 + indices[2]).toFloat()
                 }
@@ -269,8 +269,8 @@ class SlicingStressTest {
     fun testTensorInteroperabilityWithViews() {
         println("[DEBUG_LOG] Testing tensor interoperability with views")
         
-        with(testFactory) {
-            val originalTensor = tensor(30, 30, 3) { shape ->
+        tensor(testFactory) {
+            val originalTensor = shape(30, 30, 3) { shape ->
                 init { indices ->
                     (indices[0] * 1000 + indices[1] * 10 + indices[2]).toFloat()
                 }
@@ -327,8 +327,8 @@ class SlicingStressTest {
     fun testSerializationCompatibilityOfViews() {
         println("[DEBUG_LOG] Testing serialization compatibility of views")
         
-        with(testFactory) {
-            val tensor = tensor(10, 10, 3) { shape ->
+        tensor(testFactory) {
+            val tensor = shape(10, 10, 3) { shape ->
                 init { indices ->
                     (indices[0] * 100 + indices[1] * 10 + indices[2]).toFloat()
                 }
@@ -372,8 +372,8 @@ class SlicingStressTest {
     fun testPerformanceOnDifferentArchitectures() {
         println("[DEBUG_LOG] Testing performance on different architectures")
         
-        with(testFactory) {
-            val tensor = tensor(100, 100, 10) { shape ->
+        tensor(testFactory) {
+            val tensor = shape(100, 100, 10) { shape ->
                 init { indices ->
                     (indices[0] + indices[1] + indices[2]).toFloat()
                 }
