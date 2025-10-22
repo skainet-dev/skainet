@@ -5,7 +5,8 @@ import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ksp.writeTo
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import sk.ainet.lang.ops.ComputationMode
+import sk.ainet.lang.ops.TensorOp
 import java.io.File
 
 // KSP Processor
@@ -15,7 +16,7 @@ class ComputeGraphProcessor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val symbols = resolver.getSymbolsWithAnnotation(Mikrograd::class.qualifiedName!!)
+        val symbols = resolver.getSymbolsWithAnnotation(TensorOp::class.qualifiedName!!)
         logger.info("Found ${symbols.count()} symbols with @Mikrograd annotation")
         val invalidSymbols = symbols.filter { !it.validate() }.toList()
         logger.info("Found ${invalidSymbols.size} invalid symbols")

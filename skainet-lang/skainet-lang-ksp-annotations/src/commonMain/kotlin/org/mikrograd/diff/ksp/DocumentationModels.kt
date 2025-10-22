@@ -21,7 +21,7 @@ data class OperatorDocModule(
 @Serializable
 data class OperatorDoc(
     val name: String,
-    val package: String,
+    val packageName: String,
     val modality: String,
     val functions: List<FunctionDoc>
 )

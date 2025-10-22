@@ -26,7 +26,7 @@ enum class ComputationMode {
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
-annotation class Mikrograd(val mode: ComputationMode = ComputationMode.INFERENCE)
+annotation class TensorOp(val mode: ComputationMode = ComputationMode.INFERENCE)
 
 /**
  * Annotation to mark classes or functions as not implemented for specific backends.

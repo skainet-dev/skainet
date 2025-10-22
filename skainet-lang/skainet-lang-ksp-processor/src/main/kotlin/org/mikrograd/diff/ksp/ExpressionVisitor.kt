@@ -2,6 +2,7 @@ package org.mikrograd.diff.ksp
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ClassName
+import sk.ainet.lang.ops.ComputationMode
 
 /**
  * Visitor for generating code that uses the differentiation context.
