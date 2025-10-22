@@ -1,7 +1,7 @@
 package sk.ainet.lang.nn.activations
 
-import sk.ainet.lang.nn.dsl.context
-import sk.ainet.lang.nn.dsl.network
+import sk.ainet.compile.nn.context
+import sk.ainet.compile.nn.network
 import sk.ainet.lang.tensor.gelu
 import sk.ainet.lang.tensor.sigmoid
 import sk.ainet.lang.tensor.silu

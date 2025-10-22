@@ -12,7 +12,7 @@ import sk.ainet.lang.graph.*
 public class GraphTensorOps<V>(
     private val baseOps: TensorOps<V>,
     private val graph: ComputeGraph,
-    private val executionContext: ExecutionContext
+    private val executionContext: GraphExecutionContext
 ) : TensorOps<V> {
 
     private var nodeCounter = 0L

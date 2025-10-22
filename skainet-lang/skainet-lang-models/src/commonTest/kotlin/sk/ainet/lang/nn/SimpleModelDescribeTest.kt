@@ -1,8 +1,8 @@
 package sk.ainet.lang.nn
 
 import sk.ainet.lang.nn.Linear
-import sk.ainet.lang.nn.dsl.context
-import sk.ainet.lang.nn.dsl.network
+import sk.ainet.compile.nn.context
+import sk.ainet.compile.nn.network
 import sk.ainet.lang.nn.reflection.Summary
 import sk.ainet.lang.nn.reflection.describe
 import sk.ainet.lang.tensor.Shape

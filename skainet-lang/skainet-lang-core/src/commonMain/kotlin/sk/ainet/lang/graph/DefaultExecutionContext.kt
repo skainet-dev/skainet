@@ -6,10 +6,9 @@ import sk.ainet.lang.types.DType
 /**
  * Default implementation of ExecutionContext
  */
+/*
 public class DefaultExecutionContext(
-    initialMode: ExecutionMode = ExecutionMode.EAGER,
-    initialDevice: Device = Device(DeviceType.CPU)
-) : ExecutionContext {
+) : GraphExecutionContext {
     
     private var _executionMode: ExecutionMode = initialMode
     private var _device: Device = initialDevice
@@ -145,3 +144,5 @@ public class DefaultExecutionContext(
         return _executionStats.operationsExecuted
     }
 }
+
+ */

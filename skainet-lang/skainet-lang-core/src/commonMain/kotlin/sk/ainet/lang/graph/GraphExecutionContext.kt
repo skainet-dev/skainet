@@ -8,9 +8,10 @@ import sk.ainet.lang.types.DType
  * Context for graph execution DSL to define operations within a graph scope.
  * Similar to NetworkContext but focused on graph computation execution.
  */
+/*
 public interface GraphExecutionContext<T: DType, V> {
     public val graphOps: GraphTensorOps<V>
-    public val executionContext: ExecutionContext
+    public val executionContext: GraphExecutionContext
     public val graph: ComputeGraph
 }
 
@@ -21,7 +22,7 @@ public class DefaultGraphExecutionContext<T: DType, V>(
     private val dataFactory: TensorDataFactory
 ) : GraphExecutionContext<T, V> {
     
-    override val executionContext: ExecutionContext = DefaultExecutionContext()
+    override val executionContext: GraphExecutionContext = DefaultExecutionContext()
     override val graph: ComputeGraph = DefaultComputeGraph()
     
     private val baseOps = sk.ainet.lang.tensor.ops.VoidTensorOps<V>()
@@ -32,3 +33,5 @@ public class DefaultGraphExecutionContext<T: DType, V>(
         executionContext.switchToGraph()
     }
 }
+
+ */

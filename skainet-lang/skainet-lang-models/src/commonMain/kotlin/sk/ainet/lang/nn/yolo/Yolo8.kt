@@ -2,8 +2,8 @@ package sk.ainet.lang.nn.yolo
 
 import sk.ainet.lang.nn.Model
 import sk.ainet.lang.nn.Module
-import sk.ainet.lang.nn.dsl.context
-import sk.ainet.lang.nn.dsl.network
+import sk.ainet.compile.nn.context
+import sk.ainet.compile.nn.network
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP32
 

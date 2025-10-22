@@ -2,8 +2,9 @@ package sk.ainet.lang.nn.cnn
 
 import sk.ainet.lang.nn.Model
 import sk.ainet.lang.nn.Module
-import sk.ainet.lang.nn.dsl.context
-import sk.ainet.lang.nn.dsl.network
+import sk.ainet.compile.nn.context
+import sk.ainet.compile.nn.network
+
 import sk.ainet.lang.tensor.relu
 import sk.ainet.lang.tensor.softmax
 import sk.ainet.lang.types.DType
