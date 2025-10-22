@@ -13,6 +13,8 @@ binaryCompatibilityValidator = "0.18.1"
 ksp = "2.2.20-2.0.4"
 kotlinpoet = "2.2.0"
 kotlin-compile-testing = "1.6.0"
+asciidoctorj = "2.5.13"
+dokka = "1.9.20"
 
 [libraries]
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
@@ -38,9 +40,8 @@ ksp-test = { module = "com.google.devtools.ksp:symbol-processing-test", version.
 kotlin-compile-testing = { module = "com.github.tschuchortdev:kotlin-compile-testing", version.ref = "kotlin-compile-testing" }
 kotlin-compile-testing-ksp = { module = "com.github.tschuchortdev:kotlin-compile-testing-ksp", version.ref = "kotlin-compile-testing" }
 
-
-
-
+asciidoctorj-core = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciidoctorj" }
+asciidoctorj-pdf = { module = "org.asciidoctor:asciidoctorj-pdf", version.ref = "asciidoctorj" }
 
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
 
@@ -54,4 +55,7 @@ vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.34
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+asciidoctorJvm = { id = "org.asciidoctor.jvm.convert", version = "3.3.2" }
+asciidoctorPdf = { id = "org.asciidoctor.jvm.pdf", version = "3.3.2" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
