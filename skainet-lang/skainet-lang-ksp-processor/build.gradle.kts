@@ -10,7 +10,7 @@ kotlin {
     sourceSets {
         val jvmMain by getting {
             dependencies {
-                implementation(project("skainet-lang:skainet-lang-ksp-annotations"))
+                implementation(project(":skainet-lang:skainet-lang-ksp-annotations"))
                 implementation(libs.kotlinpoet) // Use version from libs.versions.toml
                 implementation(libs.kotlinpoet.ksp) // Required for KSP integration
                 implementation(libs.ksp.api)

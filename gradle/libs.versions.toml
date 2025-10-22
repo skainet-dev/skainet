@@ -10,7 +10,9 @@ ktorClientPlugins = "3.1.1"
 logbackClassic = "1.5.20"
 kover = "0.9.3"
 binaryCompatibilityValidator = "0.18.1"
-
+ksp = "2.2.20-2.0.4"
+kotlinpoet = "2.2.0"
+kotlin-compile-testing = "1.6.0"
 
 [libraries]
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
@@ -29,6 +31,16 @@ ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktorClientC
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorClientCore" }
 ktor-client-plugins = { module = "io.ktor:ktor-client-plugins", version.ref = "ktorClientPlugins" }
 
+kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
+kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
+ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+ksp-test = { module = "com.google.devtools.ksp:symbol-processing-test", version.ref = "ksp" }
+kotlin-compile-testing = { module = "com.github.tschuchortdev:kotlin-compile-testing", version.ref = "kotlin-compile-testing" }
+kotlin-compile-testing-ksp = { module = "com.github.tschuchortdev:kotlin-compile-testing-ksp", version.ref = "kotlin-compile-testing" }
+
+
+
+
 
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
 
@@ -40,4 +52,5 @@ jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.34.0" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 

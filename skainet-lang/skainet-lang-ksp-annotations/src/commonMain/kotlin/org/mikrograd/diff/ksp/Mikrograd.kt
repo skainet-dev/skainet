@@ -1,4 +1,4 @@
-package org.mikrograd.diff.ksp
+package  sk.ainet.lang.ops
 
 /**
  * Computation mode for the Mikrograd annotation.
@@ -27,3 +27,27 @@ enum class ComputationMode {
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
 annotation class Mikrograd(val mode: ComputationMode = ComputationMode.INFERENCE)
+
+/**
+ * Annotation to mark classes or functions as not implemented for specific backends.
+ * 
+ * @param backends List of backend names where this feature is not implemented
+ */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.SOURCE)
+annotation class NotImplemented(vararg val backends: String)
+
+/**
+ * Annotation to mark classes or functions as in progress for specific backends.
+ * 
+ * @param backends List of backend names where this feature is in progress
+ * @param owner The person or team responsible for the implementation
+ * @param issue URL or identifier for the tracking issue
+ */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.SOURCE)
+annotation class InProgress(
+    vararg val backends: String,
+    val owner: String = "",
+    val issue: String = ""
+)

@@ -21,7 +21,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":miKrograd"))
+            implementation(project(":skainet-lang:skainet-lang-core"))
         }
 
         commonTest.dependencies {
@@ -32,7 +32,7 @@ kotlin {
         val jvmMain by getting {
             kotlin.srcDir("build/generated/ksp/jvm/jvmMain/kotlin")
             dependencies {
-                implementation(project(":miKrograd-annotations"))
+                implementation(project(":skainet-lang:skainet-lang-ksp-annotations"))
             }
         }
 
