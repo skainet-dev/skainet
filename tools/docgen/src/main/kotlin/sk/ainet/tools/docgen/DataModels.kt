@@ -1,0 +1,45 @@
+package sk.ainet.tools.docgen
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class OperatorDocModule(
+    val schema: String = "https://skainet.ai/schemas/operator-doc/v1",
+    val version: String,
+    val commit: String,
+    val timestamp: String,
+    val module: String,
+    val operators: List<OperatorDoc>
+)
+
+@Serializable
+data class OperatorDoc(
+    val name: String,
+    val packageName: String,
+    val modality: String,
+    val functions: List<FunctionDoc>
+)
+
+@Serializable
+data class FunctionDoc(
+    val name: String,
+    val signature: String,
+    val parameters: List<ParameterDoc>,
+    val returnType: String,
+    val statusByBackend: Map<String, String>,
+    val notes: List<Note>
+)
+
+@Serializable
+data class ParameterDoc(
+    val name: String,
+    val type: String,
+    val description: String = ""
+)
+
+@Serializable
+data class Note(
+    val type: String,
+    val backend: String,
+    val content: String
+)
