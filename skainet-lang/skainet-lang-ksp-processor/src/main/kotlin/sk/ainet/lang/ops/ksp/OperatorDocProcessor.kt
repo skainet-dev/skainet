@@ -1,11 +1,8 @@
-package org.mikrograd.diff.ksp
+package sk.ainet.lang.ops.ksp
 
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.validate
-import sk.ainet.lang.ops.InProgress
-import sk.ainet.lang.ops.NotImplemented
-import java.io.File
 import java.time.Instant
 
 // Simple data classes for documentation generation
@@ -65,12 +62,17 @@ class OperatorDocProcessor(
             .filter { it.validate() }
 
         val inProgressSymbols = resolver
-            .getSymbolsWithAnnotation("sk.ainet.lang.ops.InProgress") 
+            .getSymbolsWithAnnotation("sk.ainet.lang.ops.InProgress")
+            .filterIsInstance<KSDeclaration>()
+            .filter { it.validate() }
+            
+        val testInProgressSymbols = resolver
+            .getSymbolsWithAnnotation("test.InProgress")
             .filterIsInstance<KSDeclaration>()
             .filter { it.validate() }
 
-        val allSymbols = (notImplementedSymbols + inProgressSymbols).toList()
-        
+        val allSymbols = (notImplementedSymbols + inProgressSymbols + testInProgressSymbols).toList()
+
         if (allSymbols.isEmpty()) {
             logger.info("No annotated symbols found")
             return emptyList()
@@ -80,7 +82,7 @@ class OperatorDocProcessor(
 
         // Group symbols by their containing class/package to create operators
         val operatorDocs = groupSymbolsByOperator(allSymbols)
-        
+
         // Create the module documentation
         val module = OperatorDocModule(
             version = extractVersion(),
@@ -106,7 +108,7 @@ class OperatorDocProcessor(
                 }
             }
             .mapNotNull { (classSymbol, declarations) ->
-                classSymbol?.let { 
+                classSymbol?.let {
                     createOperatorDoc(it, declarations)
                 }
             }
@@ -160,28 +162,24 @@ class OperatorDocProcessor(
     private fun deriveStatusByBackend(declaration: KSDeclaration): Map<String, String> {
         val statusMap = mutableMapOf<String, String>()
 
-        // Check @NotImplemented annotation
-        declaration.annotations.find { 
-            it.shortName.asString() == "NotImplemented" 
-        }?.let { annotation ->
-            val backends = annotation.arguments.find { it.name?.asString() == "backends" }
-                ?.value as? List<*>
-            backends?.forEach { backend ->
-                statusMap[backend.toString()] = "not_implemented"
-            }
-        }
-
         // Check @InProgress annotation
-        declaration.annotations.find { 
-            it.shortName.asString() == "InProgress" 
+        declaration.annotations.find {
+            it.shortName.asString() == "InProgress"
         }?.let { annotation ->
-            val backends = annotation.arguments.find { it.name?.asString() == "backends" }
-                ?.value as? List<*>
-            backends?.forEach { backend ->
-                statusMap[backend.toString()] = "in_progress"
+            logger.info("Processing annotation: ${annotation.shortName.asString()}")
+            logger.info("Annotation arguments: ${annotation.arguments.map { "${it.name?.asString()}: ${it.value}" }}")
+
+            // For vararg parameters, the first argument contains the array
+            val backendsArg = annotation.arguments.firstOrNull()
+            val backends = when (val value = backendsArg?.value) {
+                is List<*> -> value.map { it.toString() }
+                is String -> listOf(value)
+                else -> emptyList()
+            }
+            backends.forEach { backend ->
+                statusMap[backend] = "in_progress"
             }
         }
-
         return statusMap
     }
 
@@ -189,22 +187,27 @@ class OperatorDocProcessor(
         val notes = mutableListOf<Note>()
 
         // Extract notes from @InProgress annotation
-        declaration.annotations.find { 
-            it.shortName.asString() == "InProgress" 
+        declaration.annotations.find {
+            it.shortName.asString() == "InProgress"
         }?.let { annotation ->
-            val backends = annotation.arguments.find { it.name?.asString() == "backends" }
-                ?.value as? List<*>
+            // For vararg parameters, the first argument contains the array
+            val backendsArg = annotation.arguments.firstOrNull()
+            val backends = when (val value = backendsArg?.value) {
+                is List<*> -> value.map { it.toString() }
+                is String -> listOf(value)
+                else -> emptyList()
+            }
             val owner = annotation.arguments.find { it.name?.asString() == "owner" }
                 ?.value?.toString() ?: ""
             val issue = annotation.arguments.find { it.name?.asString() == "issue" }
                 ?.value?.toString() ?: ""
 
-            backends?.forEach { backend ->
+            backends.forEach { backend ->
                 if (owner.isNotEmpty()) {
-                    notes.add(Note("owner", backend.toString(), owner))
+                    notes.add(Note("owner", backend, owner))
                 }
                 if (issue.isNotEmpty()) {
-                    notes.add(Note("issue", backend.toString(), issue))
+                    notes.add(Note("issue", backend, issue))
                 }
             }
         }
@@ -244,47 +247,62 @@ class OperatorDocProcessor(
                 append("  \"timestamp\": \"${module.timestamp}\",\n")
                 append("  \"module\": \"${module.module}\",\n")
                 append("  \"operators\": [\n")
-                
+
                 module.operators.forEachIndexed { opIndex, operator ->
                     append("    {\n")
                     append("      \"name\": \"${operator.name}\",\n")
                     append("      \"package\": \"${operator.packageName}\",\n")
                     append("      \"modality\": \"${operator.modality}\",\n")
                     append("      \"functions\": [\n")
-                    
+
                     operator.functions.forEachIndexed { funcIndex, function ->
                         append("        {\n")
                         append("          \"name\": \"${function.name}\",\n")
                         append("          \"signature\": \"${function.signature}\",\n")
                         append("          \"parameters\": [],\n") // Simplified for now
                         append("          \"returnType\": \"${function.returnType}\",\n")
-                        append("          \"statusByBackend\": {},\n") // Simplified for now
-                        append("          \"notes\": []\n") // Simplified for now
+
+                        // Generate statusByBackend JSON
+                        append("          \"statusByBackend\": {")
+                        function.statusByBackend.entries.forEachIndexed { statusIndex, (backend, status) ->
+                            append("\"$backend\": \"$status\"")
+                            if (statusIndex < function.statusByBackend.size - 1) append(", ")
+                        }
+                        append("},\n")
+
+                        // Generate notes JSON
+                        append("          \"notes\": [")
+                        function.notes.forEachIndexed { noteIndex, note ->
+                            append("{\"type\": \"${note.type}\", \"backend\": \"${note.backend}\", \"message\": \"${note.content}\"}")
+                            if (noteIndex < function.notes.size - 1) append(", ")
+                        }
+                        append("]\n")
+
                         append("        }")
                         if (funcIndex < operator.functions.size - 1) append(",")
                         append("\n")
                     }
-                    
+
                     append("      ]\n")
                     append("    }")
                     if (opIndex < module.operators.size - 1) append(",")
                     append("\n")
                 }
-                
+
                 append("  ]\n")
                 append("}")
             }
-            
+
             val file = codeGenerator.createNewFile(
                 dependencies = Dependencies.ALL_FILES,
                 packageName = "",
                 fileName = "operators",
                 extensionName = "json"
             )
-            
+
             file.write(jsonContent.toByteArray())
             file.close()
-            
+
             logger.info("Generated operators.json with ${module.operators.size} operators")
         } catch (e: Exception) {
             logger.error("Failed to generate JSON output: ${e.message}")

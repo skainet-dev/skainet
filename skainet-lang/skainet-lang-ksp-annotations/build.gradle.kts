@@ -1,21 +1,29 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
 
 kotlin {
     jvm()
+    explicitApi()
 
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
+    iosArm64()
+    iosSimulatorArm64()
+    macosArm64 ()
+    linuxX64 ()
+    linuxArm64 ()
 
-                implementation(libs.kotlinx.serialization.json)
-            }
-        }
+    jvm()
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
     }
 }
 

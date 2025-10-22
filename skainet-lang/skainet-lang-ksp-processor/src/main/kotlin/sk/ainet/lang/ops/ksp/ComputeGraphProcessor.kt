@@ -1,4 +1,4 @@
-package org.mikrograd.diff.ksp
+package sk.ainet.lang.ops.ksp
 
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*

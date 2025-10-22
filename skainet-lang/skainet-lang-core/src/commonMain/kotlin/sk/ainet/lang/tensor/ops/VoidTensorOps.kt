@@ -1,5 +1,6 @@
 package sk.ainet.lang.tensor.ops
 
+import sk.ainet.lang.ops.InProgress
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.VoidOpsTensor
@@ -101,6 +102,7 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, a.dtype)
     }
 
+    @InProgress("Metal", owner="ops-team", issue="GH-1234")
     override fun <T : DType> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateMatmulShapes(a.shape, b.shape)
         val resultShape = calculateMatmulShape(a.shape, b.shape)
@@ -108,6 +110,7 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, a.dtype)
     }
 
+    @InProgress("Metal", owner="ops-team", issue="GH-1234")
     override fun <T : DType> transpose(tensor: Tensor<T, V>): Tensor<T, V> {
         val resultShape = calculateTransposeShape(tensor.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)

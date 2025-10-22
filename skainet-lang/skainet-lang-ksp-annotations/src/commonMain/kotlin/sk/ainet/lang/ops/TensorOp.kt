@@ -4,7 +4,7 @@ package  sk.ainet.lang.ops
  * Computation mode for the Mikrograd annotation.
  * This determines whether to use ForwardValue (INFERENCE) or BackwardValue (TRAINING).
  */
-enum class ComputationMode {
+public enum class ComputationMode {
     /**
      * Inference mode uses ForwardValue which doesn't track gradients.
      * This is more memory-efficient when only forward pass is needed.
@@ -26,7 +26,7 @@ enum class ComputationMode {
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
-annotation class TensorOp(val mode: ComputationMode = ComputationMode.INFERENCE)
+public annotation class TensorOp(val mode: ComputationMode = ComputationMode.INFERENCE)
 
 /**
  * Annotation to mark classes or functions as not implemented for specific backends.
@@ -35,7 +35,7 @@ annotation class TensorOp(val mode: ComputationMode = ComputationMode.INFERENCE)
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
-annotation class NotImplemented(vararg val backends: String)
+public annotation class NotImplemented(vararg val backends: String)
 
 /**
  * Annotation to mark classes or functions as in progress for specific backends.
@@ -46,7 +46,7 @@ annotation class NotImplemented(vararg val backends: String)
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
-annotation class InProgress(
+public annotation class InProgress(
     vararg val backends: String,
     val owner: String = "",
     val issue: String = ""

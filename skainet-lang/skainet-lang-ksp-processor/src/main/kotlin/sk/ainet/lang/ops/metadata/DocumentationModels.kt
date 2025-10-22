@@ -1,4 +1,4 @@
-package org.mikrograd.diff.ksp
+package sk.ainet.lang.ops.metadata
 
 import kotlinx.serialization.Serializable
 

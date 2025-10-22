@@ -36,6 +36,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api(project(":skainet-lang:skainet-lang-ksp-annotations"))
         }
 
         commonTest.dependencies {

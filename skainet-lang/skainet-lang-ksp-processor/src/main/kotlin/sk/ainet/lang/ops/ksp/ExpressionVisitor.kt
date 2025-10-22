@@ -1,4 +1,4 @@
-package org.mikrograd.diff.ksp
+package sk.ainet.lang.ops.ksp
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ClassName

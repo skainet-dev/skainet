@@ -1,19 +1,24 @@
 plugins {
-    kotlin("multiplatform")
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.kotlinSerialization)
 }
-
-group = "com.example"
-version = "1.0-SNAPSHOT"
 
 kotlin {
     jvm()
     sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(libs.kotlinx.serialization.json)
+            }
+        }
         val jvmMain by getting {
             dependencies {
-                implementation(project(":skainet-lang:skainet-lang-ksp-annotations"))
                 implementation(libs.kotlinpoet) // Use version from libs.versions.toml
                 implementation(libs.kotlinpoet.ksp) // Required for KSP integration
                 implementation(libs.ksp.api)
+                implementation(project(":skainet-lang:skainet-lang-ksp-annotations"))
             }
             kotlin.srcDir("src/main/kotlin")
             resources.srcDir("src/main/resources")

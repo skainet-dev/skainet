@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.ksp)
 }
 
@@ -22,6 +23,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":skainet-lang:skainet-lang-core"))
+            implementation(libs.kotlinx.serialization.json)
+
         }
 
         commonTest.dependencies {
@@ -33,6 +36,8 @@ kotlin {
             kotlin.srcDir("build/generated/ksp/jvm/jvmMain/kotlin")
             dependencies {
                 implementation(project(":skainet-lang:skainet-lang-ksp-annotations"))
+                implementation("com.networknt:json-schema-validator:1.0.87")
+                implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
             }
         }
 
@@ -67,4 +72,22 @@ tasks.register<JavaExec>("runKspMain") {
     description = "Run the KspMain application"
     classpath = files(kotlin.jvm().compilations["main"].output.allOutputs, configurations.getByName("jvmRuntimeClasspath"))
     mainClass.set("com.example.KspMainKt")
+}
+
+// Add schema validation task
+tasks.register<JavaExec>("validateOperatorSchema") {
+    group = "verification"
+    description = "Validate generated operator.json files against the JSON schema"
+    classpath = files(kotlin.jvm().compilations["main"].output.allOutputs, configurations.getByName("jvmRuntimeClasspath"))
+    mainClass.set("org.mikrograd.diff.ksp.SchemaValidationMainKt")
+    
+    // Set build directory as argument
+    args(project.buildDir.absolutePath)
+    
+    // Depend on KSP compilation to ensure JSON files are generated first
+    dependsOn("kspKotlinJvm")
+    
+    doFirst {
+        println("Validating operator documentation JSON schema...")
+    }
 }

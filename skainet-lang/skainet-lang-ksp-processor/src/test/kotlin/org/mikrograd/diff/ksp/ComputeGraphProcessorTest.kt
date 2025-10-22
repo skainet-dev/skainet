@@ -1,16 +1,20 @@
+@file:OptIn(ExperimentalCompilerApi::class)
+
 package org.mikrograd.diff.ksp
 
-import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
+import sk.ainet.lang.ops.ksp.ComputeGraphProcessorProvider
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import kotlin.test.assertTrue
 
 class ComputeGraphProcessorTest {
 
+    @OptIn(ExperimentalCompilerApi::class)
     @Test
     fun testProcessorGeneratesCodeWithDefaultMode() {
         // Create a test Kotlin source file with a function annotated with @Mikrograd
