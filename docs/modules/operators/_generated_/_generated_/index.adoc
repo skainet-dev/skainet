@@ -1,0 +1,14 @@
+= skainet-lang-core Operators
+
+// Generated on 2025-10-23T12:05:07.383567
+// Version: 1.0.0
+// Commit: unknown
+
+This documentation is automatically generated from the codebase annotations.
+
+== Operators
+
+=== Core Operators
+
+* xref:voidtensorops.adoc[VoidTensorOps] - sk.ainet.lang.tensor.ops
+

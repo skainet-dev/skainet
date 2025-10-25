@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.kover)
     alias(libs.plugins.binary.compatibility.validator)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.dokka)
 }
 
 kotlin {
@@ -45,8 +47,14 @@ kotlin {
     }
 }
 
+dependencies {
+    add("kspCommonMainMetadata", project(":skainet-lang:skainet-lang-ksp-processor"))
+    add("kspJvm", project(":skainet-lang:skainet-lang-ksp-processor"))
+    add("kspAndroid", project(":skainet-lang:skainet-lang-ksp-processor"))
+}
+
 android {
-    namespace = "sk.ai.net.lang.api"
+    namespace = "sk.ai.net.lang.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -56,4 +64,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+}
+
+tasks.named("dokkaHtml") {
+    dependsOn("kspCommonMainKotlinMetadata")
 }

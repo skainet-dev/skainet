@@ -137,6 +137,12 @@ object DocGen {
                 generateBackendStatusTable(function, this)
             }
             
+            // API reference link
+            appendLine("==== See also")
+            appendLine()
+            appendLine("* xref:api:${function.name}[API Reference (Dokka)]")
+            appendLine("* xref:theory:${function.name}.adoc[Mathematical Definition]")
+            appendLine("* xref:examples:${function.name}.adoc[Usage Examples]")
             appendLine()
         }
     }
@@ -156,9 +162,9 @@ object DocGen {
                 if (backendNotes.isNotEmpty()) {
                     val notesText = backendNotes.joinToString(", ") { note ->
                         when (note.type) {
-                            "owner" -> "Owner: ${note.content}"
-                            "issue" -> "Issue: ${note.content}"
-                            else -> "${note.type}: ${note.content}"
+                            "owner" -> "Owner: ${note.message}"
+                            "issue" -> "Issue: ${note.message}"
+                            else -> "${note.type}: ${note.message}"
                         }
                     }
                     appendLine("| ${notesText}")

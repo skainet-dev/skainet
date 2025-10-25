@@ -1,0 +1,70 @@
+= VoidTensorOps
+
+// Generated on 2025-10-23T12:05:07.383567
+// Package: sk.ainet.lang.tensor.ops
+// Modality: core
+
+Package: `sk.ainet.lang.tensor.ops`
+
+Modality: *core*
+
+== Functions
+
+=== matmul
+
+[source,kotlin]
+----
+fun matmul(a:Tensor, b:Tensor): Tensor
+----
+
+==== Returns
+
+`Tensor`
+
+==== Backend Status
+
+[cols="1,1,2"]
+|===
+| Backend | Status | Notes
+
+| Metal
+| 🚧 In Progress
+| Owner: ops-team, Issue: GH-1234
+
+|===
+
+==== See also
+
+* xref:api:matmul[API Reference (Dokka)]
+* xref:theory:matmul.adoc[Mathematical Definition]
+* xref:examples:matmul.adoc[Usage Examples]
+
+=== transpose
+
+[source,kotlin]
+----
+fun transpose(tensor:Tensor): Tensor
+----
+
+==== Returns
+
+`Tensor`
+
+==== Backend Status
+
+[cols="1,1,2"]
+|===
+| Backend | Status | Notes
+
+| Metal
+| 🚧 In Progress
+| Owner: ops-team, Issue: GH-1234
+
+|===
+
+==== See also
+
+* xref:api:transpose[API Reference (Dokka)]
+* xref:theory:transpose.adoc[Mathematical Definition]
+* xref:examples:transpose.adoc[Usage Examples]
+

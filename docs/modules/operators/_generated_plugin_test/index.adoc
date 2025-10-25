@@ -1,0 +1,10 @@
+= AI-NET Operators Reference
+
+Generated from version `1.0.0` on 2025-10-23
+
+== Operators by Modality
+
+=== Core
+
+* xref:voidtensorops.adoc[VoidTensorOps]
+

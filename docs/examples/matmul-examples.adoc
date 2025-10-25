@@ -1,0 +1,132 @@
+= Matrix Multiplication Examples
+
+[#basic-usage]
+== Basic Usage
+
+=== Simple Matrix Multiplication
+
+[source,kotlin]
+----
+// Create two matrices
+val a = tensor(shape = intArrayOf(3, 2)) {
+    floatArrayOf(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f)
+}
+
+val b = tensor(shape = intArrayOf(2, 4)) {
+    floatArrayOf(1.0f, 0.0f, 1.0f, 0.0f, 
+                 0.0f, 1.0f, 0.0f, 1.0f)
+}
+
+// Perform matrix multiplication
+val result = a.matmul(b)
+println("Result shape: ${result.shape.contentToString()}") // [3, 4]
+----
+
+[#batch-operations]
+== Batch Operations
+
+=== Batch Matrix Multiplication
+
+[source,kotlin]
+----
+// Batch of matrices: [batch_size, m, k] × [batch_size, k, n] → [batch_size, m, n]
+val batchA = tensor(shape = intArrayOf(2, 3, 2)) {
+    floatArrayOf(
+        1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f,  // First batch
+        2.0f, 1.0f, 4.0f, 3.0f, 6.0f, 5.0f   // Second batch
+    )
+}
+
+val batchB = tensor(shape = intArrayOf(2, 2, 3)) {
+    floatArrayOf(
+        1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // First batch  
+        0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f   // Second batch
+    )
+}
+
+val batchResult = batchA.matmul(batchB)
+println("Batch result shape: ${batchResult.shape.contentToString()}") // [2, 3, 3]
+----
+
+[#neural-network]
+== Neural Network Applications
+
+=== Linear Layer Implementation
+
+[source,kotlin]
+----
+class LinearLayer(
+    private val weights: Tensor<Float>,
+    private val bias: Tensor<Float>? = null
+) {
+    fun forward(input: Tensor<Float>): Tensor<Float> {
+        // input: [batch_size, in_features]
+        // weights: [in_features, out_features] 
+        // output: [batch_size, out_features]
+        
+        var output = input.matmul(weights)
+        
+        bias?.let { b ->
+            output = output + b  // Broadcasting addition
+        }
+        
+        return output
+    }
+}
+
+// Usage example
+val inputSize = 784  // MNIST image flattened
+val hiddenSize = 256
+val batchSize = 32
+
+val weights = tensor(shape = intArrayOf(inputSize, hiddenSize)) { 
+    // Initialize with Xavier/Glorot initialization
+    randomNormal(0.0f, sqrt(2.0f / (inputSize + hiddenSize)))
+}
+val bias = zeros(shape = intArrayOf(hiddenSize))
+
+val layer = LinearLayer(weights, bias)
+val input = randomNormal(shape = intArrayOf(batchSize, inputSize))
+val output = layer.forward(input)
+----
+
+[#performance-considerations]
+== Performance Considerations
+
+=== Memory Layout Optimization
+
+[source,kotlin]
+----
+// Prefer row-major order for better cache locality
+val a = tensor(shape = intArrayOf(1000, 500), layout = TensorLayout.RowMajor)
+val b = tensor(shape = intArrayOf(500, 200), layout = TensorLayout.RowMajor)
+
+// For very large matrices, consider blocking/tiling
+val result = a.matmul(b, blockSize = 64)
+----
+
+[#common-patterns]
+== Common Patterns
+
+=== Matrix-Vector Multiplication
+
+[source,kotlin]
+----
+val matrix = randomNormal(shape = intArrayOf(100, 50))
+val vector = randomNormal(shape = intArrayOf(50, 1))
+
+// Equivalent operations:
+val result1 = matrix.matmul(vector)           // [100, 1]
+val result2 = matrix.dot(vector.squeeze())    // [100] - squeezed result
+----
+
+=== Transpose Patterns
+
+[source,kotlin]
+----
+val a = randomNormal(shape = intArrayOf(3, 4))
+val b = randomNormal(shape = intArrayOf(5, 3))
+
+// Compute b @ a.T without explicit transpose
+val result = b.matmul(a, transposeB = true)  // [5, 4]
+----

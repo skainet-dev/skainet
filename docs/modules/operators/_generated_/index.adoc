@@ -1,0 +1,35 @@
+= Generated Operator Reference
+
+This section contains automatically generated API reference documentation for SKaiNET operators.
+
+[NOTE]
+====
+This content is automatically generated from source code annotations and should not be edited manually.
+Generated on: {docdate}
+====
+
+[#operator-index]
+== Operator Index
+
+// Generated content will be inserted here by the documentation generation system
+// The DocGen tool will populate this with operator listings from operators.json
+
+[#cross-references]
+== Cross-References to Human-Authored Content
+
+=== Theory References
+* xref:../../theory/index.adoc[Mathematical Theory Reference]
+* xref:../../theory/matmul.adoc#matmul-definition[Matrix Multiplication Theory]
+
+=== Usage Examples  
+* xref:../../examples/index.adoc[Usage Examples]
+* xref:../../examples/matmul-examples.adoc#basic-usage[Matrix Multiplication Examples]
+
+[#anchors]
+== Anchor Points for Cross-Linking
+
+The following anchors are available for cross-referencing from generated content:
+
+* `#operator-index` - Main operator index
+* Individual operator anchors will be generated with pattern: `#operator-{operatorName}`
+* Function anchors will follow pattern: `#function-{operatorName}-{functionName}`

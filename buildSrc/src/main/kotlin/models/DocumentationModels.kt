@@ -1,4 +1,4 @@
-package sk.ainet.tools.docgen
+package models
 
 import kotlinx.serialization.Serializable
 
@@ -43,3 +43,7 @@ data class Note(
     val backend: String,
     val message: String
 )
+
+enum class DocumentationFormat {
+    ASCIIDOC, MARKDOWN, HTML
+}
