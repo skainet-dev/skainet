@@ -36,11 +36,11 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
       
-    - name: Generate operator documentation
-      run: ./gradlew :skainet-lang:skainet-lang-export-ops:kspKotlinJvm
+    - name: Generate operator documentation (KSP)
+      run: ./gradlew :skainet-lang:skainet-lang-core:kspCommonMainKotlinMetadata
       
-    - name: Validate JSON schema
-      run: ./gradlew :skainet-lang:skainet-lang-export-ops:validateOperatorSchema
+    - name: Validate JSON schema via Gradle plugin
+      run: ./gradlew validateOperatorSchema
       
     - name: Upload validation artifacts
       if: failure()

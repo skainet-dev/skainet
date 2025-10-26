@@ -236,36 +236,62 @@ class OperatorDocProcessor(
         return "unknown"
     }
 
+    private fun escapeJson(value: String): String = buildString {
+        value.forEach { ch ->
+            when (ch) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\b' -> append("\\b")
+                '\u000C' -> append("\\f") // form feed
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> {
+                    if (ch < ' ') {
+                        append("\\u")
+                        append(ch.code.toString(16).padStart(4, '0'))
+                    } else append(ch)
+                }
+            }
+        }
+    }
+
     private fun generateJsonOutput(module: OperatorDocModule) {
         try {
             // Simple JSON generation without external dependencies
             val jsonContent = buildString {
                 append("{\n")
-                append("  \"schema\": \"${module.schema}\",\n")
-                append("  \"version\": \"${module.version}\",\n")
-                append("  \"commit\": \"${module.commit}\",\n")
-                append("  \"timestamp\": \"${module.timestamp}\",\n")
-                append("  \"module\": \"${module.module}\",\n")
+                append("  \"schema\": \"${escapeJson(module.schema)}\",\n")
+                append("  \"version\": \"${escapeJson(module.version)}\",\n")
+                append("  \"commit\": \"${escapeJson(module.commit)}\",\n")
+                append("  \"timestamp\": \"${escapeJson(module.timestamp)}\",\n")
+                append("  \"module\": \"${escapeJson(module.module)}\",\n")
                 append("  \"operators\": [\n")
 
                 module.operators.forEachIndexed { opIndex, operator ->
                     append("    {\n")
-                    append("      \"name\": \"${operator.name}\",\n")
-                    append("      \"package\": \"${operator.packageName}\",\n")
-                    append("      \"modality\": \"${operator.modality}\",\n")
+                    append("      \"name\": \"${escapeJson(operator.name)}\",\n")
+                    append("      \"packageName\": \"${escapeJson(operator.packageName)}\",\n")
+                    append("      \"modality\": \"${escapeJson(operator.modality)}\",\n")
                     append("      \"functions\": [\n")
 
                     operator.functions.forEachIndexed { funcIndex, function ->
                         append("        {\n")
-                        append("          \"name\": \"${function.name}\",\n")
-                        append("          \"signature\": \"${function.signature}\",\n")
-                        append("          \"parameters\": [],\n") // Simplified for now
-                        append("          \"returnType\": \"${function.returnType}\",\n")
+                        append("          \"name\": \"${escapeJson(function.name)}\",\n")
+                        append("          \"signature\": \"${escapeJson(function.signature)}\",\n")
+                        // parameters
+                        append("          \"parameters\": [")
+                        function.parameters.forEachIndexed { pIndex, p ->
+                            append("{\"name\": \"${escapeJson(p.name)}\", \"type\": \"${escapeJson(p.type)}\", \"description\": \"${escapeJson(p.description)}\"}")
+                            if (pIndex < function.parameters.size - 1) append(", ")
+                        }
+                        append("],\n")
+                        append("          \"returnType\": \"${escapeJson(function.returnType)}\",\n")
 
                         // Generate statusByBackend JSON
                         append("          \"statusByBackend\": {")
                         function.statusByBackend.entries.forEachIndexed { statusIndex, (backend, status) ->
-                            append("\"$backend\": \"$status\"")
+                            append("\"${escapeJson(backend)}\": \"${escapeJson(status)}\"")
                             if (statusIndex < function.statusByBackend.size - 1) append(", ")
                         }
                         append("},\n")
@@ -273,7 +299,7 @@ class OperatorDocProcessor(
                         // Generate notes JSON
                         append("          \"notes\": [")
                         function.notes.forEachIndexed { noteIndex, note ->
-                            append("{\"type\": \"${note.type}\", \"backend\": \"${note.backend}\", \"message\": \"${note.content}\"}")
+                            append("{\"type\": \"${escapeJson(note.type)}\", \"backend\": \"${escapeJson(note.backend)}\", \"content\": \"${escapeJson(note.content)}\"}")
                             if (noteIndex < function.notes.size - 1) append(", ")
                         }
                         append("]\n")

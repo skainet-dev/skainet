@@ -4,9 +4,6 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-
-group = "org.mikrograd.samples"
-
 kotlin {
 
     compilerOptions {
@@ -74,20 +71,3 @@ tasks.register<JavaExec>("runKspMain") {
     mainClass.set("com.example.KspMainKt")
 }
 
-// Add schema validation task
-tasks.register<JavaExec>("validateOperatorSchema") {
-    group = "verification"
-    description = "Validate generated operator.json files against the JSON schema"
-    classpath = files(kotlin.jvm().compilations["main"].output.allOutputs, configurations.getByName("jvmRuntimeClasspath"))
-    mainClass.set("org.mikrograd.diff.ksp.SchemaValidationMainKt")
-    
-    // Set build directory as argument
-    args(project.buildDir.absolutePath)
-    
-    // Depend on KSP compilation to ensure JSON files are generated first
-    dependsOn("kspKotlinJvm")
-    
-    doFirst {
-        println("Validating operator documentation JSON schema...")
-    }
-}

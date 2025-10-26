@@ -1,4 +1,4 @@
-package org.mikrograd.diff.ksp
+package sk.ainet.lang.tools.export.ops
 
 import java.io.File
 import kotlin.system.exitProcess

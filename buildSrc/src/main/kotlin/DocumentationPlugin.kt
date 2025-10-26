@@ -1,6 +1,9 @@
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Action
+import org.gradle.kotlin.dsl.named
+import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.configureEach
 
 class DocumentationPlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -17,6 +20,16 @@ class DocumentationPlugin : Plugin<Project> {
                 task.format.set(extension.format)
                 task.includeBackendStatus.set(extension.includeBackendStatus)
                 task.generateIndex.set(extension.generateIndex)
+            }
+        })
+
+        // Register schema validation task in plugin (migrated from skainet-lang-export-ops)
+        val validateTaskProvider = project.tasks.register("validateOperatorSchema", SchemaValidationTask::class.java, object : Action<SchemaValidationTask> {
+            override fun execute(task: SchemaValidationTask) {
+                task.group = "verification"
+                task.description = "Validate generated operators.json files against the JSON schema"
+                // By default search from the root project dir to find all operators.json
+                task.searchDirectory.set(project.rootProject.layout.projectDirectory)
             }
         })
     }

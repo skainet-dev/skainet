@@ -1,11 +1,10 @@
-package org.mikrograd.diff.ksp
+package sk.ainet.lang.tools.export.ops
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.networknt.schema.JsonSchema
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
-import com.networknt.schema.ValidationMessage
 import java.io.File
 import java.io.InputStream
 
