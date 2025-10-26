@@ -15,7 +15,9 @@ data class OperatorDocModule(
 @Serializable
 data class OperatorDoc(
     val name: String,
-    @kotlinx.serialization.SerialName("package") val packageName: String,
+    @kotlinx.serialization.SerialName("package")
+    @kotlinx.serialization.json.JsonNames("packageName")
+    val packageName: String,
     val modality: String,
     val functions: List<FunctionDoc>
 )
@@ -24,10 +26,10 @@ data class OperatorDoc(
 data class FunctionDoc(
     val name: String,
     val signature: String,
-    val parameters: List<ParameterDoc>,
+    val parameters: List<ParameterDoc> = emptyList(),
     val returnType: String,
-    val statusByBackend: Map<String, String>,
-    val notes: List<Note>
+    val statusByBackend: Map<String, String> = emptyMap(),
+    val notes: List<Note> = emptyList()
 )
 
 @Serializable
@@ -38,10 +40,10 @@ data class ParameterDoc(
 )
 
 @Serializable
-data class Note(
-    val type: String,
-    val backend: String,
-    val message: String
+ data class Note(
+    val type: String = "",
+    val backend: String = "",
+    val message: String = ""
 )
 
 enum class DocumentationFormat {

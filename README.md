@@ -36,6 +36,16 @@ Use any of the following Gradle tasks from the project root:
 
 Open the generated AsciiDoc sources in docs/modules/operators/_generated_ with your preferred AsciiDoc viewer. If you build an HTML site locally with Asciidoctor, open build/docs/asciidoc.
 
+### Documentation tooling
+
+We now use the Gradle plugin (buildSrc) only. The former skainet-lang-export-ops module has been removed. All everyday workflows are covered by:
+- generateDocs — converts KSP JSON to AsciiDoc
+- validateOperatorSchema — validates generated operators.json against the JSON schema
+
+Run from the project root, for example:
+- ./gradlew generateDocs
+- ./gradlew validateOperatorSchema
+
 ---
 
 ## Development Practices

@@ -44,7 +44,8 @@ abstract class GenerateDocumentationTask : DefaultTask() {
         logger.lifecycle("📂 Output directory: ${output.absolutePath}")
         
         val jsonContent = input.readText()
-        val module = Json.decodeFromString<OperatorDocModule>(jsonContent)
+        val json = Json { ignoreUnknownKeys = true }
+        val module = json.decodeFromString<OperatorDocModule>(jsonContent)
         
         when (format.get()) {
             DocumentationFormat.ASCIIDOC -> generateAsciidoc(module, output)
