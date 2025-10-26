@@ -35,8 +35,6 @@ tasks.register("generateOperatorDocs") {
     
     // Configure inputs for incremental builds
     inputs.files("skainet-lang/skainet-lang-core/build/generated/ksp/metadata/commonMain/resources/operators.json")
-    inputs.files("tools/docgen/src/main/kotlin")
-    
     // Configure outputs for incremental builds
     outputs.dir("docs/modules/operators/_generated_")
     outputs.cacheIf { true }
@@ -44,11 +42,8 @@ tasks.register("generateOperatorDocs") {
     // Depend on KSP processing
     dependsOn(":skainet-lang:skainet-lang-core:kspCommonMainKotlinMetadata")
     
-    // Depend on DocGen application
-    dependsOn(":tools:docgen:run")
-    
-    // Final step: process with AsciiDoctor
-    finalizedBy(":tools:docgen:asciidoctor")
+    // Run built-in documentation generation task (provided by sk.ainet.documentation plugin)
+    dependsOn("generateDocs")
     
     doLast {
         println("Operator documentation generation completed")
