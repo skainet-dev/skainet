@@ -1,6 +1,5 @@
 package sk.ainet.lang.nn.mlp
 
-import sk.ainet.lang.graph.*
 import sk.ainet.lang.nn.reflection.describe
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.types.FP32

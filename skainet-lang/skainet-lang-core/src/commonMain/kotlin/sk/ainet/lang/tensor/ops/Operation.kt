@@ -1,4 +1,4 @@
-package sk.ainet.lang.graph
+package sk.ainet.lang.tensor.ops
 
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
@@ -33,7 +33,7 @@ public interface Operation {
      * Validate that the given inputs are compatible with this operation
      */
     public fun validateInputs(inputs: List<TensorSpec>): ValidationResult
-    
+
     /**
      * Infer the output tensor specifications from input specifications
      */
@@ -53,6 +53,14 @@ public interface Operation {
      * Get a human-readable description of this operation
      */
     public fun getDescription(): String = "$name($parameters)"
+}
+
+/**
+ * Result of graph validation
+ */
+public sealed class ValidationResult {
+    public object Valid : ValidationResult()
+    public data class Invalid(val errors: List<String>) : ValidationResult()
 }
 
 /**

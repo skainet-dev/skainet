@@ -1,8 +1,5 @@
 package sk.ainet.lang.tensor.ops
 
-import sk.ainet.lang.graph.DefaultComputeGraph
-import sk.ainet.lang.graph.DefaultExecutionContext
-import sk.ainet.lang.graph.ExecutionMode
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory

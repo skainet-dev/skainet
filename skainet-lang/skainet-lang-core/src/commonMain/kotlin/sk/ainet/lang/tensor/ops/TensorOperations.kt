@@ -2,7 +2,6 @@ package sk.ainet.lang.tensor.ops
 
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
-import sk.ainet.lang.graph.*
 
 /**
  * Input tensor operation for graph representation
@@ -15,14 +14,14 @@ public class InputOperation<T : DType, V>(
         require(inputs.isEmpty()) { "Input operation should not have inputs" }
         throw UnsupportedOperationException("Input operations don't execute - they represent tensor values")
     }
-    
+
     override fun validateInputs(inputs: List<TensorSpec>): ValidationResult {
         if (inputs.isNotEmpty()) {
             return ValidationResult.Invalid(listOf("Input operation should not have inputs, got ${inputs.size}"))
         }
         return ValidationResult.Valid
     }
-    
+
     override fun inferOutputs(inputs: List<TensorSpec>): List<TensorSpec> {
         require(inputs.isEmpty()) { "Input operation should not have inputs" }
         // This will be set by the caller with the actual tensor spec
@@ -43,7 +42,7 @@ public class AddOperation<T : DType, V>(
         require(inputs.size == 2) { "Add operation requires exactly 2 inputs" }
         throw UnsupportedOperationException("Direct execution not supported in graph mode")
     }
-    
+
     override fun validateInputs(inputs: List<TensorSpec>): ValidationResult {
         if (inputs.size != 2) {
             return ValidationResult.Invalid(listOf("Add operation requires exactly 2 inputs, got ${inputs.size}"))
@@ -53,7 +52,7 @@ public class AddOperation<T : DType, V>(
         }
         return ValidationResult.Valid
     }
-    
+
     override fun inferOutputs(inputs: List<TensorSpec>): List<TensorSpec> {
         require(inputs.size == 2) { "Add operation requires exactly 2 inputs" }
         val outputShape = inputs[0].shape ?: inputs[1].shape
@@ -88,7 +87,7 @@ public class SubtractOperation<T : DType, V>(
         }
         return ValidationResult.Valid
     }
-    
+
     override fun inferOutputs(inputs: List<TensorSpec>): List<TensorSpec> {
         require(inputs.size == 2) { "Subtract operation requires exactly 2 inputs" }
         val outputShape = inputs[0].shape ?: inputs[1].shape

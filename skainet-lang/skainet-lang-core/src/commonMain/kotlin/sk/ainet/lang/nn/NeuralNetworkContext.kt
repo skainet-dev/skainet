@@ -7,6 +7,7 @@ import sk.ainet.lang.nn.dsl.sequential
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.types.DType
+import sk.ainet.lang.types.FP32
 
 
 /**

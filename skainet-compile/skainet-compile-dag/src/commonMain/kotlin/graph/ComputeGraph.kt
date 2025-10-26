@@ -77,10 +77,3 @@ public interface ComputeGraph {
     public fun clear()
 }
 
-/**
- * Result of graph validation
- */
-public sealed class ValidationResult {
-    public object Valid : ValidationResult()
-    public data class Invalid(val errors: List<String>) : ValidationResult()
-}

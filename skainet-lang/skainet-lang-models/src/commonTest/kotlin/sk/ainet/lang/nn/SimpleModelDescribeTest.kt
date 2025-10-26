@@ -1,15 +1,11 @@
 package sk.ainet.lang.nn
 
-import sk.ainet.lang.nn.Linear
-import sk.ainet.compile.nn.context
-import sk.ainet.compile.nn.network
 import sk.ainet.lang.nn.reflection.Summary
 import sk.ainet.lang.nn.reflection.describe
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.relu
-import sk.ainet.lang.tensor.softmax
 import sk.ainet.lang.types.FP32
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -26,7 +22,7 @@ class SimpleModelDescribeTest {
 
     @Test
     fun testMnistCnnModelDescribeAndSummary() {
-        val model = context<FP32, Float> {
+        val model = definition<FP32, Float> {
             network {
                 // Stage: "conv1"
                 stage("conv1") {

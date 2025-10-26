@@ -1,4 +1,6 @@
-package sk.ainet.lang.graph
+package sk.ainet.compile.nn
+
+import sk.ainet.lang.tensor.ops.Operation
 
 /**
  * Registry for managing operation types and their implementations.
