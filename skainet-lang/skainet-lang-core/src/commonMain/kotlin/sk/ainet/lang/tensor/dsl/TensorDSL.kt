@@ -152,6 +152,7 @@ public class TensorBuilder<T : DType, V>(private val dtype: KClass<T>) {
      */
     public fun shape(shape: Shape): ShapeBuilder<T, V> =
         ShapeBuilder(dtype, shape)
+
 }
 
 /**

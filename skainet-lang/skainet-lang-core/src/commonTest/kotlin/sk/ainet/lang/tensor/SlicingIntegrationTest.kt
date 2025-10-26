@@ -20,7 +20,7 @@ class SlicingIntegrationTest {
     fun testCompatibilityWithExistingTensorOperations() {
         println("[DEBUG_LOG] Testing compatibility with existing tensor operations")
 
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             // Create base tensor
             val tensor = shape(4, 3, 2) { shape ->
                 init { indices ->
@@ -68,7 +68,7 @@ class SlicingIntegrationTest {
     fun testSliceViewVsSliceCopyBehavioralDifferences() {
         println("[DEBUG_LOG] Testing sliceView() vs sliceCopy() behavioral differences")
 
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             val tensor = shape(4, 3, 2) { shape ->
                 init { indices ->
                     var flatIndex = 0
@@ -210,7 +210,7 @@ class SlicingIntegrationTest {
     fun testBatchProcessingScenarios() {
         println("[DEBUG_LOG] Testing batch processing scenarios")
 
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             // Create dataset tensor: (batch_size=32, features=128)
             val dataset = shape(32, 128) {
                 init { indices ->
@@ -254,7 +254,7 @@ class SlicingIntegrationTest {
     fun testFeatureExtractionUseCases() {
         println("[DEBUG_LOG] Testing feature extraction use cases")
 
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             // Create NCHW image tensor: (batch=4, channels=3, height=32, width=32)
             val images = shape(4, 3, 32, 32) { shape ->
                 init { indices ->
@@ -312,7 +312,7 @@ class SlicingIntegrationTest {
     fun testSequenceProcessingWithSlidingWindows() {
         println("[DEBUG_LOG] Testing sequence processing with sliding windows")
 
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             // Create sequence tensor: (batch=2, sequence_length=100, features=64)
             val sequences = shape(2, 100, 64) { shape ->
                 init { indices ->
@@ -362,7 +362,7 @@ class SlicingIntegrationTest {
     fun testMultiHeadAttentionAndModelLayerOutputPatterns() {
         println("[DEBUG_LOG] Testing multi-head attention and model layer output patterns")
 
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             // Create attention tensor: (batch=4, heads=8, seq_length=64, head_dim=32)
             val attention = shape(4, 8, 64, 32) { shape ->
                 init { indices ->

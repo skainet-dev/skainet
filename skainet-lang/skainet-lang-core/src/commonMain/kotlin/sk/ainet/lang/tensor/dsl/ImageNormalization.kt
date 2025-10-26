@@ -39,3 +39,9 @@ public fun Tensor<Int32, Int>.normalizePixels(maxValue: Float = ImageNormalizati
         }
     }
 }
+
+/**
+ * Alias: Normalize Int32 BCHW tensor to unit range [0,1].
+ */
+public fun Tensor<Int32, Int>.normalizeIntBCHWToUnitRange(maxValue: Float = ImageNormalization.DEFAULT_MAX_PIXEL): Tensor<FP32, Float> =
+    this.normalizePixels(maxValue)

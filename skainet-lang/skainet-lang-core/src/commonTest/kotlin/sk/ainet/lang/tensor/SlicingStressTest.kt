@@ -17,7 +17,7 @@ class SlicingStressTest {
     fun testBehaviorUnderMemoryPressureConditions() {
         println("[DEBUG_LOG] Testing behavior under memory pressure conditions")
         
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             // Create large tensor to simulate memory pressure
             val largeTensor = shape(500, 500, 10) { shape ->
                 init { indices ->
@@ -58,7 +58,7 @@ class SlicingStressTest {
     fun testPerformanceWithLargeTensorSlicingScenarios() {
         println("[DEBUG_LOG] Testing performance with large tensor slicing scenarios")
         
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             // Create very large tensor
             val largeTensor = shape(1000, 1000, 5) { shape ->
                 init { indices ->
@@ -111,7 +111,7 @@ class SlicingStressTest {
     fun testViewCreationDestructionPatternsForMemoryStability() {
         println("[DEBUG_LOG] Testing view creation/destruction patterns for memory stability")
         
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             val baseTensor = shape(200, 200, 5) { shape ->
                 init { indices ->
                     (indices[0] * 1000 + indices[1] + indices[2]).toFloat()
@@ -168,7 +168,7 @@ class SlicingStressTest {
     fun testFallbackMechanismsUnderVariousConditions() {
         println("[DEBUG_LOG] Testing fallback mechanisms under various conditions")
         
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             val tensor = shape(50, 50, 10) { shape ->
                 init { indices ->
                     (indices[0] * 100 + indices[1] + indices[2]).toFloat()
@@ -228,7 +228,7 @@ class SlicingStressTest {
     fun testMultiplatformTargetCompatibility() {
         println("[DEBUG_LOG] Testing multiplatform target compatibility")
         
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             // This test runs on all platforms defined in build.gradle.kts
             val tensor = shape(20, 20, 5) { shape ->
                 init { indices ->
@@ -269,7 +269,7 @@ class SlicingStressTest {
     fun testTensorInteroperabilityWithViews() {
         println("[DEBUG_LOG] Testing tensor interoperability with views")
         
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             val originalTensor = shape(30, 30, 3) { shape ->
                 init { indices ->
                     (indices[0] * 1000 + indices[1] * 10 + indices[2]).toFloat()
@@ -327,7 +327,7 @@ class SlicingStressTest {
     fun testSerializationCompatibilityOfViews() {
         println("[DEBUG_LOG] Testing serialization compatibility of views")
         
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             val tensor = shape(10, 10, 3) { shape ->
                 init { indices ->
                     (indices[0] * 100 + indices[1] * 10 + indices[2]).toFloat()
@@ -372,7 +372,7 @@ class SlicingStressTest {
     fun testPerformanceOnDifferentArchitectures() {
         println("[DEBUG_LOG] Testing performance on different architectures")
         
-        tensor(testFactory) {
+        tensor<FP32,Float>(testFactory) {
             val tensor = shape(100, 100, 10) { shape ->
                 init { indices ->
                     (indices[0] + indices[1] + indices[2]).toFloat()
