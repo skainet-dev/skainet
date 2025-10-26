@@ -6,6 +6,7 @@ import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.types.DType
+import sk.ainet.lang.tensor.operators.withOps
 import kotlin.random.Random
 import kotlin.reflect.KClass
 
@@ -133,7 +134,18 @@ public inline fun <reified T : DType, V> tensor(
  */
 public inline fun <reified T : DType, V> tensor(
     content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
-): Tensor<T, V> = tensor(DenseTensorDataFactory(), content)
+): Tensor<T, V> {
+    // If an execution context is active, use its factory and bind ops
+    val ctx = sk.ainet.context.ExecutionEnvironment.current
+    return if (ctx != null) {
+        @Suppress("UNCHECKED_CAST")
+        val typed = ctx as sk.ainet.context.ExecutionContext<V>
+        val t = tensor<T, V>(typed.tensorDataFactory, content)
+        t.withOps(typed.ops)
+    } else {
+        tensor(DenseTensorDataFactory(), content)
+    }
+}
 
 
 /**
