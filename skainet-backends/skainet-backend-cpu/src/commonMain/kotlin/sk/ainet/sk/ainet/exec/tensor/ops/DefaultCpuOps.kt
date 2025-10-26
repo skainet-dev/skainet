@@ -159,7 +159,122 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         a: Tensor<T, V>,
         b: Tensor<T, V>
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        require(a.rank >= 2 && b.rank >= 2) { "Matrix multiplication requires tensors with at least 2 dimensions" }
+        require(a.dtype == b.dtype) { "DType mismatch: ${a.dtype} vs ${b.dtype}" }
+
+        val aDims = a.shape.dimensions
+        val bDims = b.shape.dimensions
+        val aRank = aDims.size
+        val bRank = bDims.size
+        val kA = aDims[aRank - 1]
+        val kB = bDims[bRank - 2]
+        require(kA == kB) { "Matrix multiplication shape mismatch: inner dimensions must match ($kA vs $kB)" }
+
+        // Validate batch dims broadcastability (excluding last two dims)
+        val maxRank = maxOf(aRank, bRank)
+        for (i in 0 until maxRank - 2) {
+            val aDim = if (i < aRank - 2) aDims[i] else 1
+            val bDim = if (i < bRank - 2) bDims[i] else 1
+            if (aDim != bDim && aDim != 1 && bDim != 1) {
+                throw IllegalArgumentException("Matrix multiplication batch dimension mismatch at position $i: $aDim vs $bDim")
+            }
+        }
+
+        // Compute output shape
+        val outDims = IntArray(maxRank)
+        for (i in 0 until maxRank - 2) {
+            val aDim = if (i < aRank - 2) aDims[i] else 1
+            val bDim = if (i < bRank - 2) bDims[i] else 1
+            outDims[i] = maxOf(aDim, bDim)
+        }
+        outDims[maxRank - 2] = aDims[aRank - 2] // m
+        outDims[maxRank - 1] = bDims[bRank - 1] // n
+        val outShape = Shape(outDims)
+
+        // Helper to map an output batch index to input batch indices with broadcasting
+        fun mapBatchIndex(batchIdx: IntArray, inDims: IntArray, inRank: Int): IntArray {
+            val inBatchRank = inRank - 2
+            val mapped = IntArray(inBatchRank)
+            var or = batchIdx.size - 1
+            var ir = inBatchRank - 1
+            while (ir >= 0) {
+                val inDim = inDims[ir]
+                val outIndex = if (or >= 0) batchIdx[or] else 0
+                mapped[ir] = if (inDim == 1) 0 else outIndex
+                ir--; or--
+            }
+            return mapped
+        }
+
+        val outData = dataFactory.init<T, V>(outShape, a.dtype) { outIdx ->
+            // Split outIdx into batch + m + n
+            val m = outIdx[outIdx.size - 2]
+            val n = outIdx[outIdx.size - 1]
+            val batchIdx = if (outIdx.size > 2) outIdx.copyOf(outIdx.size - 2) else IntArray(0)
+
+            val aBatchIdx = mapBatchIndex(batchIdx, aDims, aRank)
+            val bBatchIdx = mapBatchIndex(batchIdx, bDims, bRank)
+
+            // Accumulate over k
+            when (a.dtype) {
+                sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                    var acc = 0.0f
+                    var k = 0
+                    while (k < kA) {
+                        // Build indices for a: [aBatch..., m, k]
+                        val aIdx = IntArray(aRank)
+                        if (aBatchIdx.isNotEmpty()) {
+                            aBatchIdx.copyInto(aIdx, destinationOffset = 0, startIndex = 0, endIndex = aBatchIdx.size)
+                        }
+                        aIdx[aRank - 2] = m
+                        aIdx[aRank - 1] = k
+                        val av = a.data.get(*aIdx) as Float
+
+                        // Build indices for b: [bBatch..., k, n]
+                        val bIdx = IntArray(bRank)
+                        if (bBatchIdx.isNotEmpty()) {
+                            bBatchIdx.copyInto(bIdx, destinationOffset = 0, startIndex = 0, endIndex = bBatchIdx.size)
+                        }
+                        bIdx[bRank - 2] = k
+                        bIdx[bRank - 1] = n
+                        val bv = b.data.get(*bIdx) as Float
+
+                        acc += av * bv
+                        k++
+                    }
+                    @Suppress("UNCHECKED_CAST")
+                    acc as V
+                }
+                sk.ainet.lang.types.Int32::class -> {
+                    var acc = 0
+                    var k = 0
+                    while (k < kA) {
+                        val aIdx = IntArray(aRank)
+                        if (aBatchIdx.isNotEmpty()) {
+                            aBatchIdx.copyInto(aIdx, destinationOffset = 0, startIndex = 0, endIndex = aBatchIdx.size)
+                        }
+                        aIdx[aRank - 2] = m
+                        aIdx[aRank - 1] = k
+                        val av = a.data.get(*aIdx) as Int
+
+                        val bIdx = IntArray(bRank)
+                        if (bBatchIdx.isNotEmpty()) {
+                            bBatchIdx.copyInto(bIdx, destinationOffset = 0, startIndex = 0, endIndex = bBatchIdx.size)
+                        }
+                        bIdx[bRank - 2] = k
+                        bIdx[bRank - 1] = n
+                        val bv = b.data.get(*bIdx) as Int
+
+                        acc += av * bv
+                        k++
+                    }
+                    @Suppress("UNCHECKED_CAST")
+                    acc as V
+                }
+                else -> throw IllegalArgumentException("Unsupported dtype for matmul: ${a.dtype}")
+            }
+        }
+        return CpuTensor(outData, this, a.dtype)
     }
 
     @TensorOp()
