@@ -1,12 +1,14 @@
 package sk.ainet.compile.nn
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.dsl.NeuralNetworkDsl
-import sk.ainet.lang.nn.dsl.sequential
 
 
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.data.TensorDataFactory
+import sk.ainet.lang.tensor.ops.TensorOps
+import sk.ainet.lang.tensor.ops.VoidTensorOps
 import sk.ainet.lang.types.DType
 
 
@@ -19,10 +21,13 @@ import sk.ainet.lang.types.DType
  *
  * @param T The default data type.
  */
-public interface NeuralNetworkContext<T: DType, V> {
+public interface NeuralNetworkContext<T : DType, V> : ExecutionContext<V>
 
-    public val tensorDataFactory: TensorDataFactory
-
+private class DefaultNetworkContext<T : DType, V> : NeuralNetworkContext<T, V> {
+    override val ops: TensorOps<V>
+        get() = VoidTensorOps()
+    override val tensorDataFactory: TensorDataFactory
+        get() = DenseTensorDataFactory()
 }
 
 /**
@@ -32,7 +37,7 @@ public interface NeuralNetworkContext<T: DType, V> {
  * @param init The configuration function.
  * @return The configured context.
  */
-public fun <T: DType, V> definition(init: NeuralNetworkContext<T, V>.(NeuralNetworkContext<T, V>) -> Module<T, V>): Module<T, V> {
+public fun <T : DType, V> context(init: NeuralNetworkContext<T, V>.(NeuralNetworkContext<T, V>) -> Module<T, V>): Module<T, V> {
     val instance = DefaultNetworkContext<T, V>()
     return instance.init(instance)
 }
@@ -41,11 +46,7 @@ public fun <T: DType, V> definition(init: NeuralNetworkContext<T, V>.(NeuralNetw
  * Extension function to create a network within a NetworkContext.
  * This bridges the context wrapper with the network DSL using the context's tensor factory.
  */
-public inline fun <reified T: DType, V> NeuralNetworkContext<T, V>.network(
+public inline fun <reified T : DType, V> NeuralNetworkContext<T, V>.network(
     content: NeuralNetworkDsl<T, V>.() -> Unit
-): Module<T, V> = sequential(tensorDataFactory, content)
+): Module<T, V> = sk.ainet.lang.nn.dsl.network(this.tensorDataFactory, content)
 
-public class DefaultNetworkContext<T : DType, V> : NeuralNetworkContext<T, V> {
-    override val tensorDataFactory: TensorDataFactory
-        get() = DenseTensorDataFactory()
-}

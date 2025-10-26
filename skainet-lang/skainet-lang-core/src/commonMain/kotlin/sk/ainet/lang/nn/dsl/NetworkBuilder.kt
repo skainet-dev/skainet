@@ -53,7 +53,7 @@ public annotation class NetworkDsl
  * ```
  */
 @NetworkDsl
-public inline fun <reified T : DType, V> network(
+public inline fun <reified T : DType, V> sequential(
     factory: TensorDataFactory,
     content: NeuralNetworkDsl<T, V>.() -> Unit
 ): Module<T, V> =

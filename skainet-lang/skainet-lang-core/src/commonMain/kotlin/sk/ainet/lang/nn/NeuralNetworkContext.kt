@@ -1,10 +1,9 @@
-package sk.ainet.compile.nn
+package sk.ainet.lang.nn
 
 import sk.ainet.lang.nn.dsl.NeuralNetworkDsl
 import sk.ainet.lang.nn.dsl.sequential
 
 
-import sk.ainet.lang.nn.Module
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.types.DType

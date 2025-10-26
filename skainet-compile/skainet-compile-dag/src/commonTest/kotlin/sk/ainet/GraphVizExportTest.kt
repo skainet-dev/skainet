@@ -1,14 +1,26 @@
-package sk.ainet.lang.graph.utils
+package sk.ainet
 
-import sk.ainet.lang.graph.*
+import sk.ainet.lang.graph.BaseOperation
+import sk.ainet.DefaultComputeGraph
+import sk.ainet.lang.graph.GraphEdge
+import sk.ainet.lang.graph.GraphExecutionResult
+import sk.ainet.lang.graph.GraphNode
+import sk.ainet.lang.graph.Operation
+import sk.ainet.lang.graph.TensorSpec
+import sk.ainet.lang.graph.ValidationResult
+import sk.ainet.lang.graph.exec
+import sk.ainet.lang.graph.utils.drawDot
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.dsl.tensor
 import sk.ainet.lang.tensor.ops.plus
+import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP32
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.test.assertEquals
+import kotlin.text.get
+import kotlin.text.iterator
 
 /**
  * Test for GraphViz export functionality
@@ -21,7 +33,7 @@ class GraphVizExportTest {
         override val parameters: Map<String, Any> = emptyMap()
     ) : BaseOperation(name, type, parameters) {
 
-        override fun <T : sk.ainet.lang.types.DType, V> execute(inputs: List<sk.ainet.lang.tensor.Tensor<T, V>>): List<sk.ainet.lang.tensor.Tensor<T, V>> {
+        override fun <T : DType, V> execute(inputs: List<Tensor<T, V>>): List<Tensor<T, V>> {
             return inputs // Pass through for testing
         }
 
@@ -170,7 +182,7 @@ class GraphVizExportTest {
         val dotLR = drawDot(graph, "LR")
         assertTrue(dotLR.content.contains("rankdir=LR"), "Should set LR rank direction")
 
-        // Test TB direction  
+        // Test TB direction
         val dotTB = drawDot(graph, "TB")
         assertTrue(dotTB.content.contains("rankdir=TB"), "Should set TB rank direction")
 
@@ -179,7 +191,7 @@ class GraphVizExportTest {
     @Test
     fun testSimpleExpressionToGraphviz() {
         println("[DEBUG_LOG] Testing simple expression to GraphViz")
-        
+
         // Create tensors exactly as specified in the issue
         val a = tensor<FP32, Float> {
             shape(1) { ones() }
@@ -203,25 +215,25 @@ class GraphVizExportTest {
         val dotTB = drawDot(result.graph, "TB")
         println("[DEBUG_LOG] Generated DOT content:")
         println(dotTB.content)
-        
+
         // Verify that we have exactly 3 nodes as expected
         assertEquals(3, result.graph.nodes.size, "Should have exactly 3 nodes")
-        
+
         // Verify the DOT content contains 3 node definitions
         val nodeDefinitions = dotTB.content.lines().filter { it.trim().contains("[label=") }
         assertEquals(3, nodeDefinitions.size, "DOT should contain 3 node definitions")
-        
+
         // Verify we have 2 input nodes (rectangles with values) and 1 addition operation node
         val nodesByType = result.graph.nodes.groupBy { it.operation.type }
         assertTrue(nodesByType.containsKey("input"), "Should contain input operations")
         assertTrue(nodesByType.containsKey("math"), "Should contain math operations")
         assertEquals(2, nodesByType["input"]!!.size, "Should have exactly 2 input nodes")
         assertEquals(1, nodesByType["math"]!!.size, "Should have exactly 1 math operation node")
-        
+
         // Verify the addition operation name
         val addNode = nodesByType["math"]!!.first()
         assertEquals("add", addNode.operationName, "Math operation should be 'add'")
-        
+
         println("[DEBUG_LOG] Simple expression GraphViz test completed")
     }
 

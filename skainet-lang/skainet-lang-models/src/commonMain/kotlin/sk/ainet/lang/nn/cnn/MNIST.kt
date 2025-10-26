@@ -2,8 +2,7 @@ package sk.ainet.lang.nn.cnn
 
 import sk.ainet.lang.nn.Model
 import sk.ainet.lang.nn.Module
-import sk.ainet.compile.nn.context
-import sk.ainet.compile.nn.network
+import sk.ainet.lang.nn.network
 
 import sk.ainet.lang.tensor.relu
 import sk.ainet.lang.tensor.softmax
@@ -57,7 +56,7 @@ public class MnistCnn() : Model {
     }
 
 
-    private val model = context<FP32, Float> {
+    private val model = sk.ainet.lang.nn.definition<FP32, Float> {
         network {
             sequential {
                 // Stage: "conv1"

@@ -13,7 +13,7 @@ class WeightsContextTest {
 
         // Simple test to check if from and ones work in weights context
         val testNetwork = context<FP32, Float> {
-            network {
+            sequential {
                 input(1)
                 dense(2) {
                     weights { shape ->

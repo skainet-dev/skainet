@@ -38,7 +38,6 @@ kotlin {
         commonMain.dependencies {
             api(project(":skainet-lang:skainet-lang-core"))
             api(project(":skainet-compile:skainet-compile-core"))
-//            implementation(project(":skainet-compile:skainet-compile-dag"))
         }
 
         commonTest.dependencies {
@@ -48,7 +47,7 @@ kotlin {
 }
 
 android {
-    namespace = "sk.ai.net.lang.api"
+    namespace = "sk.ainet.compilie.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
