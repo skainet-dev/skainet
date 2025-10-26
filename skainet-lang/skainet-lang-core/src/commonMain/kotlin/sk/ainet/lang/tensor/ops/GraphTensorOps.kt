@@ -1,5 +1,6 @@
 package sk.ainet.lang.tensor.ops
 
+import sk.ainet.context.GraphExecutionContext
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.types.DType
@@ -12,7 +13,7 @@ import sk.ainet.lang.graph.*
 public class GraphTensorOps<V>(
     private val baseOps: TensorOps<V>,
     private val graph: ComputeGraph,
-    private val executionContext: GraphExecutionContext
+    private val executionContext: GraphExecutionContext<V>
 ) : TensorOps<V> {
 
     private var nodeCounter = 0L

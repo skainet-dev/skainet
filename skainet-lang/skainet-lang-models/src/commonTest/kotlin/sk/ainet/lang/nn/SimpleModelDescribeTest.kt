@@ -63,7 +63,7 @@ class SimpleModelDescribeTest {
                  */
             }
         }
-        model.describe(Shape(1,1,28,28), FP32::class)
+        print(model.describe(Shape(1,1,28,28), FP32::class))
     }
 
 

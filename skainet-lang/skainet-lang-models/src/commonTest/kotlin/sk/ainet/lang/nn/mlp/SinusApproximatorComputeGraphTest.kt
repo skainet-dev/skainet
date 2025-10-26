@@ -1,6 +1,9 @@
 package sk.ainet.lang.nn.mlp
 
 import sk.ainet.lang.graph.*
+import sk.ainet.lang.nn.reflection.describe
+import sk.ainet.lang.tensor.Shape
+import sk.ainet.lang.types.FP32
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -17,6 +20,9 @@ class SinusApproximatorComputeGraphTest {
         
         // Create the SinusApproximator model
         val sinusModel = SinusApproximator()
+
+        print(sinusModel.model<FP32,Float>().describe(Shape(1, 1), FP32::class))
+
         
         // Create a compute graph to represent the model
         val graph = DefaultComputeGraph()

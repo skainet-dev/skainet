@@ -1,6 +1,7 @@
 package sk.ainet.lang.graph
 
 import sk.ainet.context.ExecutionStats
+import sk.ainet.context.GraphExecutionContext
 import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.types.DType
@@ -36,7 +37,7 @@ public data class GraphExecutionResult<V>(
 public fun <V, R> exec(
     dataFactory: TensorDataFactory = DenseTensorDataFactory(),
     block: GraphExecutionContext<V>.() -> R
-): GraphExecutionResult<V> {
+) {//}: GraphExecutionResult<V> {
     /*
 
     return try {

@@ -1,11 +1,7 @@
-package sk.ainet.lang.graph
+package sk.ainet.context
 
-import sk.ainet.context.ExecutionContext
-import sk.ainet.context.ExecutionStats
-import sk.ainet.context.MemoryInfo
-import sk.ainet.lang.tensor.Tensor
-import sk.ainet.lang.types.DType
-
+import sk.ainet.lang.graph.ExecutionTape
+import sk.ainet.lang.graph.TapeStack
 
 /**
  * Context for managing execution state, including mode switching,

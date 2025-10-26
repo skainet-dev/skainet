@@ -2,7 +2,6 @@ package sk.ainet.lang.tensor.ops
 
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
-import sk.ainet.lang.graph.getCurrentGraphContext
 
 /**
  * Extension functions to make tensor operations available in the graph execution context.
