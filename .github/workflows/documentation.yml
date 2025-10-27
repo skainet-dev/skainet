@@ -83,7 +83,7 @@ jobs:
           path: ./docs-preview
           
       - name: Setup Node.js for preview server
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '18'
           
