@@ -86,11 +86,15 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         return elementwise(a, b) { av, bv, dtype ->
             when (dtype) {
                 sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
-                    val x = av as Float; val y = bv as Float; (x + y) as V
+                    val x = av as Float;
+                    val y = bv as Float; (x + y) as V
                 }
+
                 sk.ainet.lang.types.Int32::class -> {
-                    val x = av as Int; val y = bv as Int; (x + y) as V
+                    val x = av as Int;
+                    val y = bv as Int; (x + y) as V
                 }
+
                 else -> throw IllegalArgumentException("Unsupported dtype for add: ${'$'}dtype")
             }
         }
@@ -105,11 +109,15 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         return elementwise(a, b) { av, bv, dtype ->
             when (dtype) {
                 sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
-                    val x = av as Float; val y = bv as Float; (x - y) as V
+                    val x = av as Float;
+                    val y = bv as Float; (x - y) as V
                 }
+
                 sk.ainet.lang.types.Int32::class -> {
-                    val x = av as Int; val y = bv as Int; (x - y) as V
+                    val x = av as Int;
+                    val y = bv as Int; (x - y) as V
                 }
+
                 else -> throw IllegalArgumentException("Unsupported dtype for subtract: ${'$'}dtype")
             }
         }
@@ -124,11 +132,15 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         return elementwise(a, b) { av, bv, dtype ->
             when (dtype) {
                 sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
-                    val x = av as Float; val y = bv as Float; (x * y) as V
+                    val x = av as Float;
+                    val y = bv as Float; (x * y) as V
                 }
+
                 sk.ainet.lang.types.Int32::class -> {
-                    val x = av as Int; val y = bv as Int; (x * y) as V
+                    val x = av as Int;
+                    val y = bv as Int; (x * y) as V
                 }
+
                 else -> throw IllegalArgumentException("Unsupported dtype for multiply: ${'$'}dtype")
             }
         }
@@ -143,11 +155,15 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         return elementwise(a, b) { av, bv, dtype ->
             when (dtype) {
                 sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
-                    val x = av as Float; val y = bv as Float; (x / y) as V
+                    val x = av as Float;
+                    val y = bv as Float; (x / y) as V
                 }
+
                 sk.ainet.lang.types.Int32::class -> {
-                    val x = av as Int; val y = bv as Int; if (y == 0) 0 as V else (x / y) as V
+                    val x = av as Int;
+                    val y = bv as Int; if (y == 0) 0 as V else (x / y) as V
                 }
+
                 else -> throw IllegalArgumentException("Unsupported dtype for divide: ${'$'}dtype")
             }
         }
@@ -245,7 +261,9 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
                     @Suppress("UNCHECKED_CAST")
                     acc as V
                 }
-                sk.ainet.lang.types.Int32::class -> {
+
+                sk.ainet.lang.types.Int32::class,
+                sk.ainet.lang.types.Int8::class -> {
                     var acc = 0
                     var k = 0
                     while (k < kA) {
@@ -271,6 +289,7 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
                     @Suppress("UNCHECKED_CAST")
                     acc as V
                 }
+
                 else -> throw IllegalArgumentException("Unsupported dtype for matmul: ${a.dtype}")
             }
         }

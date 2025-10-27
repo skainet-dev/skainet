@@ -508,7 +508,7 @@ public class DenseTensorDataFactory: TensorDataFactory {
                 }
                 createFloatTensorData(shape, data, FP32 as T) as TensorData<T, V>
             }
-            Int32::class -> {
+            Int8::class, Int32::class -> {
                 val data = IntArray(shape.volume) { flatIndex ->
                     val indices = IntArray(shape.dimensions.size)
                     var remaining = flatIndex
@@ -576,6 +576,9 @@ public class DenseTensorDataFactory: TensorDataFactory {
         @Suppress("UNCHECKED_CAST")
         return when (dtype) {
             Int32::class -> {
+                createIntTensorData(shape, data) as TensorData<T, V>
+            }
+            Int8::class -> {
                 createIntTensorData(shape, data) as TensorData<T, V>
             }
             else -> throw IllegalArgumentException("fromIntArray only supports Int32 type: $dtype")

@@ -12,6 +12,7 @@ import sk.ainet.context.DirectCpuExecutionContext
 import sk.ainet.lang.tensor.dsl.tensor
 import sk.ainet.lang.tensor.matmul
 import sk.ainet.lang.tensor.pprint
+import sk.ainet.lang.types.Int8
 
 class DefaultCpuOpsMatmulTest {
     private val dataFactory = DenseTensorDataFactory()
@@ -23,18 +24,27 @@ class DefaultCpuOpsMatmulTest {
         return VoidOpsTensor(data, FP32::class)
     }
 
+    private fun iTensor(shape: Shape, values: IntArray): VoidOpsTensor<Int8, Int> {
+        val data = dataFactory.fromIntArray<Int8, Int>(shape, Int8::class, values)
+        return VoidOpsTensor(data, Int8::class)
+    }
+
     @Test
     fun matmul_fp32_2d() {
         // 2x3 @ 3x2 = 2x2
-        val a = fTensor(Shape(2, 3), floatArrayOf(
-            1f, 2f, 3f,
-            4f, 5f, 6f
-        ))
-        val b = fTensor(Shape(3, 2), floatArrayOf(
-            7f, 8f,
-            9f, 10f,
-            11f, 12f
-        ))
+        val a = fTensor(
+            Shape(2, 3), floatArrayOf(
+                1f, 2f, 3f,
+                4f, 5f, 6f
+            )
+        )
+        val b = fTensor(
+            Shape(3, 2), floatArrayOf(
+                7f, 8f,
+                9f, 10f,
+                11f, 12f
+            )
+        )
         val r = cpuOpsF.matmul(a, b)
         assertEquals(Shape(2, 2), r.shape)
         // Manual result
@@ -49,8 +59,8 @@ class DefaultCpuOpsMatmulTest {
     @Test
     fun matmul_fp32_batched3d() {
         // batch=2, (2, 3, 4) @ (2, 4, 2) -> (2, 3, 2)
-        val a = fTensor(Shape(2, 3, 4), FloatArray(2*3*4) { it.toFloat() + 1 })
-        val b = fTensor(Shape(2, 4, 2), FloatArray(2*4*2) { (it % 5).toFloat() + 1 })
+        val a = fTensor(Shape(2, 3, 4), FloatArray(2 * 3 * 4) { it.toFloat() + 1 })
+        val b = fTensor(Shape(2, 4, 2), FloatArray(2 * 4 * 2) { (it % 5).toFloat() + 1 })
         val r = cpuOpsF.matmul(a, b)
         assertEquals(Shape(2, 3, 2), r.shape)
         // spot-check a couple values by recomputing
@@ -71,11 +81,15 @@ class DefaultCpuOpsMatmulTest {
     @Test
     fun matmul_fp32_bchw_images_last2dims() {
         // Treat last two dims as (H,W) x (W,N) per BCH batch/channel
-        val B = 2; val C = 3; val H = 2; val W = 3; val N = 2
+        val B = 2;
+        val C = 3;
+        val H = 2;
+        val W = 3;
+        val N = 2
         val aShape = Shape(B, C, H, W)
         val bShape = Shape(B, C, W, N) // broadcast over B,C exact match
-        val a = fTensor(aShape, FloatArray(B*C*H*W) { (it + 1).toFloat() })
-        val b = fTensor(bShape, FloatArray(B*C*W*N) { ((it % 7) + 1).toFloat() })
+        val a = fTensor(aShape, FloatArray(B * C * H * W) { (it + 1).toFloat() })
+        val b = fTensor(bShape, FloatArray(B * C * W * N) { ((it % 7) + 1).toFloat() })
 
         val r = cpuOpsF.matmul(a, b)
         assertEquals(Shape(B, C, H, N), r.shape)
@@ -94,6 +108,36 @@ class DefaultCpuOpsMatmulTest {
     }
 
     @Test
+    fun matmul_Int8_bchw_images_last2dims() {
+        // Treat last two dims as (H,W) x (W,N) per BCH batch/channel
+        val B = 2;
+        val C = 3;
+        val H = 2;
+        val W = 3;
+        val N = 2
+        val aShape = Shape(B, C, H, W)
+        val bShape = Shape(B, C, W, N) // broadcast over B,C exact match
+        val a = iTensor(aShape, IntArray(B * C * H * W) { (it + 1) })
+        val b = iTensor(bShape, IntArray(B * C * W * N) { ((it % 7) + 1) })
+
+        val r = cpuOpsI.matmul(a, b)
+        assertEquals(Shape(B, C, H, N), r.shape)
+        // Validate per-slice via zero-copy slicing semantics by direct indexing
+        fun ref(bi: Int, ci: Int, h: Int, n: Int): Int {
+            var acc = 0
+            for (w in 0 until W) {
+                val av = a.data[bi, ci, h, w]
+                val bv = b.data[bi, ci, w, n]
+                acc += av * bv
+            }
+            return acc
+        }
+        assertEquals(ref(0, 0, 0, 0), r.data[0, 0, 0, 0])
+        assertEquals(ref(1, 2, 1, 1), r.data[1, 2, 1, 1])
+    }
+
+
+    @Test
     fun matmul_mismatched_inner_dims_throws() {
         val a = fTensor(Shape(2, 3), FloatArray(6) { 1f })
         val b = fTensor(Shape(4, 2), FloatArray(8) { 1f })
@@ -106,8 +150,13 @@ class DefaultCpuOpsMatmulTest {
         val b = fTensor(Shape(0, 3), FloatArray(0))
         val r = cpuOpsF.matmul(a, b)
         assertEquals(Shape(2, 3), r.shape)
-        // All zeros by definition of sum over empty set
-        assertEquals(0, r.shape.volume)
+        // All zeros by definition of sum over empty set (result shape still has volume 2*3 = 6)
+        assertEquals(6, r.shape.volume)
+        // Spot-check that elements are zero
+        if (r.shape.volume > 0) {
+            assertEquals(0f, r.data[0, 0])
+            assertEquals(0f, r.data[1, 2])
+        }
     }
 
     @Test
@@ -116,12 +165,13 @@ class DefaultCpuOpsMatmulTest {
         execute(ctx) {
             val a = tensor<FP32, Float> {
                 shape(2, 3) {
-                    init { idx -> (idx[0]*3 + idx[1] + 1).toFloat() }
+                    init { idx -> (idx[0] * 3 + idx[1] + 1).toFloat() }
                 }
             }
             val b = tensor<FP32, Float> {
                 shape(3, 2) {
-                    init { idx -> (idx[0]*2 + idx[1] + 1).toFloat() }
+                    // Match the non-DSL test matrix values: [[7,8],[9,10],[11,12]]
+                    init { idx -> (7 + idx[0] * 2 + idx[1]).toFloat() }
                 }
             }
             val r = a.matmul(b)
