@@ -1,10 +1,10 @@
 package sk.ainet.lang.tensor.dsl
 
 import sk.ainet.lang.tensor.Tensor
-import sk.ainet.lang.tensor.dsl.tensor
 import sk.ainet.lang.types.FP32
 import sk.ainet.lang.types.Int32
 
+/*
 /**
  * Image normalization utilities for BCHW tensors with integer pixel values.
  */
@@ -27,16 +27,19 @@ public fun Tensor<Int32, Int>.normalizePixels(maxValue: Float = ImageNormalizati
     val shape = src.shape
 
     // Build a new FP32 tensor by mapping each Int pixel to Float/Max
-    return tensor<FP32, Float> {
-        shape(shape) {
-            init { indices ->
-                val b = indices[0]
-                val c = indices[1]
-                val h = indices[2]
-                val w = indices[3]
-                (src.data[b, c, h, w].toFloat() / maxValue)
+    return process<FP32,Float> {
+        val a= tensor<FP32, Float> {
+            shape(shape) {
+                init { indices ->
+                    val b = indices[0]
+                    val c = indices[1]
+                    val h = indices[2]
+                    val w = indices[3]
+                    (src.data[b, c, h, w].toFloat() / maxValue)
+                }
             }
         }
+         return@definition a
     }
 }
 
@@ -45,3 +48,6 @@ public fun Tensor<Int32, Int>.normalizePixels(maxValue: Float = ImageNormalizati
  */
 public fun Tensor<Int32, Int>.normalizeIntBCHWToUnitRange(maxValue: Float = ImageNormalization.DEFAULT_MAX_PIXEL): Tensor<FP32, Float> =
     this.normalizePixels(maxValue)
+
+
+ */

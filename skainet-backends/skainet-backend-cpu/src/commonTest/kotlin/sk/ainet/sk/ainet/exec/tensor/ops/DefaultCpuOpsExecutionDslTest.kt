@@ -3,8 +3,9 @@ package sk.ainet.sk.ainet.exec.tensor.ops
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import sk.ainet.context.DirectCpuExecutionContext
+import sk.ainet.execute.context.computation
+import sk.ainet.execute.context.dsl.tensor
 import sk.ainet.lang.tensor.Shape
-import sk.ainet.lang.tensor.dsl.tensor
 import sk.ainet.lang.tensor.plus
 import sk.ainet.lang.tensor.minus
 import sk.ainet.lang.tensor.times
@@ -22,7 +23,7 @@ class DefaultCpuOpsExecutionDslTest {
     @Test
     fun fp32_sameShape_ops_with_init() {
         val ctx = DirectCpuExecutionContext<Float>()
-        execute(ctx) {
+        computation(ctx) {
             val a = tensor<FP32, Float> { shape(3) { init { idx -> (idx[0] + 1).toFloat() } } } // [1,2,3]
             val b = tensor<FP32, Float> { shape(3) { init { idx -> (idx[0] * 2 + 4).toFloat() } } } // [4,6,8]
 
@@ -39,20 +40,23 @@ class DefaultCpuOpsExecutionDslTest {
             // multiply -> [4,12,24]
             assertEquals(4f, mul.data[0]); assertEquals(12f, mul.data[1]); assertEquals(24f, mul.data[2])
             // divide -> [4/1, 6/2, 8/3]
-            assertEquals(4f, div.data[0]); assertEquals(3f, div.data[1]); assertEquals(8f/3f, div.data[2])
+            assertEquals(4f, div.data[0]); assertEquals(3f, div.data[1]); assertEquals(8f / 3f, div.data[2])
         }
     }
 
     @Test
     fun fp32_broadcast_scalar_vector_and_vector_matrix() {
         val ctx = DirectCpuExecutionContext<Float>()
-        execute(ctx) {
+        computation(ctx) {
             // scalar (represented as shape(1)) times vector
             val scalar = tensor<FP32, Float> { shape(1) { ones() } } // [1]
             val vec = tensor<FP32, Float> { shape(4) { init { i -> (i[0] + 1).toFloat() } } } // [1,2,3,4]
             val r1 = scalar * vec
             assertEquals(Shape(4), r1.shape)
-            assertEquals(1f, r1.data[0]); assertEquals(2f, r1.data[1]); assertEquals(3f, r1.data[2]); assertEquals(4f, r1.data[3])
+            assertEquals(1f, r1.data[0]); assertEquals(2f, r1.data[1]); assertEquals(3f, r1.data[2]); assertEquals(
+            4f,
+            r1.data[3]
+        )
 
             // vector + matrix (broadcast along rows)
             val mat = tensor<FP32, Float> {
@@ -66,15 +70,15 @@ class DefaultCpuOpsExecutionDslTest {
             println("=")
             println(r2.pprint())
             // Row 0 -> [11,11,11], Row 1 -> [14,14,14]
-            assertEquals(11f, r2.data[0,0]); assertEquals(11f, r2.data[0,1]); assertEquals(11f, r2.data[0,2])
-            assertEquals(14f, r2.data[1,0]); assertEquals(14f, r2.data[1,1]); assertEquals(14f, r2.data[1,2])
+            assertEquals(11f, r2.data[0, 0]); assertEquals(11f, r2.data[0, 1]); assertEquals(11f, r2.data[0, 2])
+            assertEquals(14f, r2.data[1, 0]); assertEquals(14f, r2.data[1, 1]); assertEquals(14f, r2.data[1, 2])
         }
     }
 
     @Test
     fun fp32_zeros_ones_full_mix() {
         val ctx = DirectCpuExecutionContext<Float>()
-        execute(ctx) {
+        computation(ctx) {
             val zeros = tensor<FP32, Float> { shape(2, 2) { zeros() } }
             val ones = tensor<FP32, Float> { shape(2, 2) { ones() } }
             val twos = ones + ones
@@ -87,20 +91,32 @@ class DefaultCpuOpsExecutionDslTest {
 
             // Assertions
             // rAdd -> ones
-            assertEquals(1f, rAdd.data[0,0]); assertEquals(1f, rAdd.data[0,1]); assertEquals(1f, rAdd.data[1,0]); assertEquals(1f, rAdd.data[1,1])
+            assertEquals(1f, rAdd.data[0, 0]); assertEquals(1f, rAdd.data[0, 1]); assertEquals(
+            1f,
+            rAdd.data[1, 0]
+        ); assertEquals(1f, rAdd.data[1, 1])
             // rSub -> ones
-            assertEquals(1f, rSub.data[0,0]); assertEquals(1f, rSub.data[0,1]); assertEquals(1f, rSub.data[1,0]); assertEquals(1f, rSub.data[1,1])
+            assertEquals(1f, rSub.data[0, 0]); assertEquals(1f, rSub.data[0, 1]); assertEquals(
+            1f,
+            rSub.data[1, 0]
+        ); assertEquals(1f, rSub.data[1, 1])
             // rMul -> zeros
-            assertEquals(0f, rMul.data[0,0]); assertEquals(0f, rMul.data[0,1]); assertEquals(0f, rMul.data[1,0]); assertEquals(0f, rMul.data[1,1])
+            assertEquals(0f, rMul.data[0, 0]); assertEquals(0f, rMul.data[0, 1]); assertEquals(
+            0f,
+            rMul.data[1, 0]
+        ); assertEquals(0f, rMul.data[1, 1])
             // rDiv -> three
-            assertEquals(3f, rDiv.data[0,0]); assertEquals(3f, rDiv.data[0,1]); assertEquals(3f, rDiv.data[1,0]); assertEquals(3f, rDiv.data[1,1])
+            assertEquals(3f, rDiv.data[0, 0]); assertEquals(3f, rDiv.data[0, 1]); assertEquals(
+            3f,
+            rDiv.data[1, 0]
+        ); assertEquals(3f, rDiv.data[1, 1])
         }
     }
 
     @Test
     fun int32_sameShape_and_division_behavior() {
         val ctx = DirectCpuExecutionContext<Int>()
-        execute(ctx) {
+        computation(ctx) {
             val a = tensor<Int32, Int> { shape(4) { init { i -> i[0] + 1 } } } // [1,2,3,4]
             val b = tensor<Int32, Int> { shape(4) { init { i -> (i[0] + 1) * 3 } } } // [3,6,9,12]
 
@@ -110,17 +126,29 @@ class DefaultCpuOpsExecutionDslTest {
             val div = b / a // [3,3,3,3]
 
             assertEquals(Shape(4), add.shape)
-            assertEquals(4, add.data[0]); assertEquals(8, add.data[1]); assertEquals(12, add.data[2]); assertEquals(16, add.data[3])
-            assertEquals(2, sub.data[0]); assertEquals(4, sub.data[1]); assertEquals(6, sub.data[2]); assertEquals(8, sub.data[3])
-            assertEquals(3, mul.data[0]); assertEquals(12, mul.data[1]); assertEquals(27, mul.data[2]); assertEquals(48, mul.data[3])
-            assertEquals(3, div.data[0]); assertEquals(3, div.data[1]); assertEquals(3, div.data[2]); assertEquals(3, div.data[3])
+            assertEquals(4, add.data[0]); assertEquals(8, add.data[1]); assertEquals(12, add.data[2]); assertEquals(
+            16,
+            add.data[3]
+        )
+            assertEquals(2, sub.data[0]); assertEquals(4, sub.data[1]); assertEquals(6, sub.data[2]); assertEquals(
+            8,
+            sub.data[3]
+        )
+            assertEquals(3, mul.data[0]); assertEquals(12, mul.data[1]); assertEquals(27, mul.data[2]); assertEquals(
+            48,
+            mul.data[3]
+        )
+            assertEquals(3, div.data[0]); assertEquals(3, div.data[1]); assertEquals(3, div.data[2]); assertEquals(
+            3,
+            div.data[3]
+        )
         }
     }
 
     @Test
     fun int32_division_by_zero_yields_zero() {
         val ctx = DirectCpuExecutionContext<Int>()
-        execute(ctx) {
+        computation(ctx) {
             val numerator = tensor<Int32, Int> { shape(3) { init { i -> (i[0] + 1) * 10 } } } // [10,20,30]
             val denom = tensor<Int32, Int> { shape(3) { init { i -> if (i[0] == 1) 0 else 2 } } } // [2,0,2]
             val r = numerator / denom

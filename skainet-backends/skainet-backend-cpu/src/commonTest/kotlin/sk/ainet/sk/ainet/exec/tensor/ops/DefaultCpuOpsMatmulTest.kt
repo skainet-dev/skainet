@@ -7,11 +7,10 @@ import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.types.FP32
-import sk.ainet.lang.types.Int32
 import sk.ainet.context.DirectCpuExecutionContext
-import sk.ainet.lang.tensor.dsl.tensor
+import sk.ainet.execute.context.computation
+import sk.ainet.execute.context.dsl.tensor
 import sk.ainet.lang.tensor.matmul
-import sk.ainet.lang.tensor.pprint
 import sk.ainet.lang.types.Int8
 
 class DefaultCpuOpsMatmulTest {
@@ -68,8 +67,8 @@ class DefaultCpuOpsMatmulTest {
             var acc = 0f
             val k = 4
             for (i in 0 until k) {
-                val av = a.data[batch, m, i] as Float
-                val bv = b.data[batch, i, n] as Float
+                val av = a.data[batch, m, i]
+                val bv = b.data[batch, i, n]
                 acc += av * bv
             }
             return acc
@@ -97,8 +96,8 @@ class DefaultCpuOpsMatmulTest {
         fun ref(bi: Int, ci: Int, h: Int, n: Int): Float {
             var acc = 0f
             for (w in 0 until W) {
-                val av = a.data[bi, ci, h, w] as Float
-                val bv = b.data[bi, ci, w, n] as Float
+                val av = a.data[bi, ci, h, w]
+                val bv = b.data[bi, ci, w, n]
                 acc += av * bv
             }
             return acc
@@ -162,7 +161,7 @@ class DefaultCpuOpsMatmulTest {
     @Test
     fun matmul_exec_context_extension() {
         val ctx = DirectCpuExecutionContext<Float>()
-        execute(ctx) {
+        computation(ctx) {
             val a = tensor<FP32, Float> {
                 shape(2, 3) {
                     init { idx -> (idx[0] * 3 + idx[1] + 1).toFloat() }

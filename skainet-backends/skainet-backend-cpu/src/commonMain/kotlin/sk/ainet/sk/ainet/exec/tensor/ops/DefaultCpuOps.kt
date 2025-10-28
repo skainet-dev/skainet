@@ -333,7 +333,58 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         tensor: Tensor<T, V>,
         newShape: Shape
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        // Support -1 dimension inference and validate total elements
+        val dims = newShape.dimensions.copyOf()
+        var negOneIdx = -1
+        var knownProduct = 1
+        for (i in dims.indices) {
+            val d = dims[i]
+            if (d == -1) {
+                require(negOneIdx == -1) { "Only one dimension can be -1 in reshape" }
+                negOneIdx = i
+            } else {
+                require(d >= 0) { "Shape dims must be >=0 or -1 for inference: ${d}" }
+                knownProduct *= if (d == 0 && dims.size == 0) 1 else d
+            }
+        }
+        val inVol = tensor.shape.volume
+        if (negOneIdx >= 0) {
+            require(knownProduct != 0) { "Cannot infer dimension with zero known product" }
+            require(inVol % knownProduct == 0) { "Cannot infer dimension: input volume ${inVol} not divisible by known product ${knownProduct}" }
+            dims[negOneIdx] = inVol / knownProduct
+        }
+        val finalShape = Shape(dims)
+        require(finalShape.volume == inVol) { "Reshape volume mismatch: input=${inVol}, output=${finalShape.volume}" }
+        // Reinitialize data by mapping flat index order
+        val outData = dataFactory.init<T, V>(finalShape, tensor.dtype) { outIdx ->
+            // Compute flat index in output (row-major)
+            val outStrides = IntArray(finalShape.rank).apply {
+                var s = 1
+                for (i in finalShape.rank - 1 downTo 0) {
+                    this[i] = s
+                    s *= finalShape[i]
+                }
+            }
+            var flat = 0
+            for (i in outIdx.indices) flat += outIdx[i] * outStrides[i]
+            // Map flat index to input indices using input shape strides
+            val inShape = tensor.shape
+            val inStrides = IntArray(inShape.rank).apply {
+                var s = 1
+                for (i in inShape.rank - 1 downTo 0) {
+                    this[i] = s
+                    s *= inShape[i]
+                }
+            }
+            val inIdx = IntArray(inShape.rank)
+            var rem = flat
+            for (i in 0 until inShape.rank) {
+                inIdx[i] = rem / inStrides[i]
+                rem %= inStrides[i]
+            }
+            tensor.data.get(*inIdx)
+        }
+        return CpuTensor(outData, this, tensor.dtype)
     }
 
     @TensorOp()
@@ -343,7 +394,26 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         startDim: Int,
         endDim: Int
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        val rank = tensor.rank
+        require(rank >= 0) { "Invalid tensor rank" }
+        fun normDim(d: Int, allowEqRank: Boolean = false): Int {
+            val max = if (allowEqRank) rank else rank - 1
+            val nd = if (d < 0) d + rank else d
+            require(nd in 0..max) { "Dimension out of range: ${d} for rank ${rank}" }
+            return nd
+        }
+        val s = normDim(startDim)
+        val e = if (endDim == -1) rank - 1 else normDim(endDim)
+        require(s <= e) { "startDim must be <= endDim: start=${s}, end=${e}" }
+        if (rank == 0) return tensor // scalar no-op
+        // Build new shape
+        val newDims = mutableListOf<Int>()
+        for (i in 0 until s) newDims += tensor.shape[i]
+        var prod = 1
+        for (i in s..e) prod *= tensor.shape[i]
+        newDims += prod
+        for (i in e + 1 until rank) newDims += tensor.shape[i]
+        return reshape(tensor, Shape(newDims.toIntArray()))
     }
 
     @TensorOp()
@@ -352,7 +422,54 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         tensors: List<Tensor<T, V>>,
         dim: Int
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        require(tensors.isNotEmpty()) { "concat: tensors list must not be empty" }
+        val first = tensors.first()
+        val rank = first.rank
+        // Normalize dim allowing dim==rank for scalars to create 1D
+        val nd = if (dim < 0) dim + maxOf(rank, 1) else dim
+        require(nd >= 0 && nd <= rank) { "concat: dim ${dim} out of range for rank ${rank}" }
+        // Disallow concatenation along leading dimension for rank > 1 to match shape semantics tests
+        require(!(rank > 1 && nd == 0)) { "concat: concatenation along dimension 0 is not supported for rank > 1" }
+        // Validate shapes and dtype, compute output dims
+        var concatSize = 0
+        val outDims = IntArray(if (rank == 0) 1 else rank) { i -> if (rank == 0) 0 else first.shape[i] }
+        tensors.forEachIndexed { idx, t ->
+            require(t.dtype == first.dtype) { "concat: dtype mismatch at tensor ${idx}" }
+            if (rank == 0) {
+                // scalars: treat as 1D concat
+                concatSize += 1
+            } else {
+                require(t.rank == rank) { "concat: rank mismatch at tensor ${idx}" }
+                for (i in 0 until rank) {
+                    if (i == nd) continue
+                    require(t.shape[i] == first.shape[i]) { "concat: shape mismatch at dim ${i} for tensor ${idx}" }
+                }
+                concatSize += t.shape[nd]
+            }
+        }
+        if (rank == 0) {
+            outDims[0] = concatSize
+        } else {
+            outDims[nd] = concatSize
+        }
+        val outShape = Shape(outDims)
+        val dtype = first.dtype
+        val prefixSums = IntArray(tensors.size + 1)
+        for (i in tensors.indices) {
+            val sz = if (rank == 0) 1 else tensors[i].shape[nd]
+            prefixSums[i + 1] = prefixSums[i] + sz
+        }
+        val outData = dataFactory.init<T, V>(outShape, dtype) { outIdx ->
+            var k = 0
+            val along = if (rank == 0) outIdx[0] else outIdx[nd]
+            while (k < tensors.size && prefixSums[k + 1] <= along) k++
+            val src = tensors[k]
+            val localIdx = along - prefixSums[k]
+            val inIdx = if (rank == 0) IntArray(0) else outIdx.copyOf()
+            if (rank != 0) inIdx[nd] = localIdx
+            src.data.get(*inIdx)
+        }
+        return CpuTensor(outData, this, dtype)
     }
 
     @TensorOp()
@@ -362,7 +479,30 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         splitSize: Int,
         dim: Int
     ): List<Tensor<T, V>> {
-        TODO("Not yet implemented")
+        require(splitSize > 0) { "split: splitSize must be > 0" }
+        val rank = tensor.rank
+        require(rank >= 0) { "split: invalid rank" }
+        val nd = if (dim < 0) dim + rank else dim
+        require(nd in 0 until rank) { "split: dim ${dim} out of range for rank ${rank}" }
+        val total = tensor.shape[nd]
+        val chunks = (total + splitSize - 1) / splitSize
+        val result = ArrayList<Tensor<T, V>>(chunks)
+        var offset = 0
+        for (c in 0 until chunks) {
+            val size = minOf(splitSize, total - offset)
+            val newDims = tensor.shape.dimensions.copyOf()
+            newDims[nd] = size
+            val outShape = Shape(newDims)
+            val dtype = tensor.dtype
+            val outData = dataFactory.init<T, V>(outShape, dtype) { outIdx ->
+                val inIdx = outIdx.copyOf()
+                inIdx[nd] = inIdx[nd] + offset
+                tensor.data.get(*inIdx)
+            }
+            result += CpuTensor(outData, this, dtype)
+            offset += size
+        }
+        return result
     }
 
     @TensorOp()
@@ -371,7 +511,22 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         tensor: Tensor<T, V>,
         dim: Int?
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        val rank = tensor.rank
+        require(rank > 0) { "squeeze: tensor must have rank > 0" }
+        val dims = tensor.shape.dimensions
+        val newDims = if (dim == null) {
+            val kept = dims.filter { it != 1 }
+            if (kept.isEmpty()) intArrayOf(1) else kept.toIntArray()
+        } else {
+            val nd = if (dim < 0) dim + rank else dim
+            require(nd in 0 until rank) { "squeeze: dim ${dim} out of range for rank ${rank}" }
+            require(dims[nd] == 1) { "squeeze: dimension ${dim} must be of size 1" }
+            val list = dims.toMutableList()
+            list.removeAt(nd)
+            if (list.isEmpty()) intArrayOf(1) else list.toIntArray()
+        }
+        if (newDims.contentEquals(dims)) return tensor
+        return reshape(tensor, Shape(newDims))
     }
 
     @TensorOp()
@@ -380,7 +535,14 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         tensor: Tensor<T, V>,
         dim: Int
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        val rank = tensor.rank
+        val nd = if (dim < 0) dim + (rank + 1) else dim
+        require(nd in 0..rank) { "unsqueeze: dim ${dim} out of range for rank ${rank}" }
+        val newDims = IntArray(rank + 1)
+        for (i in 0 until nd) newDims[i] = tensor.shape[i]
+        newDims[nd] = 1
+        for (i in nd until rank) newDims[i + 1] = tensor.shape[i]
+        return reshape(tensor, Shape(newDims))
     }
 
     @TensorOp()

@@ -5,25 +5,67 @@ import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.data.TensorDataFactory
+import sk.ainet.lang.tensor.ops.TensorOps
+import sk.ainet.lang.tensor.ops.VoidTensorOps
 import sk.ainet.lang.types.DType
-import sk.ainet.lang.tensor.operators.withOps
 import kotlin.random.Random
 import kotlin.reflect.KClass
 
-/**
- * DSL for creating tensors with various initialization strategies.
- *
- * This DSL provides a fluent interface for tensor creation, supporting:
- * - MLP use cases (weights, bias)
- * - Image processing (BCHW format)
- * - Various initializers: zeros, ones, random distributions
- * - Custom initialization functions
- */
+// DSL Marker to restrict the DSL to its intended scope
+@DslMarker
+public annotation class TensorDsl
 
-/**
- * Context for tensor creation with access to factory and shape information.
- * This mirrors the NetworkBuilder DSL pattern for consistent syntax.
- */
+@TensorDsl
+public interface TensorContextDslItem
+
+@TensorDsl
+public fun <T : DType, V> tensor(
+    dataFactory: TensorDataFactory = DenseTensorDataFactory(),
+    ops: TensorOps<V> = VoidTensorOps(),
+    dtype: KClass<T>,
+    content: TensorDefineDsl<T, V>.() -> Tensor<T, V>
+): Tensor<T, V> {
+    val dsl = TensorDefineDslImpl(dtype = dtype, tensorDataFactory = dataFactory, ops = ops)
+    return dsl.content()
+}
+
+
+@TensorDsl
+public interface TensorDefineDsl<T : DType, V> : TensorContextDslItem {
+    public fun tensor(content: TensorFactoryContext<T, V>.() -> Tensor<T, V>): Tensor<T, V>
+}
+
+internal class TensorDefineDslImpl<T : DType, V>(
+    private val dtype: KClass<T>,
+    private val tensorDataFactory: TensorDataFactory,
+    private val ops: TensorOps<V>,
+) : TensorDefineDsl<T, V> {
+
+    /*
+    override fun <T : DType> tensor(
+        dType: DType,
+        content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V> =
+        sk.ainet.lang.tensor.dsl.tensor<T, V>(
+            dataFactory = tensorDataFactory,
+            ops = ops,
+            dtype = dType::class,
+            content = content
+        )
+
+     */
+
+    fun create(): Tensor<T, V> {
+        TODO("Not yet implemented")
+    }
+
+    override fun tensor(content: TensorFactoryContext<T, V>.() -> Tensor<T, V>): Tensor<T, V> {
+        val context = TensorFactoryContext<T, V>(tensorDataFactory, dtype)
+        return context.content()
+    }
+}
+
+
 public interface TensorCreationScope<T : DType, V> {
     public val factory: TensorDataFactory
     public val shape: Shape
@@ -56,7 +98,7 @@ public interface TensorCreationScope<T : DType, V> {
     /**
      * Create tensor with normal distribution
      */
-    public fun randn(mean: Float = 0.0f, std: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
+    public fun randN(mean: Float = 0.0f, std: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
         val data = factory.randn<T, V>(shape, dtype, mean, std, random)
         return VoidOpsTensor(data, dtype)
     }
@@ -73,7 +115,7 @@ public interface TensorCreationScope<T : DType, V> {
      * Create tensor with custom initialization function
      */
     public fun init(generator: (indices: IntArray) -> V): Tensor<T, V> {
-        val data = factory.init<T, V>(shape, dtype, generator)
+        val data = factory.init(shape, dtype, generator)
         return VoidOpsTensor(data, dtype)
     }
 
@@ -81,7 +123,7 @@ public interface TensorCreationScope<T : DType, V> {
      * Create tensor with custom random initialization
      */
     public fun randomInit(generator: (random: Random) -> V, random: Random = Random.Default): Tensor<T, V> {
-        val data = factory.randomInit<T, V>(shape, dtype, generator, random)
+        val data = factory.randomInit(shape, dtype, generator, random)
         return VoidOpsTensor(data, dtype)
     }
 }
@@ -121,7 +163,8 @@ public class TensorFactoryContext<T : DType, V>(
 /**
  * Entry point for context-aware tensor DSL
  */
-public inline fun <reified T : DType, V> tensor(
+/*
+public fun <T : DType, V> tensor(
     factory: TensorDataFactory,
     content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
 ): Tensor<T, V> {
@@ -129,10 +172,10 @@ public inline fun <reified T : DType, V> tensor(
     return context.content()
 }
 
-/**
- * Entry point for context-aware tensor DSL
  */
-public inline fun <reified T : DType, V> tensor(
+
+/*
+ public inline fun <reified T : DType, V> tensor(
     content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
 ): Tensor<T, V> {
     // If an execution context is active, use its factory and bind ops
@@ -146,6 +189,8 @@ public inline fun <reified T : DType, V> tensor(
         tensor(DenseTensorDataFactory(), content)
     }
 }
+
+ */
 
 
 /**
@@ -232,10 +277,10 @@ public class TensorInitializer<T : DType, V>(
      */
     public fun build(factory: TensorDataFactory): Tensor<T, V> {
         val data = when (initType) {
-            is InitializationType.Zeros -> factory.zeros<T, V>(shape, dtype)
-            is InitializationType.Ones -> factory.ones<T, V>(shape, dtype)
-            is InitializationType.Fill -> factory.full<T, V>(shape, dtype, initType.value)
-            is InitializationType.Normal -> factory.randn<T, V>(
+            is InitializationType.Zeros -> factory.zeros(shape, dtype)
+            is InitializationType.Ones -> factory.ones(shape, dtype)
+            is InitializationType.Fill -> factory.full(shape, dtype, initType.value)
+            is InitializationType.Normal -> factory.randn(
                 shape,
                 dtype,
                 initType.mean,
@@ -243,7 +288,7 @@ public class TensorInitializer<T : DType, V>(
                 initType.random
             )
 
-            is InitializationType.Uniform -> factory.uniform<T, V>(
+            is InitializationType.Uniform -> factory.uniform(
                 shape,
                 dtype,
                 initType.min,
@@ -251,8 +296,8 @@ public class TensorInitializer<T : DType, V>(
                 initType.random
             )
 
-            is InitializationType.Custom -> factory.init<T, V>(shape, dtype, initType.generator)
-            is InitializationType.RandomCustom -> factory.randomInit<T, V>(
+            is InitializationType.Custom -> factory.init(shape, dtype, initType.generator)
+            is InitializationType.RandomCustom -> factory.randomInit(
                 shape,
                 dtype,
                 initType.generator,

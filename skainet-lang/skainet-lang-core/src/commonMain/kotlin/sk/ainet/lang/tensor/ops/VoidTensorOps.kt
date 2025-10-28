@@ -143,8 +143,8 @@ public class VoidTensorOps<V> : TensorOps<V> {
     }
 
     override fun <T : DType> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> {
-        validateReshape(tensor.shape, newShape)
-        val resultData = dataFactory.zeros<T, V>(newShape, tensor.dtype)
+        val resultShape = calculateReshapeTargetShape(tensor.shape, newShape)
+        val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
@@ -325,14 +325,53 @@ public class VoidTensorOps<V> : TensorOps<V> {
     }
 
     /**
-     * Validates reshape operation - total volume must remain the same
+     * Calculates target shape for reshape, supporting a single -1 dimension for inference.
+     * Validates that total volume remains the same and no illegal dimensions are provided.
      */
-    private fun validateReshape(originalShape: Shape, newShape: Shape) {
-        if (originalShape.volume != newShape.volume) {
-            throw IllegalArgumentException(
-                "Reshape volume mismatch: original volume ${originalShape.volume} != " +
-                "new volume ${newShape.volume}"
-            )
+    private fun calculateReshapeTargetShape(originalShape: Shape, target: Shape): Shape {
+        val total = originalShape.volume
+        val dims = target.dimensions
+        var inferIndex = -1
+        var product = 1
+        for ((i, d) in dims.withIndex()) {
+            when {
+                d == -1 -> {
+                    if (inferIndex != -1) {
+                        throw IllegalArgumentException("Only one dimension can be -1 in reshape, found at $inferIndex and $i")
+                    }
+                    inferIndex = i
+                }
+                d < -1 -> {
+                    throw IllegalArgumentException("Reshape dimensions must be non-negative or -1 for inference, got $d at index $i")
+                }
+                else -> {
+                    product *= d
+                }
+            }
+        }
+        return if (inferIndex >= 0) {
+            if (product == 0) {
+                // If any explicit dim is 0, the only consistent inference for zero total is 0
+                if (total != 0) {
+                    throw IllegalArgumentException("Reshape volume mismatch: original volume $total != new volume $product")
+                }
+                val out = dims.copyOf()
+                out[inferIndex] = 0
+                Shape(out)
+            } else {
+                if (total % product != 0) {
+                    throw IllegalArgumentException("Cannot infer reshape dimension: original volume $total is not divisible by specified product $product")
+                }
+                val inferred = total / product
+                val out = dims.copyOf()
+                out[inferIndex] = inferred
+                Shape(out)
+            }
+        } else {
+            if (product != total) {
+                throw IllegalArgumentException("Reshape volume mismatch: original volume $total != new volume $product")
+            }
+            Shape(dims.copyOf())
         }
     }
 
@@ -489,7 +528,6 @@ public class VoidTensorOps<V> : TensorOps<V> {
         if (actualDim < 0 || actualDim >= firstShape.rank) {
             throw IllegalArgumentException("Concatenation dimension $dim is out of bounds for tensor with ${firstShape.rank} dimensions")
         }
-        
         // Validate all shapes are compatible (same except in concat dimension)
         for (shape in shapes.drop(1)) {
             if (shape.rank != firstShape.rank) {
@@ -527,17 +565,18 @@ public class VoidTensorOps<V> : TensorOps<V> {
         }
         
         val dimSize = shape.dimensions[actualDim]
-        if (dimSize % splitSize != 0) {
-            throw IllegalArgumentException(
-                "Tensor dimension $dimSize is not divisible by split size $splitSize"
-            )
+        require(splitSize > 0) { "Split size must be positive, got $splitSize" }
+        val remainder = dimSize % splitSize
+        if (remainder != 0) {
+            throw IllegalArgumentException("Dimension $actualDim size $dimSize is not divisible by split size $splitSize")
         }
-        
-        val numSplits = dimSize / splitSize
-        val resultDims = shape.dimensions.copyOf()
-        resultDims[actualDim] = splitSize
-        
-        return List(numSplits) { Shape(resultDims) }
+        val fullSplits = dimSize / splitSize
+        val result = MutableList(fullSplits) {
+            val dims = shape.dimensions.copyOf()
+            dims[actualDim] = splitSize
+            Shape(dims)
+        }
+        return result
     }
 
     /**

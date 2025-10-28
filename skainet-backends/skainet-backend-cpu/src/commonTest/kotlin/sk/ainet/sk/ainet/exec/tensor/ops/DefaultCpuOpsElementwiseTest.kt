@@ -8,7 +8,8 @@ import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.types.FP32
 import sk.ainet.lang.types.Int32
 import sk.ainet.context.DirectCpuExecutionContext
-import sk.ainet.lang.tensor.dsl.tensor
+import sk.ainet.execute.context.computation
+import sk.ainet.execute.context.dsl.tensor
 import sk.ainet.lang.tensor.plus
 import sk.ainet.lang.tensor.pprint
 
@@ -47,7 +48,7 @@ class DefaultCpuOpsElementwiseTest {
         val ctx = DirectCpuExecutionContext<Float>()
 
         // dsl for execution context
-        execute(ctx) {
+        computation(ctx) {
             val a = tensor<FP32, Float> {
                 shape(1) { ones() }
             }
