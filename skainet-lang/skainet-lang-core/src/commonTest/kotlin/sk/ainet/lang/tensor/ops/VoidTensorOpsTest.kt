@@ -116,59 +116,45 @@ class VoidTensorOpsTest {
     }
     
     @Test
-    fun testMatmul_1DTensor_ThrowsException() {
-        val a = createTensor(Shape(4))
-        val b = createTensor(Shape(4))
-        
-        val exception = assertFailsWith<IllegalArgumentException> {
-            ops.matmul(a, b)
-        }
-        assertTrue(exception.message?.contains("at least 2 dimensions") == true)
+    fun testMatmul_1D_1D_DotProduct() {
+        val a = createTensor(Shape(4))  // (k,)
+        val b = createTensor(Shape(4))  // (k,)
+        val result = ops.matmul(a, b)
+        // Result is scalar (0-D)
+        assertEquals(0, result.rank)
+        assertEquals(Shape(), result.shape)
     }
 
     // Additional comprehensive matmul tests covering all specification cases
     
     @Test
-    fun testMatmul_1D_1D_DotProduct() {
-        // Note: Current implementation doesn't support 1D×1D, but we test the expected behavior
-        // This test documents the expected behavior per PyTorch specification
-        val a = createTensor(Shape(5))
-        val b = createTensor(Shape(5))
-        
-        // Current implementation throws exception, but spec says it should work
-        val exception = assertFailsWith<IllegalArgumentException> {
-            ops.matmul(a, b)
-        }
-        assertTrue(exception.message?.contains("at least 2 dimensions") == true)
-        // TODO: When 1D×1D support is added, result should be Shape() (scalar)
+    fun testMatmul_VectorTimesBatchedMatrices_Broadcast() {
+        // (k,) @ (b, k, n) -> (b, n)
+        val a = createTensor(Shape(4))        // k=4
+        val b = createTensor(Shape(3, 4, 2))  // b=3, k=4, n=2
+        val result = ops.matmul(a, b)
+        assertEquals(Shape(3, 2), result.shape)
+        assertEquals(FP32::class, result.dtype)
     }
     
     @Test
     fun testMatmul_1D_2D_RowVectorTimesMatrix() {
-        // Note: Current implementation doesn't support 1D×2D, documenting expected behavior
+        // (k,) @ (k, n) -> (n)
         val a = createTensor(Shape(4))      // (k,)
         val b = createTensor(Shape(4, 2))   // (k, n)
-        
-        // Current implementation throws exception, but spec says it should work  
-        val exception = assertFailsWith<IllegalArgumentException> {
-            ops.matmul(a, b)
-        }
-        assertTrue(exception.message?.contains("at least 2 dimensions") == true)
-        // TODO: When 1D×2D support is added, result should be Shape(2) -> (n,)
+        val result = ops.matmul(a, b)
+        assertEquals(Shape(2), result.shape)
+        assertEquals(FP32::class, result.dtype)
     }
     
     @Test
     fun testMatmul_2D_1D_MatrixTimesColumnVector() {
-        // Note: Current implementation doesn't support 2D×1D, documenting expected behavior
+        // (..., m, k) @ (k,) -> (..., m)
         val a = createTensor(Shape(3, 4))   // (m, k)
         val b = createTensor(Shape(4))      // (k,)
-        
-        // Current implementation throws exception, but spec says it should work
-        val exception = assertFailsWith<IllegalArgumentException> {
-            ops.matmul(a, b)
-        }
-        assertTrue(exception.message?.contains("at least 2 dimensions") == true)
-        // TODO: When 2D×1D support is added, result should be Shape(3) -> (m,)
+        val result = ops.matmul(a, b)
+        assertEquals(Shape(3), result.shape)
+        assertEquals(FP32::class, result.dtype)
     }
     
     @Test
@@ -489,6 +475,16 @@ class VoidTensorOpsTest {
         
         // Should broadcast to (5, 2, 4)
         assertEquals(Shape(5, 2, 4), result.shape)
+        assertEquals(FP32::class, result.dtype)
+    }
+
+    @Test
+    fun testMatmul_BatchedMatricesTimesVector_Broadcast() {
+        // (b, m, k) @ (k,) -> (b, m)
+        val a = createTensor(Shape(3, 2, 4))  // b=3, m=2, k=4
+        val b = createTensor(Shape(4))        // k=4
+        val result = ops.matmul(a, b)
+        assertEquals(Shape(3, 2), result.shape)
         assertEquals(FP32::class, result.dtype)
     }
 

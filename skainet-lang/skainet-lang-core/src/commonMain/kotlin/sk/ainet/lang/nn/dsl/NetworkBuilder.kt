@@ -14,7 +14,12 @@ import sk.ainet.lang.nn.topology.MLP
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.VoidOpsTensor
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.tensor.data.TensorDataFactory
+import sk.ainet.lang.tensor.data.DenseTensorDataFactory
+import sk.ainet.lang.tensor.ops.TensorOps
+import sk.ainet.lang.tensor.ops.VoidTensorOps
+import sk.ainet.lang.tensor.operators.withOps
 import sk.ainet.lang.types.DType
 import kotlin.random.Random
 import kotlin.reflect.KClass
@@ -57,7 +62,18 @@ public inline fun <reified T : DType, V> sequential(
     factory: TensorDataFactory,
     content: NeuralNetworkDsl<T, V>.() -> Unit
 ): Module<T, V> =
-    NeuralNetworkDslImpl<T, V>(T::class, factory)
+    NeuralNetworkDslImpl<T, V>(T::class, factory, null)
+        .apply(content)
+        .create()
+
+/**
+ * Overload that wires both tensor factory and ops from an ExecutionContext.
+ */
+public inline fun <reified T : DType, V> sequential(
+    executionContext: ExecutionContext<V>,
+    content: NeuralNetworkDsl<T, V>.() -> Unit
+): Module<T, V> =
+    NeuralNetworkDslImpl<T, V>(T::class, executionContext.tensorDataFactory, executionContext.ops)
         .apply(content)
         .create()
 
@@ -532,13 +548,15 @@ public interface TensorsValueScope<T : DType, V> {
     public val factory: TensorDataFactory
     public val shape: Shape
     public val dtype: KClass<T>
+    public val ops: TensorOps<V>?
 
     /**
      * Create tensor filled with zeros
      */
     public fun zeros(): Tensor<T, V> {
         val data = factory.zeros<T, V>(shape, dtype)
-        return VoidOpsTensor(data, dtype)
+        val base = VoidOpsTensor<T, V>(data, dtype)
+        return if (ops != null) base.withOps(ops!!) else base
     }
     
     /**
@@ -546,7 +564,8 @@ public interface TensorsValueScope<T : DType, V> {
      */
     public fun ones(): Tensor<T, V> {
         val data = factory.ones<T, V>(shape, dtype)
-        return VoidOpsTensor(data, dtype)
+        val base = VoidOpsTensor<T, V>(data, dtype)
+        return if (ops != null) base.withOps(ops!!) else base
     }
     
     /**
@@ -554,7 +573,8 @@ public interface TensorsValueScope<T : DType, V> {
      */
     public fun full(value: Number): Tensor<T, V> {
         val data = factory.full<T, V>(shape, dtype, value)
-        return VoidOpsTensor(data, dtype)
+        val base = VoidOpsTensor<T, V>(data, dtype)
+        return if (ops != null) base.withOps(ops!!) else base
     }
     
     /**
@@ -562,7 +582,8 @@ public interface TensorsValueScope<T : DType, V> {
      */
     public fun randn(mean: Float = 0.0f, std: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
         val data = factory.randn<T, V>(shape, dtype, mean, std, random)
-        return VoidOpsTensor(data, dtype)
+        val base = VoidOpsTensor<T, V>(data, dtype)
+        return if (ops != null) base.withOps(ops!!) else base
     }
     
     /**
@@ -570,7 +591,8 @@ public interface TensorsValueScope<T : DType, V> {
      */
     public fun uniform(min: Float = 0.0f, max: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
         val data = factory.uniform<T, V>(shape, dtype, min, max, random)
-        return VoidOpsTensor(data, dtype)
+        val base = VoidOpsTensor<T, V>(data, dtype)
+        return if (ops != null) base.withOps(ops!!) else base
     }
     
     /**
@@ -578,7 +600,8 @@ public interface TensorsValueScope<T : DType, V> {
      */
     public fun init(generator: (indices: IntArray) -> V): Tensor<T, V> {
         val data = factory.init<T, V>(shape, dtype, generator)
-        return VoidOpsTensor(data, dtype)
+        val base = VoidOpsTensor<T, V>(data, dtype)
+        return if (ops != null) base.withOps(ops!!) else base
     }
     
     /**
@@ -586,7 +609,8 @@ public interface TensorsValueScope<T : DType, V> {
      */
     public fun randomInit(generator: (random: Random) -> V, random: Random = Random.Default): Tensor<T, V> {
         val data = factory.randomInit<T, V>(shape, dtype, generator, random)
-        return VoidOpsTensor(data, dtype)
+        val base = VoidOpsTensor<T, V>(data, dtype)
+        return if (ops != null) base.withOps(ops!!) else base
     }
 
     /**
@@ -600,7 +624,8 @@ public interface TensorsValueScope<T : DType, V> {
             "Data size ${data.size} doesn't match shape volume ${shape.volume}"
         }
         val tensorData = factory.fromFloatArray<T, V>(shape, dtype, data)
-        return VoidOpsTensor(tensorData, dtype)
+        val base = VoidOpsTensor<T, V>(tensorData, dtype)
+        return if (ops != null) base.withOps(ops!!) else base
     }
 
     // fromXX Int
@@ -611,7 +636,8 @@ public interface TensorsValueScope<T : DType, V> {
             "Data size ${data.size} doesn't match shape volume ${shape.volume}"
         }
         val tensorData = factory.fromIntArray<T, V>(shape, dtype, data)
-        return VoidOpsTensor(tensorData, dtype)
+        val base = VoidOpsTensor<T, V>(tensorData, dtype)
+        return if (ops != null) base.withOps(ops!!) else base
     }
 
 
@@ -640,7 +666,8 @@ public interface BiasScope<T : DType, V> : TensorsValueScope<T, V>
 public class WeightsScopeImpl<T : DType, V>(
     override val factory: TensorDataFactory,
     override val shape: Shape,
-    override val dtype: KClass<T>
+    override val dtype: KClass<T>,
+    override val ops: TensorOps<V>? = null
 ) : WeightsScope<T, V>
 
 /**
@@ -649,7 +676,8 @@ public class WeightsScopeImpl<T : DType, V>(
 public class BiasScopeImpl<T : DType, V>(
     override val factory: TensorDataFactory,
     override val shape: Shape,
-    override val dtype: KClass<T>
+    override val dtype: KClass<T>,
+    override val ops: TensorOps<V>? = null
 ) : BiasScope<T, V>
 
 @NetworkDsl
@@ -680,7 +708,8 @@ private fun <T : DType, V> createLinear(
     kClass: kotlin.reflect.KClass<T>,
     myInitWeights: Tensor<T, V>? = null,
     myInitBias: Tensor<T, V>? = null,
-    factory: TensorDataFactory
+    factory: TensorDataFactory,
+    ops: TensorOps<V>? = null
 ): Linear<T, V> {
     return when {
         myInitWeights != null && myInitBias != null ->
@@ -695,38 +724,46 @@ private fun <T : DType, V> createLinear(
         myInitWeights == null && myInitBias != null -> {
 
             val safeWeights = factory.zeros<T, V>(Shape(outFeatures, inFeatures), kClass)
+            val baseW = VoidOpsTensor<T, V>(safeWeights, kClass)
+            val initW = if (ops != null) baseW.withOps(ops) else baseW
 
             Linear(
                 inFeatures = inFeatures,
                 outFeatures = outFeatures,
                 name = id,
-                initWeights = VoidOpsTensor(safeWeights, kClass),
+                initWeights = initW,
                 initBias = myInitBias
             )
         }
 
         myInitWeights != null && myInitBias == null -> {
             val safeBias = factory.zeros<T, V>(Shape(outFeatures), kClass)
+            val baseB = VoidOpsTensor<T, V>(safeBias, kClass)
+            val initB = if (ops != null) baseB.withOps(ops) else baseB
 
             Linear(
                 inFeatures = inFeatures,
                 outFeatures = outFeatures,
                 name = id,
                 initWeights = myInitWeights,
-                initBias = VoidOpsTensor(safeBias, kClass)
+                initBias = initB
             )
         }
 
         else -> {
             val safeWeights = factory.zeros<T, V>(Shape(outFeatures, inFeatures), kClass)
             val safeBias = factory.zeros<T, V>(Shape(outFeatures), kClass)
+            val baseW = VoidOpsTensor<T, V>(safeWeights, kClass)
+            val baseB = VoidOpsTensor<T, V>(safeBias, kClass)
+            val initW = if (ops != null) baseW.withOps(ops) else baseW
+            val initB = if (ops != null) baseB.withOps(ops) else baseB
 
             Linear(
                 inFeatures = inFeatures,
                 outFeatures = outFeatures,
                 name = id,
-                initWeights = VoidOpsTensor(safeWeights, kClass),
-                initBias = VoidOpsTensor(safeBias, kClass)
+                initWeights = initW,
+                initBias = initB
             )
         }
     }
@@ -738,7 +775,8 @@ public class DenseImpl<T : DType, V>(
     private var _outputDimension: Int,
     private val id: String,
     private val kClass: kotlin.reflect.KClass<T>,
-    override val factory: TensorDataFactory
+    override val factory: TensorDataFactory,
+    private val ops: TensorOps<V>? = null
 ) : DENSE<T, V> {
 
     private var weightsValue: Tensor<T, V>? = null
@@ -768,7 +806,8 @@ public class DenseImpl<T : DType, V>(
             kClass = kClass,
             myInitWeights = weights,
             myInitBias = bias,
-            factory = factory
+            factory = factory,
+            ops = ops
         )
 
         return listOf(
@@ -795,12 +834,12 @@ public class DenseImpl<T : DType, V>(
     }
 
     override fun weights(initBlock: WeightsScope<T, V>.(Shape) -> Tensor<T, V>) {
-        val scope = WeightsScopeImpl<T, V>(factory, weightsShape, kClass)
+        val scope = WeightsScopeImpl<T, V>(factory, weightsShape, kClass, ops)
         weightsValue = scope.initBlock(weightsShape)
     }
 
     override fun bias(initBlock: BiasScope<T, V>.(Shape) -> Tensor<T, V>) {
-        val scope = BiasScopeImpl<T, V>(factory, biasShape, kClass)
+        val scope = BiasScopeImpl<T, V>(factory, biasShape, kClass, ops)
         biasValue = scope.initBlock(biasShape)
     }
 }
@@ -1165,7 +1204,8 @@ public class StageImpl<T : DType, V>(
 
 public class NeuralNetworkDslImpl<T : DType, V>(
     private val kClass: kotlin.reflect.KClass<T>,
-    private val factory: TensorDataFactory
+    private val factory: TensorDataFactory,
+    private val ops: TensorOps<V>? = null
 ) : NeuralNetworkDsl<T, V> {
 
     public val modules: MutableList<Module<T, V>> = mutableListOf<Module<T, V>>()

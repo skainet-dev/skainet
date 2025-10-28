@@ -252,31 +252,46 @@ public class VoidTensorOps<V> : TensorOps<V> {
      * For higher dimensions: batch dimensions must match, inner dimensions must be compatible
      */
     private fun validateMatmulShapes(a: Shape, b: Shape) {
-        if (a.rank < 2 || b.rank < 2) {
-            throw IllegalArgumentException("Matrix multiplication requires tensors with at least 2 dimensions")
+        // Support PyTorch-like matmul rank rules, including 1D operands via virtual unsqueeze
+        if (a.rank == 0 || b.rank == 0) {
+            throw IllegalArgumentException("Matrix multiplication requires tensors with at least 1 dimension per operand")
         }
-        
-        val aLastDim = a.dimensions[a.rank - 1]
-        val bSecondLastDim = b.dimensions[b.rank - 2]
-        
-        if (aLastDim != bSecondLastDim) {
+
+        // Build effective shapes by virtually unsqueezing 1D operands:
+        // - If a is 1D with dim n, treat as (1, n)
+        // - If b is 1D with dim n, treat as (n, 1)
+        val aEffDims = when (a.rank) {
+            1 -> intArrayOf(1, a.dimensions[0])
+            else -> a.dimensions
+        }
+        val bEffDims = when (b.rank) {
+            1 -> intArrayOf(b.dimensions[0], 1)
+            else -> b.dimensions
+        }
+
+        val aEffRank = aEffDims.size
+        val bEffRank = bEffDims.size
+
+        // Inner dimension (k) must match: a[..., k] with b[k, ...]
+        val aK = aEffDims[aEffRank - 1]
+        val bK = bEffDims[bEffRank - 2]
+        if (aK != bK) {
             throw IllegalArgumentException(
-                "Matrix multiplication shape mismatch: inner dimensions must match " +
-                "($aLastDim vs $bSecondLastDim)"
+                "Matrix multiplication shape mismatch: inner dimensions must match ($aK vs $bK)"
             )
         }
-        
-        // For tensors with more than 2 dimensions, batch dimensions must be compatible
-        if (a.rank > 2 || b.rank > 2) {
-            val maxRank = maxOf(a.rank, b.rank)
-            for (i in 0 until maxRank - 2) {
-                val aDim = if (i < a.rank - 2) a.dimensions[i] else 1
-                val bDim = if (i < b.rank - 2) b.dimensions[i] else 1
-                if (aDim != bDim && aDim != 1 && bDim != 1) {
-                    throw IllegalArgumentException(
-                        "Matrix multiplication batch dimension mismatch at position $i: $aDim vs $bDim"
-                    )
-                }
+
+        // Validate broadcastability of leading batch dims (all but the last 2 dims)
+        val aBatchRank = aEffRank - 2
+        val bBatchRank = bEffRank - 2
+        val maxBatchRank = maxOf(aBatchRank, bBatchRank)
+        for (i in 0 until maxBatchRank) {
+            val aDim = if (i < aBatchRank) aEffDims[i] else 1
+            val bDim = if (i < bBatchRank) bEffDims[i] else 1
+            if (aDim != bDim && aDim != 1 && bDim != 1) {
+                throw IllegalArgumentException(
+                    "Matrix multiplication batch dimension mismatch at position $i: $aDim vs $bDim"
+                )
             }
         }
     }
@@ -285,21 +300,58 @@ public class VoidTensorOps<V> : TensorOps<V> {
      * Calculates the result shape for matrix multiplication
      */
     private fun calculateMatmulShape(a: Shape, b: Shape): Shape {
-        val maxRank = maxOf(a.rank, b.rank)
-        val resultDims = IntArray(maxRank)
-        
-        // Handle batch dimensions
-        for (i in 0 until maxRank - 2) {
-            val aDim = if (i < a.rank - 2) a.dimensions[i] else 1
-            val bDim = if (i < b.rank - 2) b.dimensions[i] else 1
-            resultDims[i] = maxOf(aDim, bDim)
+        // Construct effective shapes by virtually unsqueezing 1D operands
+        val aEff = when (a.rank) {
+            1 -> intArrayOf(1, a.dimensions[0])
+            else -> a.dimensions
         }
-        
-        // Handle matrix dimensions: (m, k) × (k, n) -> (m, n)
-        resultDims[maxRank - 2] = a.dimensions[a.rank - 2]
-        resultDims[maxRank - 1] = b.dimensions[b.rank - 1]
-        
-        return Shape(resultDims)
+        val bEff = when (b.rank) {
+            1 -> intArrayOf(b.dimensions[0], 1)
+            else -> b.dimensions
+        }
+        val aEffRank = aEff.size
+        val bEffRank = bEff.size
+
+        // Compute broadcasted batch dims
+        val batchRank = maxOf(aEffRank, bEffRank) - 2
+        val outBatch = IntArray(batchRank) { i ->
+            val aDim = if (i < aEffRank - 2) aEff[i] else 1
+            val bDim = if (i < bEffRank - 2) bEff[i] else 1
+            maxOf(aDim, bDim)
+        }
+
+        val m = aEff[aEffRank - 2]
+        val n = bEff[bEffRank - 1]
+
+        // Build full result then squeeze depending on original ranks
+        return when {
+            a.rank == 1 && b.rank == 1 -> {
+                // Dot product -> scalar
+                Shape(intArrayOf())
+            }
+            a.rank == 1 -> {
+                // (k,) @ (..., k, n) -> (..., n)
+                val result = IntArray(outBatch.size + 1)
+                for (i in outBatch.indices) result[i] = outBatch[i]
+                result[result.size - 1] = n
+                Shape(result)
+            }
+            b.rank == 1 -> {
+                // (..., m, k) @ (k,) -> (..., m)
+                val result = IntArray(outBatch.size + 1)
+                for (i in outBatch.indices) result[i] = outBatch[i]
+                result[result.size - 1] = m
+                Shape(result)
+            }
+            else -> {
+                // Regular case: (..., m, k) @ (..., k, n) -> (..., m, n)
+                val result = IntArray(outBatch.size + 2)
+                for (i in outBatch.indices) result[i] = outBatch[i]
+                result[result.size - 2] = m
+                result[result.size - 1] = n
+                Shape(result)
+            }
+        }
     }
 
     /**

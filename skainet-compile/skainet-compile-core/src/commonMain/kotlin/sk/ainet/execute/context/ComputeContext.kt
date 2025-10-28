@@ -20,3 +20,20 @@ public fun <V> computation(
     )
     dsl.apply(content)
 }
+
+public fun interface ComputationBlockWithContext<V> {
+    public fun ComputationContextDsl.invoke(computation: ExecutionContext<V>)
+}
+
+@ContextDsl
+public fun <V> computation(
+    executionContext: ExecutionContext<V>,
+    dataFactory: TensorDataFactory = executionContext.tensorDataFactory,
+    content: ComputationBlockWithContext<V>
+) {
+    val dsl = sk.ainet.execute.context.dsl.ComputationContextDslImpl<V>(
+        tensorDataFactory = dataFactory,
+        ops = executionContext.ops
+    )
+    content.run { dsl.invoke(executionContext) }
+}

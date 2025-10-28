@@ -28,6 +28,10 @@ class DefaultCpuOpsMatmulTest {
         return VoidOpsTensor(data, Int8::class)
     }
 
+    // Helpers to quickly create simple vectors/matrices
+    private fun fVec(vararg v: Float) = fTensor(Shape(v.size), v)
+    private fun fMat(rows: Int, cols: Int, vals: FloatArray) = fTensor(Shape(rows, cols), vals)
+
     @Test
     fun matmul_fp32_2d() {
         // 2x3 @ 3x2 = 2x2
@@ -178,5 +182,74 @@ class DefaultCpuOpsMatmulTest {
             assertEquals(58f, r.data[0, 0])
             assertEquals(64f, r.data[0, 1])
         }
+    }
+
+    // New tests for 1D matmul semantics
+    @Test
+    fun matmul_fp32_vector_dot_scalar_shape() {
+        val a = fVec(1f, 2f, 3f)
+        val b = fVec(4f, 5f, 6f)
+        val r = cpuOpsF.matmul(a, b)
+        assertEquals(0, r.rank)
+        assertEquals(Shape(), r.shape)
+        // Optionally, we can check value via data[ ] if supported; many backends use r.data[] for scalars not available.
+    }
+
+    @Test
+    fun matmul_fp32_vector_times_matrix() {
+        // (3,) @ (3,2) -> (2)
+        val a = fVec(1f, 2f, 3f)
+        val b = fMat(3, 2, floatArrayOf(
+            7f, 8f,
+            9f, 10f,
+            11f, 12f
+        ))
+        val r = cpuOpsF.matmul(a, b)
+        assertEquals(Shape(2), r.shape)
+        // Expected: [1*7+2*9+3*11, 1*8+2*10+3*12] = [58, 64]
+        assertEquals(58f, r.data[0])
+        assertEquals(64f, r.data[1])
+    }
+
+    @Test
+    fun matmul_fp32_matrix_times_vector() {
+        // (2,3) @ (3,) -> (2)
+        val a = fMat(2, 3, floatArrayOf(
+            1f, 2f, 3f,
+            4f, 5f, 6f
+        ))
+        val b = fVec(7f, 8f, 9f)
+        val r = cpuOpsF.matmul(a, b)
+        assertEquals(Shape(2), r.shape)
+        // Expected: [1*7+2*8+3*9, 4*7+5*8+6*9] = [50, 122]
+        assertEquals(50f, r.data[0])
+        assertEquals(122f, r.data[1])
+    }
+
+    @Test
+    fun matmul_fp32_vector_times_batched_mats_broadcast() {
+        // (3,) @ (4,3,2) -> (4,2)
+        val a = fVec(1f, 2f, 3f)
+        val bVals = FloatArray(4 * 3 * 2) { (it % 5 + 1).toFloat() }
+        val b = fTensor(Shape(4, 3, 2), bVals)
+        val r = cpuOpsF.matmul(a, b)
+        assertEquals(Shape(4, 2), r.shape)
+        // Spot check one element (batch 3, col 1)
+        var acc = 0f
+        for (k in 0 until 3) acc += a.data[k] * b.data[3, k, 1]
+        assertEquals(acc, r.data[3, 1])
+    }
+
+    @Test
+    fun matmul_fp32_batched_mats_times_vector_broadcast() {
+        // (4,2,3) @ (3,) -> (4,2)
+        val a = fTensor(Shape(4, 2, 3), FloatArray(4 * 2 * 3) { (it + 1).toFloat() })
+        val b = fVec(1f, 0f, -1f)
+        val r = cpuOpsF.matmul(a, b)
+        assertEquals(Shape(4, 2), r.shape)
+        // Spot check (batch=2,row=1): sum over k of a[2,1,k]*b[k]
+        var acc = 0f
+        for (k in 0 until 3) acc += a.data[2, 1, k] * b.data[k]
+        assertEquals(acc, r.data[2, 1])
     }
 }

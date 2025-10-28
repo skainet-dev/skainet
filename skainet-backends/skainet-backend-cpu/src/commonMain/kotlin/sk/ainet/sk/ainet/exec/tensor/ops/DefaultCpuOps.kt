@@ -175,46 +175,79 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         a: Tensor<T, V>,
         b: Tensor<T, V>
     ): Tensor<T, V> {
-        require(a.rank >= 2 && b.rank >= 2) { "Matrix multiplication requires tensors with at least 2 dimensions" }
+        require(a.rank >= 1 && b.rank >= 1) { "Matrix multiplication requires tensors with at least 1 dimension per operand" }
         require(a.dtype == b.dtype) { "DType mismatch: ${a.dtype} vs ${b.dtype}" }
 
         val aDims = a.shape.dimensions
         val bDims = b.shape.dimensions
         val aRank = aDims.size
         val bRank = bDims.size
-        val kA = aDims[aRank - 1]
-        val kB = bDims[bRank - 2]
+        val aIs1D = aRank == 1
+        val bIs1D = bRank == 1
+
+        // Effective shapes (virtually unsqueeze 1D operands):
+        val aEff = if (aIs1D) intArrayOf(1, aDims[0]) else aDims
+        val bEff = if (bIs1D) intArrayOf(bDims[0], 1) else bDims
+        val aEffRank = aEff.size
+        val bEffRank = bEff.size
+
+        val kA = aEff[aEffRank - 1]
+        val kB = bEff[bEffRank - 2]
         require(kA == kB) { "Matrix multiplication shape mismatch: inner dimensions must match ($kA vs $kB)" }
 
-        // Validate batch dims broadcastability (excluding last two dims)
-        val maxRank = maxOf(aRank, bRank)
-        for (i in 0 until maxRank - 2) {
-            val aDim = if (i < aRank - 2) aDims[i] else 1
-            val bDim = if (i < bRank - 2) bDims[i] else 1
+        // Validate batch dims broadcastability on effective shapes (excluding last two dims)
+        val maxEffRank = maxOf(aEffRank, bEffRank)
+        for (i in 0 until maxEffRank - 2) {
+            val aDim = if (i < aEffRank - 2) aEff[i] else 1
+            val bDim = if (i < bEffRank - 2) bEff[i] else 1
             if (aDim != bDim && aDim != 1 && bDim != 1) {
                 throw IllegalArgumentException("Matrix multiplication batch dimension mismatch at position $i: $aDim vs $bDim")
             }
         }
 
-        // Compute output shape
-        val outDims = IntArray(maxRank)
-        for (i in 0 until maxRank - 2) {
-            val aDim = if (i < aRank - 2) aDims[i] else 1
-            val bDim = if (i < bRank - 2) bDims[i] else 1
-            outDims[i] = maxOf(aDim, bDim)
+        // Compute output shape according to PyTorch rules (squeeze for 1D operands)
+        val batchRank = maxEffRank - 2
+        val outBatch = IntArray(batchRank) { i ->
+            val aDim = if (i < aEffRank - 2) aEff[i] else 1
+            val bDim = if (i < bEffRank - 2) bEff[i] else 1
+            maxOf(aDim, bDim)
         }
-        outDims[maxRank - 2] = aDims[aRank - 2] // m
-        outDims[maxRank - 1] = bDims[bRank - 1] // n
-        val outShape = Shape(outDims)
+        val m = aEff[aEffRank - 2]
+        val n = bEff[bEffRank - 1]
 
-        // Helper to map an output batch index to input batch indices with broadcasting
-        fun mapBatchIndex(batchIdx: IntArray, inDims: IntArray, inRank: Int): IntArray {
-            val inBatchRank = inRank - 2
+        val outShape = when {
+            aIs1D && bIs1D -> Shape(intArrayOf())
+            aIs1D -> {
+                // (k,) @ (..., k, n) -> (..., n)
+                val dims = IntArray(outBatch.size + 1)
+                if (outBatch.isNotEmpty()) outBatch.copyInto(dims, 0)
+                dims[dims.size - 1] = n
+                Shape(dims)
+            }
+            bIs1D -> {
+                // (..., m, k) @ (k,) -> (..., m)
+                val dims = IntArray(outBatch.size + 1)
+                if (outBatch.isNotEmpty()) outBatch.copyInto(dims, 0)
+                dims[dims.size - 1] = m
+                Shape(dims)
+            }
+            else -> {
+                val dims = IntArray(outBatch.size + 2)
+                if (outBatch.isNotEmpty()) outBatch.copyInto(dims, 0)
+                dims[dims.size - 2] = m
+                dims[dims.size - 1] = n
+                Shape(dims)
+            }
+        }
+
+        // Helper to map an output batch index to input batch indices with broadcasting using effective ranks
+        fun mapBatchIndexEff(batchIdx: IntArray, effDims: IntArray): IntArray {
+            val inBatchRank = effDims.size - 2
             val mapped = IntArray(inBatchRank)
             var or = batchIdx.size - 1
             var ir = inBatchRank - 1
             while (ir >= 0) {
-                val inDim = inDims[ir]
+                val inDim = effDims[ir]
                 val outIndex = if (or >= 0) batchIdx[or] else 0
                 mapped[ir] = if (inDim == 1) 0 else outIndex
                 ir--; or--
@@ -223,13 +256,28 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
         }
 
         val outData = dataFactory.init<T, V>(outShape, a.dtype) { outIdx ->
-            // Split outIdx into batch + m + n
-            val m = outIdx[outIdx.size - 2]
-            val n = outIdx[outIdx.size - 1]
-            val batchIdx = if (outIdx.size > 2) outIdx.copyOf(outIdx.size - 2) else IntArray(0)
+            // Determine batchIdx, m, n interpretation based on 1D/2D cases
+            val (batchIdx, mIdx, nIdx) = when {
+                aIs1D && bIs1D -> Triple(IntArray(0), -1, -1)
+                aIs1D -> {
+                    val batchLen = outIdx.size - 1
+                    val batch = if (batchLen > 0) outIdx.copyOf(batchLen) else IntArray(0)
+                    Triple(batch, -1, outIdx.last())
+                }
+                bIs1D -> {
+                    val batchLen = outIdx.size - 1
+                    val batch = if (batchLen > 0) outIdx.copyOf(batchLen) else IntArray(0)
+                    Triple(batch, outIdx.last(), -1)
+                }
+                else -> {
+                    val batchLen = outIdx.size - 2
+                    val batch = if (batchLen > 0) outIdx.copyOf(batchLen) else IntArray(0)
+                    Triple(batch, outIdx[outIdx.size - 2], outIdx[outIdx.size - 1])
+                }
+            }
 
-            val aBatchIdx = mapBatchIndex(batchIdx, aDims, aRank)
-            val bBatchIdx = mapBatchIndex(batchIdx, bDims, bRank)
+            val aBatchIdx = mapBatchIndexEff(batchIdx, aEff)
+            val bBatchIdx = mapBatchIndexEff(batchIdx, bEff)
 
             // Accumulate over k
             when (a.dtype) {
@@ -237,23 +285,33 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
                     var acc = 0.0f
                     var k = 0
                     while (k < kA) {
-                        // Build indices for a: [aBatch..., m, k]
-                        val aIdx = IntArray(aRank)
-                        if (aBatchIdx.isNotEmpty()) {
-                            aBatchIdx.copyInto(aIdx, destinationOffset = 0, startIndex = 0, endIndex = aBatchIdx.size)
+                        // Get a value
+                        val av: Float = if (aIs1D) {
+                            val aIdx = intArrayOf(k)
+                            a.data.get(*aIdx) as Float
+                        } else {
+                            val aIdx = IntArray(aRank)
+                            if (aBatchIdx.isNotEmpty()) {
+                                aBatchIdx.copyInto(aIdx, destinationOffset = 0, startIndex = 0, endIndex = aBatchIdx.size)
+                            }
+                            aIdx[aRank - 2] = mIdx
+                            aIdx[aRank - 1] = k
+                            a.data.get(*aIdx) as Float
                         }
-                        aIdx[aRank - 2] = m
-                        aIdx[aRank - 1] = k
-                        val av = a.data.get(*aIdx) as Float
 
-                        // Build indices for b: [bBatch..., k, n]
-                        val bIdx = IntArray(bRank)
-                        if (bBatchIdx.isNotEmpty()) {
-                            bBatchIdx.copyInto(bIdx, destinationOffset = 0, startIndex = 0, endIndex = bBatchIdx.size)
+                        // Get b value
+                        val bv: Float = if (bIs1D) {
+                            val bIdx = intArrayOf(k)
+                            b.data.get(*bIdx) as Float
+                        } else {
+                            val bIdx = IntArray(bRank)
+                            if (bBatchIdx.isNotEmpty()) {
+                                bBatchIdx.copyInto(bIdx, destinationOffset = 0, startIndex = 0, endIndex = bBatchIdx.size)
+                            }
+                            bIdx[bRank - 2] = k
+                            bIdx[bRank - 1] = nIdx
+                            b.data.get(*bIdx) as Float
                         }
-                        bIdx[bRank - 2] = k
-                        bIdx[bRank - 1] = n
-                        val bv = b.data.get(*bIdx) as Float
 
                         acc += av * bv
                         k++
@@ -267,21 +325,31 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
                     var acc = 0
                     var k = 0
                     while (k < kA) {
-                        val aIdx = IntArray(aRank)
-                        if (aBatchIdx.isNotEmpty()) {
-                            aBatchIdx.copyInto(aIdx, destinationOffset = 0, startIndex = 0, endIndex = aBatchIdx.size)
+                        val av: Int = if (aIs1D) {
+                            val aIdx = intArrayOf(k)
+                            a.data.get(*aIdx) as Int
+                        } else {
+                            val aIdx = IntArray(aRank)
+                            if (aBatchIdx.isNotEmpty()) {
+                                aBatchIdx.copyInto(aIdx, destinationOffset = 0, startIndex = 0, endIndex = aBatchIdx.size)
+                            }
+                            aIdx[aRank - 2] = mIdx
+                            aIdx[aRank - 1] = k
+                            a.data.get(*aIdx) as Int
                         }
-                        aIdx[aRank - 2] = m
-                        aIdx[aRank - 1] = k
-                        val av = a.data.get(*aIdx) as Int
 
-                        val bIdx = IntArray(bRank)
-                        if (bBatchIdx.isNotEmpty()) {
-                            bBatchIdx.copyInto(bIdx, destinationOffset = 0, startIndex = 0, endIndex = bBatchIdx.size)
+                        val bv: Int = if (bIs1D) {
+                            val bIdx = intArrayOf(k)
+                            b.data.get(*bIdx) as Int
+                        } else {
+                            val bIdx = IntArray(bRank)
+                            if (bBatchIdx.isNotEmpty()) {
+                                bBatchIdx.copyInto(bIdx, destinationOffset = 0, startIndex = 0, endIndex = bBatchIdx.size)
+                            }
+                            bIdx[bRank - 2] = k
+                            bIdx[bRank - 1] = nIdx
+                            b.data.get(*bIdx) as Int
                         }
-                        bIdx[bRank - 2] = k
-                        bIdx[bRank - 1] = n
-                        val bv = b.data.get(*bIdx) as Int
 
                         acc += av * bv
                         k++
@@ -548,7 +616,22 @@ public class DefaultCpuOps<V>(private val dataFactory: TensorDataFactory) : Tens
     @TensorOp()
     @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-relu")
     override fun <T : DType> relu(tensor: Tensor<T, V>): Tensor<T, V> {
-        TODO("Not yet implemented")
+        val outData = dataFactory.init<T, V>(tensor.shape, tensor.dtype) { idx ->
+            when (tensor.dtype) {
+                sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                    val v = tensor.data.get(*idx) as Float
+                    @Suppress("UNCHECKED_CAST")
+                    (if (v < 0f) 0f else v) as V
+                }
+                sk.ainet.lang.types.Int32::class, sk.ainet.lang.types.Int8::class -> {
+                    val v = tensor.data.get(*idx) as Int
+                    @Suppress("UNCHECKED_CAST")
+                    (if (v < 0) 0 else v) as V
+                }
+                else -> throw IllegalArgumentException("Unsupported dtype for relu: ${'$'}{tensor.dtype}")
+            }
+        }
+        return CpuTensor(outData, this, tensor.dtype)
     }
 
     @TensorOp()
