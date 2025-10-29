@@ -8,7 +8,6 @@ import sk.ainet.lang.types.Int32
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
 class VoidTensorOpsTest {
     
@@ -20,13 +19,7 @@ class VoidTensorOpsTest {
         val data = dataFactory.zeros<FP32, Float>(shape, FP32::class)
         return VoidOpsTensor(data, FP32::class)
     }
-    
-    private fun createIntTensor(shape: Shape): VoidOpsTensor<Int32, Int> {
-        val intOps = VoidTensorOps()
-        val data = DenseTensorDataFactory().zeros<Int32, Int>(shape, Int32::class)
-        return VoidOpsTensor(data, Int32::class)
-    }
-    
+
     @Test
     fun testAdd_SameShape_Success() {
         val a = createTensor(Shape(2, 3))
@@ -46,7 +39,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.add(a, b)
         }
-        assertTrue(exception.message?.contains("Shape mismatch for addition") == true)
+        assertEquals(exception.message?.contains("Shape mismatch for addition"), true)
     }
     
     @Test
@@ -79,7 +72,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.divide(a, b)
         }
-        assertTrue(exception.message?.contains("Shape mismatch for division") == true)
+        assertEquals(exception.message?.contains("Shape mismatch for division"), true)
     }
     
     @Test
@@ -112,7 +105,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.matmul(a, b)
         }
-        assertTrue(exception.message?.contains("inner dimensions must match") == true)
+        assertEquals(exception.message?.contains("inner dimensions must match"), true)
     }
     
     @Test
@@ -184,7 +177,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.transpose(tensor)
         }
-        assertTrue(exception.message?.contains("at least 2 dimensions") == true)
+        assertEquals(exception.message?.contains("at least 2 dimensions"), true)
     }
     
     @Test
@@ -206,7 +199,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.reshape(tensor, newShape)
         }
-        assertTrue(exception.message?.contains("volume mismatch") == true)
+        assertEquals(exception.message?.contains("volume mismatch"), true)
     }
     
     @Test
@@ -236,7 +229,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.flatten(tensor, 5, 6)  // Out of bounds
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
     
     @Test
@@ -246,7 +239,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.flatten(tensor, 2, 1)  // start > end
         }
-        assertTrue(exception.message?.contains("must be <=") == true)
+        assertEquals(exception.message?.contains("must be <="), true)
     }
     
     @Test
@@ -295,7 +288,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.softmax(tensor, 5)  // Out of bounds
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
     
     @Test
@@ -355,7 +348,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.sum(tensor, 5)  // Out of bounds
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
     
     @Test
@@ -450,7 +443,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.matmul(a, b)
         }
-        assertTrue(exception.message?.contains("batch dimension mismatch") == true)
+        assertEquals(exception.message?.contains("batch dimension mismatch"), true)
     }
 
     @Test
@@ -541,8 +534,8 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.matmul(a, b)
         }
-        assertTrue(exception.message?.contains("7 vs 5") == true)
-        assertTrue(exception.message?.contains("inner dimensions must match") == true)
+        assertEquals(exception.message?.contains("7 vs 5"), true)
+        assertEquals(exception.message?.contains("inner dimensions must match"), true)
     }
 
     @Test
@@ -565,8 +558,8 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.matmul(a, b)
         }
-        assertTrue(exception.message?.contains("batch dimension mismatch") == true)
-        assertTrue(exception.message?.contains("3 vs 5") == true)
+        assertEquals(exception.message?.contains("batch dimension mismatch"), true)
+        assertEquals(exception.message?.contains("3 vs 5"), true)
     }
     
     @Test
@@ -623,7 +616,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.concat(emptyList<VoidOpsTensor<FP32, Float>>(), 0)
         }
-        assertTrue(exception.message?.contains("empty list") == true)
+        assertEquals(exception.message?.contains("empty list"), true)
     }
     
     @Test
@@ -635,7 +628,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.concat(tensors, 0)  // Try to concat along dim 0
         }
-        assertTrue(exception.message?.contains("same shape except in the concatenation dimension") == true)
+        assertEquals(exception.message?.contains("same shape except in the concatenation dimension"), true)
     }
     
     @Test
@@ -646,7 +639,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.concat(tensors, 5)  // Out of bounds dimension
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
     
     @Test
@@ -681,7 +674,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.split(tensor, 3, 1)  // 5 is not divisible by 3
         }
-        assertTrue(exception.message?.contains("not divisible") == true)
+        assertEquals(exception.message?.contains("not divisible"), true)
     }
     
     @Test
@@ -691,7 +684,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.split(tensor, 0, 1)  // Split size must be positive
         }
-        assertTrue(exception.message?.contains("must be positive") == true)
+        assertEquals(exception.message?.contains("must be positive"), true)
     }
     
     @Test
@@ -701,7 +694,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.split(tensor, 1, 5)  // Out of bounds dimension
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
     
     @Test
@@ -749,7 +742,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.squeeze(tensor, 1)  // Dimension 1 has size 3, not 1
         }
-        assertTrue(exception.message?.contains("Only dimensions of size 1 can be squeezed") == true)
+        assertEquals(exception.message?.contains("Only dimensions of size 1 can be squeezed"), true)
     }
     
     @Test
@@ -759,7 +752,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.squeeze(tensor, 5)  // Out of bounds dimension
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
     
     @Test
@@ -806,6 +799,6 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.unsqueeze(tensor, 5)  // Out of bounds for new rank (3)
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
 }
