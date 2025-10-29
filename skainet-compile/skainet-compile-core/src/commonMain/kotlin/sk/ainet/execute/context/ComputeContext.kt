@@ -4,8 +4,6 @@ import sk.ainet.context.ContextDsl
 import sk.ainet.context.ExecutionContext
 import sk.ainet.execute.context.dsl.ComputationContextDsl
 import sk.ainet.execute.context.dsl.ComputationContextDslImpl
-import sk.ainet.lang.tensor.data.DenseTensorDataFactory
-import sk.ainet.lang.tensor.data.TensorDataFactory
 
 
 @ContextDsl

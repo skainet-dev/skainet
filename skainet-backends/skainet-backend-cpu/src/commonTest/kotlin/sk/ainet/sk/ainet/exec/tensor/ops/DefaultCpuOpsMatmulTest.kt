@@ -8,6 +8,7 @@ import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.types.FP32
 import sk.ainet.context.DirectCpuExecutionContext
+import sk.ainet.exec.tensor.ops.DefaultCpuOps
 import sk.ainet.execute.context.computation
 import sk.ainet.execute.context.dsl.tensor
 import sk.ainet.lang.tensor.matmul

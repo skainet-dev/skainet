@@ -3,7 +3,7 @@ package sk.ainet.context
 import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.ops.TensorOps
-import sk.ainet.sk.ainet.exec.tensor.ops.DefaultCpuOps
+import sk.ainet.exec.tensor.ops.DefaultCpuOps
 
 public class DirectCpuExecutionContext(
     override val executionStats: ExecutionStats = ExecutionStats(),

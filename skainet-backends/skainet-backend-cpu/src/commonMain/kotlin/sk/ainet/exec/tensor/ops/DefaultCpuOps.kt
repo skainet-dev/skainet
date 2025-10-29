@@ -1,4 +1,4 @@
-package sk.ainet.sk.ainet.exec.tensor.ops
+package sk.ainet.exec.tensor.ops
 
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
@@ -384,8 +384,6 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         return CpuTensor(outData, this, tensor.dtype)
     }
 
-    @TensorOp()
-    @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-conv2d")
     override fun <T : DType, V> conv2d(
         input: Tensor<T, V>,
         weight: Tensor<T, V>,
@@ -398,8 +396,6 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         TODO("Not yet implemented")
     }
 
-    @TensorOp()
-    @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-maxpool2d")
     override fun <T : DType, V> maxPool2d(
         input: Tensor<T, V>,
         kernelSize: Pair<Int, Int>,
