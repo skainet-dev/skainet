@@ -13,14 +13,14 @@ import kotlin.reflect.KClass
 public class OpsBoundTensor<T : DType, V>(
     override val data: TensorData<T, V>,
     override val dtype: KClass<T>,
-    private val opsRef: TensorOps<V>
+    private val opsRef: TensorOps
 ) : Tensor<T, V> {
-    override val ops: TensorOps<V>
+    override val ops: TensorOps
         get() = opsRef
 }
 
 /**
  * Returns a Tensor that uses the provided ops for subsequent operations.
  */
-public fun <T : DType, V> Tensor<T, V>.withOps(ops: TensorOps<V>): Tensor<T, V> =
+public fun <T : DType, V> Tensor<T, V>.withOps(ops: TensorOps): Tensor<T, V> =
     OpsBoundTensor(this.data, this.dtype, ops)

@@ -15,7 +15,7 @@ class TensorDSLTest {
 
     @Test
     fun testTensorDSLSyntaxWithOnes() {
-        data(testFactory) {
+        data {
 
             val vector = tensor<FP32, Float> {
                 shape(5) { 
@@ -35,7 +35,7 @@ class TensorDSLTest {
 
     @Test
     fun testTensorDSLSyntaxWithZeros() {
-        data(testFactory) {
+        data {
 
             val matrix = tensor<FP32, Float> {
                 shape(3, 4) { 
@@ -56,7 +56,7 @@ class TensorDSLTest {
 
     @Test
     fun testTensorDSLSyntaxWithFull() {
-        data(testFactory) {
+        data {
 
             val vector = tensor<FP32, Float> {
                 shape(5) { 
@@ -75,7 +75,7 @@ class TensorDSLTest {
 
     @Test
     fun testTensorDSLSyntaxWithRandn() {
-        data(testFactory) {
+        data {
             val matrix = tensor<FP32, Float> {
                 shape(2, 3) { 
                     randN(mean = 0.0f, std = 1.0f)
@@ -89,7 +89,7 @@ class TensorDSLTest {
 
     @Test
     fun testTensorDSLSyntaxWithUniform() {
-        data(testFactory) {
+        data {
             val vector = tensor<FP32, Float> {
                 shape(10) { 
                     uniform(min = -1.0f, max = 1.0f)
@@ -102,7 +102,7 @@ class TensorDSLTest {
 
     @Test
     fun testTensorDSLSyntaxWithCustomInit() {
-        data(testFactory) {
+        data {
             val vector = tensor<FP32, Float> {
                 shape(5) { 
                     init { indices -> indices[0].toFloat() }

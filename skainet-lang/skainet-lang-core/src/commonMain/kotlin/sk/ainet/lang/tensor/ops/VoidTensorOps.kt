@@ -7,7 +7,7 @@ import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.types.DType
 
-public class VoidTensorOps<V> : TensorOps<V> {
+public class VoidTensorOps : TensorOps {
     
     private val dataFactory = DenseTensorDataFactory()
     
@@ -74,28 +74,28 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return Shape(resultDims)
     }
     
-    override fun <T : DType> add(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> add(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateElementWiseShapes(a.shape, b.shape, "addition")
         val resultShape = calculateBroadcastShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
         return VoidOpsTensor(resultData, a.dtype)
     }
 
-    override fun <T : DType> subtract(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> subtract(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateElementWiseShapes(a.shape, b.shape, "subtraction")
         val resultShape = calculateBroadcastShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
         return VoidOpsTensor(resultData, a.dtype)
     }
 
-    override fun <T : DType> multiply(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> multiply(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateElementWiseShapes(a.shape, b.shape, "multiplication")
         val resultShape = calculateBroadcastShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
         return VoidOpsTensor(resultData, a.dtype)
     }
 
-    override fun <T : DType> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateElementWiseShapes(a.shape, b.shape, "division")
         val resultShape = calculateBroadcastShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
@@ -103,7 +103,7 @@ public class VoidTensorOps<V> : TensorOps<V> {
     }
 
     @InProgress("Metal", owner="ops-team", issue="GH-1234")
-    override fun <T : DType> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateMatmulShapes(a.shape, b.shape)
         val resultShape = calculateMatmulShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
@@ -111,13 +111,13 @@ public class VoidTensorOps<V> : TensorOps<V> {
     }
 
     @InProgress("Metal", owner="ops-team", issue="GH-1234")
-    override fun <T : DType> transpose(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> transpose(tensor: Tensor<T, V>): Tensor<T, V> {
         val resultShape = calculateTransposeShape(tensor.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> conv2d(
+    override fun <T : DType, V> conv2d(
         input: Tensor<T, V>,
         weight: Tensor<T, V>,
         bias: Tensor<T, V>?,
@@ -131,7 +131,7 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, input.dtype)
     }
 
-    override fun <T : DType> maxPool2d(
+    override fun <T : DType, V> maxPool2d(
         input: Tensor<T, V>,
         kernelSize: Pair<Int, Int>,
         stride: Pair<Int, Int>,
@@ -142,25 +142,25 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, input.dtype)
     }
 
-    override fun <T : DType> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> {
+    override fun <T : DType, V> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> {
         val resultShape = calculateReshapeTargetShape(tensor.shape, newShape)
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> flatten(tensor: Tensor<T, V>, startDim: Int, endDim: Int): Tensor<T, V> {
+    override fun <T : DType, V> flatten(tensor: Tensor<T, V>, startDim: Int, endDim: Int): Tensor<T, V> {
         val resultShape = calculateFlattenShape(tensor.shape, startDim, endDim)
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> {
+    override fun <T : DType, V> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> {
         val resultShape = calculateConcatShape(tensors.map { it.shape }, dim)
         val resultData = dataFactory.zeros<T, V>(resultShape, tensors.first().dtype)
         return VoidOpsTensor(resultData, tensors.first().dtype)
     }
 
-    override fun <T : DType> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> {
+    override fun <T : DType, V> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> {
         val resultShapes = calculateSplitShapes(tensor.shape, splitSize, dim)
         return resultShapes.map { shape ->
             val resultData = dataFactory.zeros<T, V>(shape, tensor.dtype)
@@ -168,50 +168,50 @@ public class VoidTensorOps<V> : TensorOps<V> {
         }
     }
 
-    override fun <T : DType> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+    override fun <T : DType, V> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
         val resultShape = calculateSqueezeShape(tensor.shape, dim)
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
+    override fun <T : DType, V> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
         val resultShape = calculateUnsqueezeShape(tensor.shape, dim)
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> relu(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> relu(tensor: Tensor<T, V>): Tensor<T, V> {
         // Activation functions preserve shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> softmax(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
+    override fun <T : DType, V> softmax(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
         validateSoftmaxDim(tensor.shape, dim)
         // Softmax preserves shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> sigmoid(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> sigmoid(tensor: Tensor<T, V>): Tensor<T, V> {
         // Activation functions preserve shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> sum(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+    override fun <T : DType, V> sum(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
         val resultShape = calculateReductionShape(tensor.shape, dim, "sum")
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> mean(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+    override fun <T : DType, V> mean(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
         val resultShape = calculateReductionShape(tensor.shape, dim, "mean")
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <TFrom : DType, TTo : DType> convert(
+    override fun <TFrom : DType, TTo : DType, V> convert(
         tensor: Tensor<TFrom, V>,
         targetType: TTo
     ): Tensor<TTo, V> {
@@ -222,25 +222,25 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, targetClass)
     }
 
-    override fun <T : DType> silu(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> silu(tensor: Tensor<T, V>): Tensor<T, V> {
         // SiLU (Swish) activation function preserves shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> gelu(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> gelu(tensor: Tensor<T, V>): Tensor<T, V> {
         // GELU activation function preserves shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> variance(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+    override fun <T : DType, V> variance(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
         val resultShape = calculateReductionShape(tensor.shape, dim, "variance")
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> sqrt(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> sqrt(tensor: Tensor<T, V>): Tensor<T, V> {
         // Square root function preserves shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)

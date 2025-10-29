@@ -18,7 +18,7 @@ class SlicingTest {
     fun testIndexMappingCorrectness() {
         println("[DEBUG_LOG] Testing index mapping correctness for all slice types")
 
-        data(testFactory) {
+        data {
             val tensor = tensor<FP32, Float> {
                 shape(4, 3, 2) { shape ->
                     init { indices ->
@@ -68,7 +68,7 @@ class SlicingTest {
     fun testEdgeCases() {
         println("[DEBUG_LOG] Testing edge cases for slicing")
 
-        data(testFactory) {
+        data {
             val tensor = tensor<FP32, Float> {
                 shape(4, 3, 2) { shape ->
                     init { indices ->
@@ -122,7 +122,7 @@ class SlicingTest {
     fun testSliceCompositionAndViewChaining() {
         println("[DEBUG_LOG] Testing slice composition and view chaining")
 
-        data(testFactory) {
+        data {
             val tensor = tensor<FP32, Float> {
                 shape(8, 6, 4) { shape ->
                     init { indices ->
@@ -172,7 +172,7 @@ class SlicingTest {
     fun testShapeCalculationForSlicedViews() {
         println("[DEBUG_LOG] Testing shape calculation for sliced views")
 
-        data(testFactory) {
+        data {
 
             val tensor = tensor<FP32, Float> {
 
@@ -235,7 +235,7 @@ class SlicingTest {
     fun testZeroCopyBehavior() {
         println("[DEBUG_LOG] Testing zero-copy behavior")
 
-        data(testFactory) {
+        data {
 
             val tensor = tensor<FP32, Float> {
 
@@ -285,7 +285,7 @@ class SlicingTest {
         // Create views and let them go out of scope
         fun createViews(): List<TensorView<FP32, Float>> {
             var result: List<TensorView<FP32, Float>> = emptyList()
-            data(testFactory) {
+            data {
                 val tensor = tensor<FP32, Float> {
                     shape(100, 100) { shape ->
                         init { indices ->
@@ -327,7 +327,7 @@ class SlicingTest {
     fun testPerformanceAccessPatterns() {
         println("[DEBUG_LOG] Testing performance for different access patterns")
 
-        data(testFactory) {
+        data {
             val tensor = tensor<FP32, Float> {
                 shape(100, 100, 50) { shape ->
                     init { indices ->
@@ -391,7 +391,7 @@ class SlicingTest {
     fun testNCHWLayoutOptimizations() {
         println("[DEBUG_LOG] Testing NCHW layout optimizations")
 
-        data(testFactory) {
+        data {
             val tensor = tensor<FP32, Float> {
                 // Create NCHW tensor: (batch=4, channels=3, height=32, width=32)
                 shape(4, 3, 32, 32) { shape ->

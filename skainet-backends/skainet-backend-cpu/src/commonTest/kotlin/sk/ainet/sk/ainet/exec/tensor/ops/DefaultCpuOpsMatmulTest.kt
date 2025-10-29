@@ -15,8 +15,8 @@ import sk.ainet.lang.types.Int8
 
 class DefaultCpuOpsMatmulTest {
     private val dataFactory = DenseTensorDataFactory()
-    private val cpuOpsF = DefaultCpuOps<Float>(dataFactory)
-    private val cpuOpsI = DefaultCpuOps<Int>(dataFactory)
+    private val cpuOpsF = DefaultCpuOps(dataFactory)
+    private val cpuOpsI = DefaultCpuOps(dataFactory)
 
     private fun fTensor(shape: Shape, values: FloatArray): VoidOpsTensor<FP32, Float> {
         val data = dataFactory.fromFloatArray<FP32, Float>(shape, FP32::class, values)
@@ -164,7 +164,7 @@ class DefaultCpuOpsMatmulTest {
 
     @Test
     fun matmul_exec_context_extension() {
-        val ctx = DirectCpuExecutionContext<Float>()
+        val ctx = DirectCpuExecutionContext()
         computation(ctx) {
             val a = tensor<FP32, Float> {
                 shape(2, 3) {

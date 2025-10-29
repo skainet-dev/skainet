@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 class VoidTensorOpsTest {
     
     private val dataFactory = DenseTensorDataFactory()
-    private val ops = VoidTensorOps<Float>()
+    private val ops = VoidTensorOps()
     
     // Helper function to create test tensors
     private fun createTensor(shape: Shape): VoidOpsTensor<FP32, Float> {
@@ -22,7 +22,7 @@ class VoidTensorOpsTest {
     }
     
     private fun createIntTensor(shape: Shape): VoidOpsTensor<Int32, Int> {
-        val intOps = VoidTensorOps<Int>()
+        val intOps = VoidTensorOps()
         val data = DenseTensorDataFactory().zeros<Int32, Int>(shape, Int32::class)
         return VoidOpsTensor(data, Int32::class)
     }

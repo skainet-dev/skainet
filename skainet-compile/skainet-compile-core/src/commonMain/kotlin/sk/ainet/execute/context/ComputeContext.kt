@@ -9,31 +9,25 @@ import sk.ainet.lang.tensor.data.TensorDataFactory
 
 
 @ContextDsl
-public fun <V> computation(
-    executionContext: ExecutionContext<V>,
-    dataFactory: TensorDataFactory = executionContext.tensorDataFactory,
+public fun computation(
+    executionContext: ExecutionContext,
     content: ComputationContextDsl.() -> Unit
 ) {
-    val dsl = sk.ainet.execute.context.dsl.ComputationContextDslImpl<V>(
-        tensorDataFactory = dataFactory,
-        ops = executionContext.ops
+    val dsl = ComputationContextDslImpl(
+        executionContext
     )
     dsl.apply(content)
 }
 
 public fun interface ComputationBlockWithContext<V> {
-    public fun ComputationContextDsl.invoke(computation: ExecutionContext<V>)
+    public fun ComputationContextDsl.invoke(computation: ExecutionContext)
 }
 
 @ContextDsl
 public fun <V> computation(
-    executionContext: ExecutionContext<V>,
-    dataFactory: TensorDataFactory = executionContext.tensorDataFactory,
+    executionContext: ExecutionContext,
     content: ComputationBlockWithContext<V>
 ) {
-    val dsl = sk.ainet.execute.context.dsl.ComputationContextDslImpl<V>(
-        tensorDataFactory = dataFactory,
-        ops = executionContext.ops
-    )
+    val dsl = ComputationContextDslImpl(executionContext)
     content.run { dsl.invoke(executionContext) }
 }

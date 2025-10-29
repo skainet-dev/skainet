@@ -11,13 +11,12 @@ import sk.ainet.lang.tensor.dsl.tensor
 
 class DefaultCpuOpsShapeOpsTest {
 
-    private val ctx = DirectCpuExecutionContext<Float>()
-    private val factory = ctx.tensorDataFactory
+    private val ctx = DirectCpuExecutionContext()
     private val ops = ctx.ops
 
     @Test
     fun reshape_happy_and_infer() {
-        data(factory) {
+        data(ctx) { _ ->
             val t = tensor<FP32, Float> { shape(2, 3, 4) { init { it.sum().toFloat() } } }
             val r = ops.reshape(t, Shape(4, -1, 2))
             assertEquals(Shape(4, 3, 2), r.shape)
@@ -35,7 +34,7 @@ class DefaultCpuOpsShapeOpsTest {
 
     @Test
     fun reshape_invalid_volume_throws() {
-        data(factory) {
+        data(ctx) { _ ->
             val t = tensor<FP32, Float> { shape(2, 2) { ones() } }
             assertFailsWith<IllegalArgumentException> {
                 ops.reshape(t, Shape(3, 2))
@@ -48,7 +47,7 @@ class DefaultCpuOpsShapeOpsTest {
 
     @Test
     fun flatten_ranges_and_edges() {
-        data(factory) {
+        data(ctx) { _ ->
 
             val t = tensor<FP32, Float> { shape(2, 3, 4) { init { (it[0] * 100 + it[1] * 10 + it[2]).toFloat() } } }
             val f0 = ops.flatten(t, 0, -1)
@@ -63,7 +62,7 @@ class DefaultCpuOpsShapeOpsTest {
 
     @Test
     fun concat_along_dim_and_scalars() {
-        data(factory) {
+        data(ctx) { _ ->
             // rank>0
             val a = tensor<FP32, Float> { shape(2, 1) { init { (it[0] + it[1]).toFloat() } } }
             val b = tensor<FP32, Float> { shape(2, 2) { init { (10 + it[0] + it[1]).toFloat() } } }
@@ -85,7 +84,7 @@ class DefaultCpuOpsShapeOpsTest {
 
     @Test
     fun split_happy_and_remainder() {
-        data(factory) {
+        data(ctx) { _ ->
 
             val t = tensor<FP32, Float> { shape(2, 5) { init { (it[0] * 10 + it[1]).toFloat() } } }
             val parts = ops.split(t, splitSize = 2, dim = 1)
@@ -101,7 +100,7 @@ class DefaultCpuOpsShapeOpsTest {
 
     @Test
     fun squeeze_and_unsqueeze_behavior() {
-        data(factory) {
+        data(ctx) { _ ->
             val t = tensor<FP32, Float> { shape(1, 3, 1, 4) { init { it.sum().toFloat() } } }
             val sAll = ops.squeeze(t, null)
             assertEquals(Shape(3, 4), sAll.shape)
@@ -122,7 +121,7 @@ class DefaultCpuOpsShapeOpsTest {
 
     @Test
     fun error_cases_concat_mismatch_and_split_dim() {
-        data(factory) {
+        data(ctx) { _ ->
             val a = tensor<FP32, Float> { shape(2, 2) { zeros() } }
             val b = tensor<FP32, Float> { shape(3, 2) { zeros() } }
             assertFailsWith<IllegalArgumentException> { ops.concat(listOf(a, b), dim = 0) }

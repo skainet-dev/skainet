@@ -7,7 +7,6 @@ import sk.ainet.execute.context.dsl.tensor
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.definition
 import sk.ainet.lang.nn.network
-import sk.ainet.lang.tensor.pprint
 import sk.ainet.lang.tensor.relu
 import sk.ainet.lang.tensor.t
 import sk.ainet.lang.types.FP32
@@ -15,8 +14,8 @@ import kotlin.test.Test
 
 class SinusApproximatorTest {
 
-    fun createModel(context: ExecutionContext<Float>): Module<FP32, Float> {
-        return definition(context) {
+    fun createModel(computation: ExecutionContext): Module<FP32, Float> {
+        return definition() {
             network {
                 input(1)  // Single input for x value
 
@@ -339,14 +338,14 @@ class SinusApproximatorTest {
 
     @Test
     fun testSinusApproximator() {
-        val ctx = DirectCpuExecutionContext<Float>()
-        computation(ctx) { computation ->
+        val ctx = DirectCpuExecutionContext()
+        computation<Float>(ctx) { computation ->
             // Create a simple input tensor compatible with the model's expected input size (1)
             val inputTensor = tensor<FP32, Float> {
                 // Using shape(1, 1) to represent a single scalar input in 2D form
                 shape(1, 1) { init { 0f } }
             }
-//            val b = inputTensor.t()
+            val b = inputTensor.t()
             val model = createModel(computation)
             model(inputTensor)
         }

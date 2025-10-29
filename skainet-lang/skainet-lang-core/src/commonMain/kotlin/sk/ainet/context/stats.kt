@@ -23,7 +23,18 @@ public data class MemoryInfo(
      * Memory usage as percentage
      */
     public val usagePercentage: Double = (usedMemory.toDouble() / totalMemory) * 100.0
-)
+) {
+    public companion object Companion {
+        public fun getEmptyInfo(): MemoryInfo = MemoryInfo(
+            totalMemory = 0,
+            usedMemory = 0,
+            freeMemory = 0,
+            usagePercentage = 0.0
+        )
+
+    }
+}
+
 
 /**
  * Execution statistics

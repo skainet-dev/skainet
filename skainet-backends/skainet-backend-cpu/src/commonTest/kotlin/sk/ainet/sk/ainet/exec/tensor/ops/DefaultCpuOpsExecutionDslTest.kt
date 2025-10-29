@@ -22,7 +22,7 @@ class DefaultCpuOpsExecutionDslTest {
 
     @Test
     fun fp32_sameShape_ops_with_init() {
-        val ctx = DirectCpuExecutionContext<Float>()
+        val ctx = DirectCpuExecutionContext()
         computation(ctx) {
             val a = tensor<FP32, Float> { shape(3) { init { idx -> (idx[0] + 1).toFloat() } } } // [1,2,3]
             val b = tensor<FP32, Float> { shape(3) { init { idx -> (idx[0] * 2 + 4).toFloat() } } } // [4,6,8]
@@ -46,7 +46,7 @@ class DefaultCpuOpsExecutionDslTest {
 
     @Test
     fun fp32_broadcast_scalar_vector_and_vector_matrix() {
-        val ctx = DirectCpuExecutionContext<Float>()
+        val ctx = DirectCpuExecutionContext()
         computation(ctx) {
             // scalar (represented as shape(1)) times vector
             val scalar = tensor<FP32, Float> { shape(1) { ones() } } // [1]
@@ -77,7 +77,7 @@ class DefaultCpuOpsExecutionDslTest {
 
     @Test
     fun fp32_zeros_ones_full_mix() {
-        val ctx = DirectCpuExecutionContext<Float>()
+        val ctx = DirectCpuExecutionContext()
         computation(ctx) {
             val zeros = tensor<FP32, Float> { shape(2, 2) { zeros() } }
             val ones = tensor<FP32, Float> { shape(2, 2) { ones() } }
@@ -115,7 +115,7 @@ class DefaultCpuOpsExecutionDslTest {
 
     @Test
     fun int32_sameShape_and_division_behavior() {
-        val ctx = DirectCpuExecutionContext<Int>()
+        val ctx = DirectCpuExecutionContext()
         computation(ctx) {
             val a = tensor<Int32, Int> { shape(4) { init { i -> i[0] + 1 } } } // [1,2,3,4]
             val b = tensor<Int32, Int> { shape(4) { init { i -> (i[0] + 1) * 3 } } } // [3,6,9,12]
@@ -147,7 +147,7 @@ class DefaultCpuOpsExecutionDslTest {
 
     @Test
     fun int32_division_by_zero_yields_zero() {
-        val ctx = DirectCpuExecutionContext<Int>()
+        val ctx = DirectCpuExecutionContext()
         computation(ctx) {
             val numerator = tensor<Int32, Int> { shape(3) { init { i -> (i[0] + 1) * 10 } } } // [10,20,30]
             val denom = tensor<Int32, Int> { shape(3) { init { i -> if (i[0] == 1) 0 else 2 } } } // [2,0,2]

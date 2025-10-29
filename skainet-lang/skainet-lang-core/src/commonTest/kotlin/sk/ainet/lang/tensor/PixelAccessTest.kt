@@ -5,7 +5,6 @@ import sk.ainet.lang.tensor.dsl.*
 import sk.ainet.lang.types.FP32
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 /**
  * Comprehensive test suite for pixel-by-pixel tensor access functionality.
@@ -17,39 +16,33 @@ class PixelAccessTest {
     fun testPixelByPixelAccess() {
         println("[DEBUG_LOG] Testing pixel-by-pixel access for 4D tensor")
 
-        data(testFactory) {
-
-            // Create a sample 4D tensor for computer vision: [Batch=2, Channels=3, Height=4, Width=4]
-            val imageTensor = tensor<FP32, Float> {
+        data {
+            // Create a 4D tensor in BCHW format: B=2, C=3, H=4, W=4
+            val tensor = tensor<FP32, Float> {
                 shape(2, 3, 4, 4) { _ ->
                     init { indices ->
-                        // Initialize with meaningful pattern: batch*1000 + channel*100 + height*10 + width
+                        // Deterministic pattern for validation: b*1000 + c*100 + h*10 + w
                         (indices[0] * 1000 + indices[1] * 100 + indices[2] * 10 + indices[3]).toFloat()
                     }
                 }
             }
 
-            assertNotNull(imageTensor)
-            assertEquals(Shape(2, 3, 4, 4), imageTensor.shape)
-
-            println("[DEBUG_LOG] Created image tensor with shape: ${imageTensor.shape}")
-
-            // Test accessing every pixel individually using data[indices] method
-            for (batch in 0 until 2) {
-                for (channel in 0 until 3) {
-                    for (height in 0 until 4) {
-                        for (width in 0 until 4) {
-                            val expectedValue = (batch * 1000 + channel * 100 + height * 10 + width).toFloat()
-                            val actualValue = imageTensor.data[batch, channel, height, width]
-
-                            assertEquals(
-                                expectedValue, actualValue, 0.001f,
-                                "Pixel mismatch at [$batch,$channel,$height,$width]: expected $expectedValue, got $actualValue"
-                            )
+            var pixelCount = 0
+            for (b in 0 until 2) {
+                for (c in 0 until 3) {
+                    for (h in 0 until 4) {
+                        for (w in 0 until 4) {
+                            val actual = tensor.data[b, c, h, w]
+                            val expected = (b * 1000 + c * 100 + h * 10 + w).toFloat()
+                            assertEquals(expected, actual, 0.001f, "Mismatch at [b=$b,c=$c,h=$h,w=$w]")
+                            pixelCount++
                         }
                     }
                 }
             }
+
+            // Ensure we actually visited every pixel: 2*3*4*4 = 96
+            assertEquals(2 * 3 * 4 * 4, pixelCount, "Visited pixel count mismatch")
         }
 
         println("[DEBUG_LOG] Successfully accessed and verified all ${2 * 3 * 4 * 4} pixels")
@@ -59,7 +52,7 @@ class PixelAccessTest {
     fun testSpecificPixelPatterns() {
         println("[DEBUG_LOG] Testing specific pixel access patterns")
 
-        data(testFactory) {
+        data {
 
             // Create a 4D tensor with a different pattern
             val tensor = tensor<FP32, Float> {
@@ -95,8 +88,7 @@ class PixelAccessTest {
     fun testFirstBatchFirstChannelPixels() {
         println("[DEBUG_LOG] Testing comprehensive access to first batch, first channel")
 
-        data(testFactory) {
-
+        data {
             val imageTensor = tensor<FP32, Float> {
                 shape(2, 3, 4, 4) { _ ->
                     init { indices ->
@@ -145,9 +137,7 @@ class PixelAccessTest {
     fun testAllChannelsFromFirstBatch() {
         println("[DEBUG_LOG] Testing access to all channels from first batch")
 
-        data(testFactory) {
-
-
+        data {
             val imageTensor = tensor<FP32, Float> {
                 shape(2, 3, 4, 4) { _ ->
                     init { indices ->
@@ -188,7 +178,7 @@ class PixelAccessTest {
     @Test
     fun testBatchSeparation() {
         println("[DEBUG_LOG] Testing pixel access across different batches")
-        data(testFactory) {
+        data {
 
 
             val imageTensor = tensor<FP32, Float> {
@@ -227,7 +217,7 @@ class PixelAccessTest {
     @Test
     fun testEdgeAndCornerPixels() {
         println("[DEBUG_LOG] Testing edge and corner pixel access")
-        data(testFactory) {
+        data {
 
 
             val imageTensor = tensor<FP32, Float> {

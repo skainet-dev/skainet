@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 class ShapeOperationsTest {
 
     private val dataFactory = DenseTensorDataFactory()
-    private val ops = VoidTensorOps<Float>()
+    private val ops = VoidTensorOps()
 
     // Helper function to create test tensors
     private fun createTensor(shape: Shape): VoidOpsTensor<FP32, Float> {

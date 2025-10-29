@@ -15,8 +15,9 @@ import sk.ainet.lang.tensor.pprint
 
 class DefaultCpuOpsElementwiseTest {
     private val dataFactory = DenseTensorDataFactory()
-    private val cpuOpsF = DefaultCpuOps<Float>(dataFactory)
-    private val cpuOpsI = DefaultCpuOps<Int>(dataFactory)
+    private val cpuOpsF = DefaultCpuOps(dataFactory)
+    private val cpuOpsI = DefaultCpuOps(dataFactory)
+
 
     // Helpers to build input tensors with data
     private fun fTensor(shape: Shape, values: FloatArray): VoidOpsTensor<FP32, Float> {
@@ -45,7 +46,7 @@ class DefaultCpuOpsElementwiseTest {
     fun context_add_fp32_sameShape() {
         // Simulate an exec context: use DirectCpuExecutionContext and the tensor DSL
 
-        val ctx = DirectCpuExecutionContext<Float>()
+        val ctx = DirectCpuExecutionContext()
 
         // dsl for execution context
         computation(ctx) {
@@ -61,6 +62,9 @@ class DefaultCpuOpsElementwiseTest {
 
                 }
             }
+            println(a.pprint())
+            println("+")
+            println(b.pprint())
             val c = a + b
             println(c.pprint())
             // Broadcasting: (1) + (1,1,1) => (2,2,2)

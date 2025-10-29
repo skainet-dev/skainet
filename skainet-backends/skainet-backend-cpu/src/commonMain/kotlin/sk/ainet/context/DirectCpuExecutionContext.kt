@@ -5,9 +5,9 @@ import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.ops.TensorOps
 import sk.ainet.sk.ainet.exec.tensor.ops.DefaultCpuOps
 
-public class DirectCpuExecutionContext<V>(
+public class DirectCpuExecutionContext(
     override val executionStats: ExecutionStats = ExecutionStats(),
-) : ExecutionContext<V> {
+) : ExecutionContext {
     private val _memoryInfo = MemoryInfo(
         totalMemory = 0,
         usedMemory = 0,
@@ -19,6 +19,6 @@ public class DirectCpuExecutionContext<V>(
     override val memoryInfo: MemoryInfo
         get() = _memoryInfo
 
-    override val ops: TensorOps<V>
+    override val ops: TensorOps
         get() = DefaultCpuOps(tensorDataFactory)
 }

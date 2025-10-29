@@ -1,9 +1,7 @@
 package sk.ainet.context
 
-import sk.ainet.lang.tensor.data.DenseTensorDataFactory
-import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.tensor.dsl.DataContextDsl
-import sk.ainet.lang.tensor.dsl.DefinitionContextDslImpl
+import sk.ainet.lang.tensor.dsl.DataDefinitionContextDslImpl
 
 @DslMarker
 public annotation class ContextDsl
@@ -11,10 +9,13 @@ public annotation class ContextDsl
 @ContextDsl
 public interface ContextDslItem
 
+
+// Overload that exposes the executionContext as a lambda parameter inside the DSL block
 @ContextDsl
-public fun data(
-    dataFactory: TensorDataFactory = DenseTensorDataFactory(),
-    content: DataContextDsl.() -> Unit
+public fun  data(
+    executionContext: ExecutionContext = DefaultDataExecutionContext(),
+    content: DataContextDsl.(executionContext: ExecutionContext) -> Unit
 ) {
-    DefinitionContextDslImpl(dataFactory).apply(content)
+    val dsl = DataDefinitionContextDslImpl(executionContext)
+    dsl.content(executionContext)
 }

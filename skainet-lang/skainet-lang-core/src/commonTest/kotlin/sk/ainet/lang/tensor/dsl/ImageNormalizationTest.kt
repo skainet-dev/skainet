@@ -2,7 +2,6 @@ package sk.ainet.lang.tensor.dsl
 
 import sk.ainet.context.data
 import sk.ainet.lang.tensor.Shape
-import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.tensor.pprint
 import sk.ainet.lang.tensor.sliceView
 import sk.ainet.lang.types.Int32
@@ -11,8 +10,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class ImageNormalizationTest {
-
-    val testFactory = DenseTensorDataFactory()
 
     @Test
     fun normalizeIntBCHWToUnitRange() {
@@ -25,7 +22,7 @@ class ImageNormalizationTest {
             39, 329, 392,
             39, 329, 393,
         )
-        data(sk.ainet.lang.tensor.testFactory) {
+        data {
 
             val intImage = tensor<Int32, Int> {
                 shape(1, 3, 2, 3) {
