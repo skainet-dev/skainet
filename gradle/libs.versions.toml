@@ -1,39 +1,75 @@
 [versions]
-agp = "8.12.1"
-kotlin = "2.2.10"
-kotlinx-coroutines = "1.10.2"
+agp = "8.12.3"
+jacksonDatabind = "2.20.0"
+jsonSchemaValidator = "2.0.0"
+jsonSchemaValidatorVersion = "0.5.2"
+kotlin = "2.2.21"
+kotlinxCoroutines = "1.10.2"
 android-minSdk = "24"
-android-compileSdk = "35"
+android-compileSdk = "36"
 kotlinxSerializationJson = "1.9.0"
-ktorClientCore = "3.2.3"
+ktorClientCore = "3.3.1"
 ktorClientPlugins = "3.1.1"
-logbackClassic = "1.5.18"
-kotlinxIo = "0.8.0"
+logbackClassic = "1.5.20"
+kover = "0.9.3"
+binaryCompatibilityValidator = "0.18.1"
+ksp = "2.2.20-2.0.4"
+kotlinpoet = "2.2.0"
+kotlin-compile-testing = "1.6.0"
+asciidoctorj = "3.0.0"
+dokka = "2.1.0"
 kotlinxCli = "0.3.6"
-nexus-publish = "2.0.0"
-testng = "7.10.2"
-binaryCompatibility = "0.18.1"
-moduleGraphSouza = "0.12.1"
 
 [libraries]
-kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabind" }
+json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "jsonSchemaValidator" }
+kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-core-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-kotlinx-coroutines-core-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinxSerializationJson" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
+
+
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientCore" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClientCore" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientCore" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktorClientCore" }
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktorClientCore" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorClientCore" }
 ktor-client-plugins = { module = "io.ktor:ktor-client-plugins", version.ref = "ktorClientPlugins" }
+
+kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
+kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
+ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+ksp-test = { module = "com.google.devtools.ksp:symbol-processing-test", version.ref = "ksp" }
+kotlin-compile-testing = { module = "com.github.tschuchortdev:kotlin-compile-testing", version.ref = "kotlin-compile-testing" }
+kotlin-compile-testing-ksp = { module = "com.github.tschuchortdev:kotlin-compile-testing-ksp", version.ref = "kotlin-compile-testing" }
+
+asciidoctorj-core = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciidoctorj" }
+asciidoctorj-pdf = { module = "org.asciidoctor:asciidoctorj-pdf", version.ref = "asciidoctorj" }
+
+dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
+dokka-core = { module = "org.jetbrains.dokka:dokka-core", version.ref = "dokka" }
+dokka-test-utils = { module = "org.jetbrains.dokka:dokka-test-utils", version.ref = "dokka" }
+
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
-kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
-kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
+optimumcode-json-schema-validator = { module = "io.github.optimumcode:json-schema-validator", version.ref = "jsonSchemaValidatorVersion" }
+
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-binaryCompatibility = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binaryCompatibility" }
-modulegraph-souza = { id = "dev.iurysouza.modulegraph", version.ref = "moduleGraphSouza" }
+jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.34.0" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+asciidoctorJvm = { id = "org.asciidoctor.jvm.convert", version = "4.0.5" }
+asciidoctorPdf = { id = "org.asciidoctor.jvm.pdf", version = "4.0.5" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+
+skainet-docs = { id = "sk.ainet.documentation" }
